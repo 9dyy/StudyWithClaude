@@ -80,6 +80,36 @@ SELECT * FROM users
 WHERE NOT guild_id = 1;
 ```
 
+### 💡 단순 부등은 `NOT` 보다 `<>` (실무 컨벤션)
+
+위 예시는 사실 아래와 **완전히 동일**하고, 실무에서는 거의 항상 아래 형태로 쓴다.
+
+```sql
+SELECT * FROM users WHERE guild_id <> 1;   -- 이쪽이 표준
+```
+
+| 비교 | 언제 |
+|------|------|
+| `<>` (또는 `!=`) | **단순 부등 비교** — 거의 모든 경우 |
+| `NOT` | **다른 술어와 결합할 때** — `NOT IN`, `NOT LIKE`, `NOT BETWEEN`, `NOT EXISTS`, `IS NOT NULL` |
+
+```sql
+-- 잘 안 쓰는 형태
+WHERE NOT guild_id = 1
+WHERE NOT level >= 30
+
+-- 자연스러운 형태
+WHERE guild_id <> 1
+WHERE level < 30
+WHERE guild_id NOT IN (1, 2, 3)        -- NOT은 이런 데서
+WHERE name NOT LIKE '김%'
+WHERE deleted_at IS NOT NULL
+```
+
+이유: 가독성·간결함·`NOT`의 낮은 우선순위로 인한 혼동 방지. C++에서 `!(a == b)` 대신 `a != b` 쓰는 것과 같은 감각.
+
+> ⚠️ **둘 다 NULL 함정은 동일.** `guild_id`가 NULL인 행은 `<> 1`에도 `NOT = 1`에도 안 잡힌다. NULL까지 포함하려면 `WHERE guild_id <> 1 OR guild_id IS NULL` 또는 `WHERE guild_id IS DISTINCT FROM 1`.
+
 ### 괄호로 우선순위 명확히
 
 `AND`가 `OR`보다 먼저 묶인다 (C++과 동일). 헷갈리면 괄호.
