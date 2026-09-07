@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12강 · 페이지 폴트와 스왑 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a; --bg2:#11152a; --card:#161b33; --card2:#1c2243;
+  --line:#2a3157; --txt:#e7ecff; --dim:#9aa3c7; --faint:#6b73a0;
+  --ind:#6366f1; --ind2:#818cf8; --pur:#a855f7; --cyan:#22d3ee;
+  --grn:#34d399; --red:#f87171; --amber:#fbbf24; --orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);
+  line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--amber),var(--orange),var(--red))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;
+  background:rgba(11,14,26,.82);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}
+nav .logo b{color:var(--amber)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;
+  border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--orange);border-color:var(--orange)}
+
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;background:radial-gradient(ellipse,rgba(251,146,60,.22),transparent 70%);
+  filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--orange);
+  background:rgba(251,146,60,.12);border:1px solid rgba(251,146,60,.3);
+  padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--amber),var(--orange),var(--red));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--orange);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--orange);font-weight:700}
+
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;
+  padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;
+  display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.amber{background:var(--orange)}.btn.amber:hover{background:#fdba74}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.red{background:var(--red)}.btn.red:hover{background:#fca5a5}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 도입: 프로파일러 */
+.gauges{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:6px}
+.gauge{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+.gauge .lab{font-size:12px;color:var(--dim)}
+.gauge .ring{position:relative;width:84px;height:84px;margin:10px auto 0;border-radius:50%;
+  background:conic-gradient(var(--c,var(--grn)) calc(var(--p,0)*1%),var(--bg2) 0)}
+.gauge .ring::after{content:"";position:absolute;inset:9px;border-radius:50%;background:var(--card2)}
+.gauge .ring b{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;z-index:1}
+.gauge.frame .num{font-size:30px;font-weight:800;font-family:ui-monospace,monospace;margin-top:18px;transition:.4s}
+.gauge.frame .num.bad{color:var(--red)}
+.gauge.frame .sub{font-size:11px;color:var(--faint)}
+#profOut{margin-top:18px;max-height:0;overflow:hidden;transition:max-height .5s}
+#profOut.open{max-height:260px}
+#profOut .inner{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:18px}
+
+/* Minor vs Major */
+.fault-cmp{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.fcol{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:18px}
+.fcol h4{font-size:15px}.fcol.minor h4{color:var(--grn)}.fcol.major h4{color:var(--red)}
+.fcol p{font-size:13px;color:var(--dim);margin-top:6px;min-height:54px}
+.pipe{margin-top:14px;height:30px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;position:relative;overflow:hidden}
+.pipe i{position:absolute;left:0;top:0;height:100%;width:0;border-radius:8px;transition:width 1.1s linear}
+.fcol.minor .pipe i{background:linear-gradient(90deg,var(--grn),#6ee7b7)}
+.fcol.major .pipe i{background:linear-gradient(90deg,var(--orange),var(--red))}
+.fcol .time{font-family:ui-monospace,monospace;font-size:20px;font-weight:800;margin-top:10px;text-align:center}
+.fcol.minor .time{color:var(--grn)}.fcol.major .time{color:var(--red)}
+.cmp-note{text-align:center;margin-top:16px;font-size:15px;color:var(--dim)}
+.cmp-note b{color:var(--amber)}
+
+/* 페이지 교체 시뮬 */
+.refstr{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;justify-content:center}
+.refstr .r{width:36px;height:40px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-weight:700;font-size:16px;color:var(--dim);transition:.2s}
+.refstr .r.cur{border-color:var(--amber);background:rgba(251,191,36,.15);color:var(--amber);transform:translateY(-4px)}
+.refstr .r.past{color:var(--faint);opacity:.5}
+.frames{display:flex;gap:10px;justify-content:center;margin-top:24px}
+.fslot{width:74px;height:74px;border-radius:12px;border:1.5px dashed var(--line);background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:24px;font-weight:800;
+  color:var(--faint);transition:.3s;position:relative}
+.fslot.full{border-style:solid;border-color:var(--ind);background:rgba(99,102,241,.12);color:var(--txt)}
+.fslot.in{border-color:var(--grn);background:rgba(52,211,153,.2);transform:scale(1.08)}
+.fslot.out{border-color:var(--red);background:rgba(248,113,113,.2)}
+.fslot .evict{position:absolute;top:-9px;right:-9px;font-size:11px;background:var(--red);color:#fff;border-radius:20px;padding:1px 6px}
+.simstat{display:flex;gap:12px;justify-content:center;margin-top:20px;flex-wrap:wrap}
+.simstat .s{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:10px 16px;text-align:center;min-width:84px}
+.simstat .s .v{font-size:22px;font-weight:800;font-family:ui-monospace,monospace}
+.simstat .s .k{font-size:11px;color:var(--dim)}
+.simstat .s.fault .v{color:var(--red)}.simstat .s.hit .v{color:var(--grn)}
+.algo-pick{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.algo-pick button{font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:9px 16px;border-radius:10px;
+  background:var(--bg2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.algo-pick button:hover{border-color:var(--amber);color:var(--txt)}
+.algo-pick button.on{background:var(--amber);color:#2a1c00;border-color:var(--amber)}
+.simlog{text-align:center;margin-top:16px;font-size:14px;min-height:24px;color:var(--dim)}
+.cmpbars{margin-top:18px}
+.cmpbars .row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.cmpbars .row .nm{width:54px;font-size:13px;font-weight:700;font-family:ui-monospace,monospace}
+.cmpbars .row .track{flex:1;height:26px;background:var(--bg2);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+.cmpbars .row .track i{display:block;height:100%;width:0;transition:width .6s;border-radius:7px;
+  display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:12px;font-weight:700;color:#1a1200}
+.cmpbars .fifo i{background:linear-gradient(90deg,#fb7185,var(--red))}
+.cmpbars .lru i{background:linear-gradient(90deg,var(--amber),var(--orange))}
+.cmpbars .opt i{background:linear-gradient(90deg,var(--grn),var(--cyan))}
+
+/* 스래싱 슬라이더 */
+.thrash .slabel{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:8px}
+.thrash input[type=range]{width:100%;accent-color:var(--orange);height:6px}
+.thrash .rambar{margin-top:18px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);position:relative;overflow:hidden}
+.thrash .rambar .ws{position:absolute;left:0;top:0;height:100%;transition:width .25s,background .25s;display:flex;align-items:center;padding-left:12px;font-size:13px;font-weight:700;color:#1a1200;border-radius:9px}
+.thrash .ramline{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--cyan)}
+.thrash .ramline b{position:absolute;top:-20px;left:6px;font-size:11px;color:var(--cyan);white-space:nowrap}
+.thrash .verdict{margin-top:18px;text-align:center;font-size:16px;font-weight:700;min-height:28px}
+.thrash .tput{margin-top:10px;text-align:center;font-size:13px;color:var(--dim)}
+
+/* 게임관점 카드 */
+.gcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:22px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;transition:.2s}
+.gcard:hover{border-color:var(--orange);transform:translateY(-3px)}
+.gcard .ic{font-size:24px}.gcard h4{margin-top:10px;font-size:15px}.gcard p{font-size:13px;color:var(--dim);margin-top:8px}
+
+/* 오해 / 면접 / 체크 (11강과 동일 시스템) */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:220px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--orange);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#2a2113,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13.5px;color:var(--txt);line-height:1.65}
+.flip .back .a b{color:var(--amber)}
+
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--orange);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}
+footer .nx .t{font-weight:700;color:var(--orange)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+
+@media(max-width:640px){
+  .fault-cmp,.gauges{grid-template-columns:1fr}
+  .gauges{grid-template-columns:repeat(3,1fr)}
+  header.hero{padding:96px 0 36px}
+  .flip{height:240px}
+  .fslot{width:60px;height:60px;font-size:20px}
+}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>12강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#fault">폴트</a>
+    <a class="chip" href="#replace">교체 시뮬</a>
+    <a class="chip" href="#thrash">스래싱</a>
+    <a class="chip" href="#game">게임관점</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 메모리 관리</span>
+  <h1>페이지 폴트와 <span class="g">스왑</span></h1>
+  <p class="sub">CPU도 GPU도 한가하고 메모리도 남는데, 게임이 갑자기 <b style="color:var(--red)">0.5초</b> 멈춘다. 범인은 누구일까? 직접 시뮬레이션하며 추적한다.</p>
+  <div class="meta">
+    <div class="m">🐢 Major Fault = 게임 hitch</div>
+    <div class="m">🧩 선수지식 <b>11강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 미스터리</div>
+  <h2 class="sec"><span class="n">1</span>메모리는 충분한데 게임이 멈춘다</h2>
+  <p class="lead">오픈월드에서 새 지역 진입 순간 한 프레임이 비정상적으로 길어진다. 프로파일러를 열어보자.</p>
+  <div class="card">
+    <div class="gauges">
+      <div class="gauge"><div class="lab">CPU</div><div class="ring" style="--p:18;--c:var(--grn)"><b>18%</b></div></div>
+      <div class="gauge"><div class="lab">GPU</div><div class="ring" style="--p:22;--c:var(--grn)"><b>22%</b></div></div>
+      <div class="gauge frame"><div class="lab">프레임 타임</div><div class="num" id="frameNum">16ms</div><div class="sub">목표 16.6ms</div></div>
+    </div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn red" id="enterZone">▶ 새 지역 진입</button>
+      <button class="btn ghost" id="openProf" disabled>🔬 프로파일러로 범인 찾기</button>
+    </div>
+    <div id="profOut"><div class="inner">
+      <b style="color:var(--red)">CPU·GPU는 노는데 프레임이 500ms.</b> 이 시간 동안 CPU는 <b>뭔가를 기다리고</b> 있었다 — 디스크다.
+      새 지역 에셋 페이지가 메모리에 없어서 <b class="tagline">Major Fault</b>가 수백 번 터지고, 매번 SSD 응답을 기다린 것.
+      메모리 "여유"는 OS 전체 기준이라, 정작 필요한 페이지는 RAM에 없을 수 있다. ↓
+    </div></div>
+  </div>
+</div></section>
+
+<!-- 2. Minor vs Major -->
+<section id="fault"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 비교 실험</div>
+  <h2 class="sec"><span class="n">2</span>Minor Fault vs Major Fault</h2>
+  <p class="lead">페이지 폴트는 <b>에러가 아니라 정상 동작</b>이다. 다만 <b class="tagline">디스크를 건드리느냐</b>가 운명을 가른다. 두 버튼을 눌러 처리 시간을 비교해보자.</p>
+  <div class="card">
+    <div class="fault-cmp">
+      <div class="fcol minor">
+        <h4>● Minor Fault (소프트)</h4>
+        <p>페이지가 이미 RAM 어딘가에 있음. 페이지 테이블만 고치면 끝. (demand paging 첫 접근, 공유 라이브러리 등)</p>
+        <div class="pipe"><i id="pMinor"></i></div>
+        <div class="time" id="tMinor">— μs</div>
+      </div>
+      <div class="fcol major">
+        <h4>● Major Fault (하드)</h4>
+        <p>데이터가 디스크에 있어 읽어와야 함. SSD라도 RAM보다 수백~수천 배 느리다. (스왑된 페이지, 에셋 스트리밍)</p>
+        <div class="pipe"><i id="pMajor"></i></div>
+        <div class="time" id="tMajor">— ms</div>
+      </div>
+    </div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn grn" id="runMinor">Minor Fault 처리</button>
+      <button class="btn red" id="runMajor">Major Fault 처리</button>
+    </div>
+    <div class="cmp-note" id="cmpNote">같은 "페이지 폴트"라도 처리 비용은 <b>약 1000배</b> 차이. 게임 hitch의 주범은 Major Fault.</div>
+  </div>
+</div></section>
+
+<!-- 3. 페이지 교체 시뮬 -->
+<section id="replace"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 시뮬레이터</div>
+  <h2 class="sec"><span class="n">3</span>페이지 교체 알고리즘 — 누구를 내쫓을까</h2>
+  <p class="lead">RAM(프레임 3칸)이 꽉 찼을 때 어떤 페이지를 디스크로 내릴지 정하는 규칙. 같은 참조열로 <b>FIFO·LRU·OPT</b>를 돌려 폴트 수를 비교해보자.</p>
+  <div class="card">
+    <div style="font-size:12px;color:var(--dim);text-align:center;margin-bottom:8px">페이지 참조열</div>
+    <div class="refstr" id="refStr"></div>
+    <div class="algo-pick" id="algoPick">
+      <button data-a="FIFO" class="on">FIFO</button>
+      <button data-a="LRU">LRU</button>
+      <button data-a="OPT">OPT (이론상 최적)</button>
+    </div>
+    <div class="frames" id="frames"></div>
+    <div class="simstat">
+      <div class="s fault"><div class="v" id="simFault">0</div><div class="k">페이지 폴트</div></div>
+      <div class="s hit"><div class="v" id="simHit">0</div><div class="k">Hit</div></div>
+      <div class="s"><div class="v" id="simStep">0/0</div><div class="k">진행</div></div>
+    </div>
+    <div class="simlog" id="simLog">알고리즘을 고르고 ▶ 재생을 누르세요.</div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn amber" id="playBtn">▶ 재생</button>
+      <button class="btn ghost" id="stepBtn">⏭ 한 칸씩</button>
+      <button class="btn ghost" id="simReset">↺ 초기화</button>
+      <button class="btn grn" id="cmpBtn">📊 3개 알고리즘 비교</button>
+    </div>
+    <div class="cmpbars" id="cmpBars" style="display:none">
+      <div class="row fifo"><div class="nm">FIFO</div><div class="track"><i></i></div></div>
+      <div class="row lru"><div class="nm">LRU</div><div class="track"><i></i></div></div>
+      <div class="row opt"><div class="nm">OPT</div><div class="track"><i></i></div></div>
+      <div class="hint" id="cmpHint"></div>
+    </div>
+  </div>
+  <p class="hint">FIFO는 단순하지만 Belady 이상현상이 있고, LRU는 "가장 오래 안 쓴 것"을 내려 잘 맞지만 구현이 비싸 실제 OS는 Clock 같은 근사를 쓴다. OPT는 미래를 알아야 해서 불가능 — 비교 기준선일 뿐.</p>
+</div></section>
+
+<!-- 4. 스래싱 -->
+<section id="thrash"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 슬라이더 실험</div>
+  <h2 class="sec"><span class="n">4</span>스래싱 — 워킹셋이 RAM을 넘으면</h2>
+  <p class="lead"><b>워킹셋</b>(현재 활발히 쓰는 페이지 집합)이 물리 RAM보다 커지면, 페이지를 내리자마자 또 필요해서 디스크만 두드린다. 슬라이더로 메모리 압력을 올려보자.</p>
+  <div class="card thrash">
+    <div class="slabel"><span>메모리 압력 (실행 중인 작업량)</span><span id="presLab">낮음</span></div>
+    <input type="range" id="pressure" min="20" max="160" value="50">
+    <div class="rambar">
+      <div class="ws" id="wsBar"></div>
+      <div class="ramline" style="left:62.5%"><b>물리 RAM 한계</b></div>
+    </div>
+    <div class="verdict" id="thrashVerdict"></div>
+    <div class="tput" id="thrashTput"></div>
+  </div>
+  <p class="hint">CPU는 노는데 디스크만 100% — 시스템 전체가 먹통이 되는 그 느낌. 콘솔(PS5·Xbox)은 스왑이 거의 없어 한계를 넘으면 스왑 대신 <b style="color:var(--red)">OOM 크래시</b>. 그래서 메모리 예산이 PC보다 빡세다.</p>
+</div></section>
+
+<!-- 5. 게임 관점 -->
+<section id="game"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 실무</div>
+  <h2 class="sec"><span class="n">5</span>게임 개발자는 hitch를 어떻게 잡나</h2>
+  <div class="gcards">
+    <div class="gcard"><div class="ic">🔥</div><h4>Pre-touch 워밍업</h4><p>로딩 화면에서 필요한 페이지를 미리 한 번 건드려 RAM에 올려둔다. 게임플레이 중 Major Fault 방지.</p></div>
+    <div class="gcard"><div class="ic">🧵</div><h4>비동기 스트리밍</h4><p>디스크 대기를 워커 스레드로 넘겨 Game Thread는 안 멈춘다. (15강 비동기 I/O)</p></div>
+    <div class="gcard"><div class="ic">💰</div><h4>메모리 예산</h4><p>플랫폼 한도를 넘으면 스왑·스래싱. 콘솔은 OOM 크래시. budget을 엄격히 관리.</p></div>
+    <div class="gcard"><div class="ic">🎯</div><h4>워킹셋 유지</h4><p>안 쓰는 에셋은 언로드, 자주 쓰는 것만 RAM에. LOD·스트리밍 시스템의 목적.</p></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--orange)">메모리 상태 확인</div>
+    <pre><span class="t">FPlatformMemoryStats</span> Stats = <span class="t">FPlatformMemory</span>::GetStats();
+<span class="k">UE_LOG</span>(LogTemp, Log, <span class="s">TEXT("사용 중: %llu MB / 가용: %llu MB")</span>,
+       Stats.UsedPhysical / (<span class="s">1024</span>*<span class="s">1024</span>),
+       Stats.AvailablePhysical / (<span class="s">1024</span>*<span class="s">1024</span>));</pre>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 7 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="13강_캐시와_메모리계층.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">13강 — 캐시와 메모리 계층 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 12강</div>
+</div></footer>
+
+<script>
+/* 1. 도입 */
+(function(){
+  var enter=document.getElementById('enterZone'),open=document.getElementById('openProf');
+  var fn=document.getElementById('frameNum'),out=document.getElementById('profOut');
+  enter.addEventListener('click',function(){
+    fn.classList.remove('bad');fn.textContent='16ms';
+    var v=16,t=setInterval(function(){v+=Math.round(40+Math.random()*30);
+      if(v>=500){v=500;clearInterval(t);fn.classList.add('bad');open.disabled=false;}
+      fn.textContent=v+'ms';},45);
+  });
+  open.addEventListener('click',function(){out.classList.toggle('open');});
+})();
+
+/* 2. Minor vs Major */
+(function(){
+  var pMinor=document.getElementById('pMinor'),pMajor=document.getElementById('pMajor');
+  var tMinor=document.getElementById('tMinor'),tMajor=document.getElementById('tMajor');
+  document.getElementById('runMinor').addEventListener('click',function(){
+    pMinor.style.transition='width .25s';pMinor.style.width='0';tMinor.textContent='처리 중…';
+    setTimeout(function(){pMinor.style.width='12%';tMinor.textContent='≈ 2 μs ✓';},30);
+  });
+  document.getElementById('runMajor').addEventListener('click',function(){
+    pMajor.style.transition='width 1.4s linear';pMajor.style.width='0';tMajor.textContent='디스크 대기…';
+    setTimeout(function(){pMajor.style.width='100%';},30);
+    setTimeout(function(){tMajor.textContent='≈ 8 ms 🐢';},1450);
+  });
+})();
+
+/* 3. 페이지 교체 시뮬 */
+var REF=[7,0,1,2,0,3,0,4,2,3,0,3,2], CAP=3;
+function simulate(algo){
+  // returns array of step objects {page,hit,frames:[...],evict:idx|-1,inIdx}
+  var frames=[], steps=[], meta={}; // meta: per algo bookkeeping
+  var fifoQ=[]; var lastUse={};
+  for(var i=0;i<REF.length;i++){
+    var p=REF[i], hit=frames.indexOf(p)!==-1, evict=-1, inIdx=-1;
+    if(hit){
+      lastUse[p]=i;
+    }else{
+      if(frames.length<CAP){
+        inIdx=frames.length; frames=frames.concat([p]); fifoQ.push(p);
+      }else{
+        var victim;
+        if(algo==='FIFO'){ victim=fifoQ.shift(); fifoQ.push(p); }
+        else if(algo==='LRU'){
+          // 가장 오래 전에 쓴 페이지
+          var oldest=Infinity,vp=frames[0];
+          frames.forEach(function(f){var u=(lastUse[f]===undefined?-1:lastUse[f]);if(u<oldest){oldest=u;vp=f;}});
+          victim=vp;
+        } else { // OPT: 앞으로 가장 늦게(또는 안) 쓰이는 페이지
+          var farthest=-1,vp2=frames[0];
+          frames.forEach(function(f){
+            var nxt=REF.indexOf(f,i+1); if(nxt===-1)nxt=Infinity;
+            if(nxt>farthest){farthest=nxt;vp2=f;}
+          });
+          victim=vp2;
+        }
+        evict=frames.indexOf(victim); inIdx=evict;
+        frames=frames.slice(); frames[evict]=p;
+        if(algo==='FIFO'){/* fifoQ already pushed */}
+      }
+      lastUse[p]=i;
+    }
+    steps.push({page:p,hit:hit,frames:frames.slice(),evict:evict,inIdx:hit?-1:inIdx,victim:evict>=0?REF:null});
+  }
+  return steps;
+}
+(function(){
+  var refEl=document.getElementById('refStr'),framesEl=document.getElementById('frames');
+  var fFault=document.getElementById('simFault'),fHit=document.getElementById('simHit'),fStep=document.getElementById('simStep');
+  var logEl=document.getElementById('simLog');
+  var algo='FIFO', steps=simulate(algo), pos=-1, playing=false, timer=null;
+
+  REF.forEach(function(p,i){var d=document.createElement('div');d.className='r';d.dataset.i=i;d.textContent=p;refEl.appendChild(d);});
+  function drawFrames(arr,inIdx,evicted){
+    framesEl.innerHTML='';
+    for(var i=0;i<CAP;i++){
+      var d=document.createElement('div');d.className='fslot';
+      if(arr&&arr[i]!==undefined){d.classList.add('full');d.textContent=arr[i];}
+      else d.textContent='';
+      if(i===inIdx){d.classList.add('in');}
+      framesEl.appendChild(d);
+    }
+  }
+  function reset(){
+    pos=-1;steps=simulate(algo);drawFrames([],-1);
+    fFault.textContent='0';fHit.textContent='0';fStep.textContent='0/'+REF.length;
+    logEl.textContent='▶ 재생을 누르세요.';
+    [].forEach.call(refEl.children,function(c){c.classList.remove('cur','past');});
+    document.getElementById('cmpBars').style.display='none';
+  }
+  function applyTo(n){
+    // recompute counts up to n
+    var f=0,h=0;
+    for(var i=0;i<=n;i++){steps[i].hit?h++:f++;}
+    fFault.textContent=f;fHit.textContent=h;fStep.textContent=(n+1)+'/'+REF.length;
+    var st=steps[n];
+    drawFrames(st.frames,st.inIdx,st.evict);
+    [].forEach.call(refEl.children,function(c,i){c.classList.toggle('cur',i===n);c.classList.toggle('past',i<n);});
+    if(st.hit){logEl.innerHTML='page <b>'+st.page+'</b> → <b style="color:var(--grn)">HIT</b> ✓ (이미 프레임에 있음)';}
+    else if(st.evict>=0){
+      var victim=steps[n-1]?steps[n-1].frames[st.evict]:'?';
+      logEl.innerHTML='page <b>'+st.page+'</b> → <b style="color:var(--red)">FAULT</b> ✗ — 프레임이 꽉 차 ['+algo+']로 한 칸을 비우고 적재';
+    }
+    else{logEl.innerHTML='page <b>'+st.page+'</b> → <b style="color:var(--red)">FAULT</b> ✗ — 빈 프레임에 적재';}
+  }
+  function step(){if(pos<REF.length-1){pos++;applyTo(pos);return true;}return false;}
+  function play(){
+    if(playing)return; if(pos>=REF.length-1)reset();
+    playing=true;
+    timer=setInterval(function(){if(!step()){clearInterval(timer);playing=false;
+      var f=parseInt(fFault.textContent,10);
+      logEl.innerHTML='완료 — <b>'+algo+'</b> 총 페이지 폴트 <b style="color:var(--red)">'+f+'</b>회';}},700);
+  }
+  document.getElementById('playBtn').addEventListener('click',play);
+  document.getElementById('stepBtn').addEventListener('click',function(){if(playing){clearInterval(timer);playing=false;}step();});
+  document.getElementById('simReset').addEventListener('click',function(){if(playing){clearInterval(timer);playing=false;}reset();});
+  document.querySelectorAll('#algoPick button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#algoPick button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');algo=b.dataset.a;if(playing){clearInterval(timer);playing=false;}reset();
+    });
+  });
+  // 3개 비교
+  document.getElementById('cmpBtn').addEventListener('click',function(){
+    if(playing){clearInterval(timer);playing=false;}
+    var box=document.getElementById('cmpBars');box.style.display='block';
+    var res={};['FIFO','LRU','OPT'].forEach(function(a){
+      var s=simulate(a),f=s.filter(function(x){return !x.hit;}).length;res[a]=f;
+    });
+    var max=Math.max(res.FIFO,res.LRU,res.OPT);
+    function setBar(cls,val){var i=box.querySelector('.'+cls+' i');i.style.width=(val/max*100)+'%';i.textContent=val+'회';}
+    setBar('fifo',res.FIFO);setBar('lru',res.LRU);setBar('opt',res.OPT);
+    document.getElementById('cmpHint').innerHTML='같은 참조열·같은 3프레임인데 폴트 수가 다르다. <b style="color:var(--grn)">OPT</b>가 이론상 최소(미래를 안다고 가정), 실전에선 <b style="color:var(--amber)">LRU</b>에 가깝게 가는 게 목표.';
+  });
+  reset();
+})();
+
+/* 4. 스래싱 */
+(function(){
+  var slider=document.getElementById('pressure'),lab=document.getElementById('presLab');
+  var ws=document.getElementById('wsBar'),verdict=document.getElementById('thrashVerdict'),tput=document.getElementById('thrashTput');
+  var RAM=62.5; // % 위치 (물리 RAM 한계선)
+  function update(){
+    var v=+slider.value; // 20~160
+    var pct=Math.min(v,100); // 막대 길이 % (100% = 컨테이너 가득은 160일때)
+    var widthPct=v/160*100;
+    ws.style.width=widthPct+'%';
+    var over=widthPct>RAM;
+    ws.style.background=over?'linear-gradient(90deg,var(--orange),var(--red))':'linear-gradient(90deg,var(--grn),var(--cyan))';
+    ws.textContent='워킹셋';
+    if(widthPct<RAM*0.7){lab.textContent='낮음';verdict.innerHTML='<span style="color:var(--grn)">쾌적 ✓</span> 워킹셋이 RAM 안에 들어옴';tput.textContent='Major Fault 거의 없음 · 처리량 정상';}
+    else if(widthPct<=RAM){lab.textContent='보통';verdict.innerHTML='<span style="color:var(--amber)">주의</span> RAM 한계에 근접';tput.textContent='가끔 스왑 발생 · 간헐적 hitch';}
+    else if(widthPct<RAM*1.25){lab.textContent='높음';verdict.innerHTML='<span style="color:var(--orange)">스왑 시작</span> 워킹셋 > RAM';tput.textContent='페이지 in/out 반복 · 프레임 드랍 증가';}
+    else{lab.textContent='과부하';verdict.innerHTML='<span style="color:var(--red)">⚠ 스래싱!</span> 디스크만 100%, CPU는 논다';tput.textContent='처리량 폭락 · 게임이 슬라이드쇼 · 콘솔이면 OOM 크래시';}
+  }
+  slider.addEventListener('input',update);update();
+})();
+
+/* 6. 오해 */
+(function(){
+  var data=[
+    {q:'"페이지 폴트 = 에러/버그"',a:'아니다. 페이지 폴트는 가상 메모리의 <b class="truth">정상 동작</b>이다. demand paging, 코드 첫 실행 등에서 늘 일어난다. 다만 Major Fault가 너무 많으면 성능 문제일 뿐.'},
+    {q:'"RAM이 남으면 스왑 안 한다"',a:'OS는 RAM이 좀 남아도 <b class="truth">미래를 위해</b> 안 쓰는 페이지를 미리 내려두기도 한다(proactive paging). "여유 있음"과 "스왑 없음"이 항상 일치하진 않는다.'},
+    {q:'"SSD니까 스왑해도 안 느려"',a:'SSD가 HDD보다 빠른 건 맞지만 RAM에 비하면 <b class="truth">수백~수천 배 느리다</b>. SSD 스왑도 Major Fault라 hitch를 만든다. RAM ≫ SSD ≫ HDD 순서는 안 바뀐다.'},
+    {q:'"메모리 많이 할당하는 게 폴트 원인"',a:'할당보다 <b class="truth">접근 패턴</b>이 문제다. 1GB라도 순차 접근하면 폴트가 예측 가능하게 흩어지고, 작은 메모리라도 랜덤하게 튀면 폴트가 몰린다. (13강 캐시와 같은 맥락)'},
+    {q:'"콘솔도 PC처럼 스왑한다"',a:'PS5·Xbox는 스왑을 거의 안 쓴다. 한계를 넘으면 스왑 대신 <b class="truth">OOM 크래시</b>. 그래서 콘솔 타겟은 메모리 예산이 PC보다 빡세다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';
+    box.appendChild(det);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'페이지 폴트가 뭔가요?',a:'접근한 가상 페이지가 물리 메모리에 없을 때 MMU가 발생시키는 예외. OS가 페이지를 프레임에 올리고 페이지 테이블을 갱신한 뒤 중단된 명령을 재실행한다. <b>에러가 아니라 정상 동작</b>.'},
+    {q:'Minor와 Major Fault의 차이는?',a:'Minor는 데이터가 이미 RAM에 있어 페이지 테이블만 갱신, 수 μs. Major는 디스크에서 읽어와야 해서 수 ms. <b>게임 hitch의 주범은 Major</b>.'},
+    {q:'스왑(swapping)이 뭔가요?',a:'물리 RAM이 부족할 때 안 쓰는 페이지를 디스크(페이지 파일/스왑 영역)로 내려 RAM을 확보하는 기법. 내려간 페이지를 다시 쓰면 Major Fault로 도로 읽어온다.'},
+    {q:'스래싱이 뭔가요?',a:'<b>워킹셋이 RAM보다 커서</b> 페이지를 내리자마자 다시 필요해 올리고 내리고를 반복, 디스크 I/O만 하고 실제 작업은 거의 못 하는 상태. CPU는 노는데 시스템이 먹통.'},
+    {q:'페이지 교체 알고리즘 종류는?',a:'FIFO(단순, Belady 이상현상), LRU(가장 오래 안 쓴 것, 효과적이나 비쌈), Clock(LRU 근사, 실제 OS), OPT(미래 기준 최적이나 불가능).'},
+    {q:'메모리 충분한데 끊기면 어디를 의심?',a:'<b>Major Fault</b>. CPU·GPU 한가한데 프레임이 길면 디스크 I/O 대기. 동기 에셋 스트리밍·스왑·메모리맵 첫 접근 등. 비동기 스트리밍·워밍업·예산 관리로 해결.'},
+    {q:'워킹셋이 뭔가요?',a:'프로세스가 현재 활발히 쓰는 페이지 집합. RAM에 다 들어가면 쾌적, RAM보다 크면 스래싱. 게임 최적화는 워킹셋을 RAM 안에 유지하는 게 목표.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['페이지 폴트가 에러가 아니라 정상 메커니즘이라는 걸 안다','Minor/Major Fault의 차이와 비용을 설명할 수 있다','스왑(page out/in)의 흐름을 안다','스래싱이 왜 생기고 어떤 증상인지 안다','FIFO·LRU·Clock·OPT를 한 문장씩 설명할 수 있다','"메모리 충분한데 끊김"의 원인으로 major fault를 떠올린다','워킹셋 개념과 게임 메모리 최적화의 연결을 안다'];
+  var KEY='os12-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var st=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?st/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

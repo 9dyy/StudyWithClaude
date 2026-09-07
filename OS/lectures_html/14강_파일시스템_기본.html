@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14강 · 파일 시스템 기본 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--grn),var(--cyan))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--grn)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#04221a;background:var(--grn);border-color:var(--grn)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(52,211,153,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--grn);background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--grn),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--grn);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--grn);font-weight:700}
+code.inl{font-family:ui-monospace,monospace;color:var(--cyan);background:var(--bg2);padding:1px 6px;border-radius:5px;font-size:.9em}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.cyan{background:var(--cyan);color:#04243a}.btn.cyan:hover{background:#67e8f9}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.amber{background:var(--amber);color:#2a1c00}.btn.amber:hover{background:#fcd34d}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 파일 구조 다이어그램 */
+.filebox{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.fb{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:18px}
+.fb h4{font-size:14px;color:var(--grn)}
+.fb table{width:100%;margin-top:10px;font-size:13px;border-collapse:collapse}
+.fb table td{padding:5px 0;color:var(--dim);border-bottom:1px dashed var(--line)}
+.fb table td:first-child{color:var(--faint);width:36%}
+.fb table tr:last-child td{border-bottom:none}
+.fb .hi{color:var(--cyan);font-family:ui-monospace,monospace;font-weight:700}
+
+/* 디렉토리 매핑 표 */
+.diragram{margin-top:6px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:center}
+.dirtable{background:var(--bg2);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:230px}
+.dirtable .th{display:flex;background:var(--card2);font-size:11.5px;color:var(--faint);font-weight:700;padding:8px 12px}
+.dirtable .th span:first-child{flex:1}
+.dirtable .row{display:flex;padding:9px 12px;font-family:ui-monospace,monospace;font-size:13px;border-top:1px solid var(--line);transition:.2s}
+.dirtable .row span:first-child{flex:1;color:var(--txt)}
+.dirtable .row span:last-child{color:var(--grn);font-weight:700}
+.dirtable .row.hi{background:rgba(52,211,153,.12)}
+.diragram .arrow{font-size:22px;color:var(--faint)}
+
+/* 경로 추적기 (킬러) */
+.pathrow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.pathrow input{flex:1;min-width:220px;font-family:ui-monospace,monospace;font-size:14px;background:var(--bg2);border:1px solid var(--line);color:var(--txt);padding:11px 14px;border-radius:11px;outline:none}
+.pathrow input:focus{border-color:var(--grn)}
+.presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.preset{font-family:ui-monospace,monospace;font-size:12px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);padding:6px 11px;border-radius:8px;cursor:pointer;transition:.15s}
+.preset:hover{border-color:var(--grn);color:var(--txt)}
+.cachetoggle{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;padding:12px 14px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
+.cachetoggle .lab{font-size:13px;color:var(--dim);margin-right:4px}
+.ctbtn{font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 13px;border-radius:9px;background:var(--card2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.ctbtn:hover{border-color:var(--grn);color:var(--txt)}
+.ctbtn.on.hit{background:var(--grn);color:#04221a;border-color:var(--grn)}
+.ctbtn.on.miss{background:var(--red);color:#2a0505;border-color:var(--red)}
+
+.disklayer{display:flex;align-items:center;justify-content:space-between;margin-top:22px;gap:14px}
+.disklayer .lyr{flex:1;text-align:center;font-size:12px;color:var(--faint);padding:10px;border-radius:10px;border:1px dashed var(--line);background:var(--bg2)}
+.disklayer .lyr.active{border-style:solid;border-color:var(--red);background:rgba(248,113,113,.12);color:var(--red);font-weight:700}
+.disklayer .lyr.cachehit{border-style:solid;border-color:var(--grn);background:rgba(52,211,153,.12);color:var(--grn);font-weight:700}
+.disklayer .conn{font-size:20px;color:var(--faint)}
+
+.stages{display:flex;align-items:stretch;gap:6px;margin-top:22px;flex-wrap:wrap;justify-content:center}
+.stage{width:120px;background:var(--bg2);border:1.5px solid var(--line);border-radius:12px;padding:12px 10px;text-align:center;transition:.25s}
+.stage .ic{font-size:22px}
+.stage .lb{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.4;min-height:44px}
+.stage .st{font-size:10.5px;font-weight:700;color:var(--faint);margin-top:6px}
+.stage.active{border-color:var(--amber);background:rgba(251,191,36,.12);transform:scale(1.05)}
+.stage.active .st{color:var(--amber)}
+.stage.done-hit{border-color:var(--grn);background:rgba(52,211,153,.1)}
+.stage.done-hit .st{color:var(--grn)}
+.stage.done-miss{border-color:var(--red);background:rgba(248,113,113,.1)}
+.stage.done-miss .st{color:var(--red)}
+.sarrow{align-self:center;font-size:18px;color:var(--faint)}
+
+.tracelog{text-align:center;margin-top:18px;font-size:14.5px;min-height:24px;color:var(--dim)}
+.traceclock{text-align:center;margin-top:6px;font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--txt)}
+.cmpbars{margin-top:18px}
+.cmpbars .row{display:flex;align-items:center;gap:12px;margin-top:10px}
+.cmpbars .row .nm{width:70px;font-size:13px;font-weight:700;font-family:ui-monospace,monospace}
+.cmpbars .row .track{flex:1;height:26px;background:var(--bg2);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+.cmpbars .row .track i{display:block;height:100%;width:0;transition:width .6s;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-size:12px;font-weight:700}
+.cmpbars .hit i{background:linear-gradient(90deg,var(--grn),var(--cyan));color:#04221a}
+.cmpbars .miss i{background:linear-gradient(90deg,var(--orange),var(--red));color:#2a1200}
+
+/* fd 테이블 */
+.fdtable{width:100%;margin-top:14px;border-collapse:collapse;font-size:13.5px}
+.fdtable th{text-align:left;font-size:11.5px;color:var(--faint);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line)}
+.fdtable td{padding:9px 10px;border-bottom:1px solid var(--line);font-family:ui-monospace,monospace}
+.fdtable tr.res td:first-child{color:var(--amber);font-weight:700}
+.fdtable tr.usr td:first-child{color:var(--grn);font-weight:700}
+.fdtable td:nth-child(2){font-family:'Pretendard',system-ui,sans-serif;color:var(--dim)}
+
+/* 실무 카드 */
+.gcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:22px}
+.gcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;transition:.2s}
+.gcard:hover{border-color:var(--grn);transform:translateY(-3px)}
+.gcard .ic{font-size:24px}.gcard h4{margin-top:10px;font-size:15px}.gcard p{font-size:13px;color:var(--dim);margin-top:8px}
+
+/* 오해/면접/체크 (공통) */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:230px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--grn);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#0f2a22,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13.5px;color:var(--txt);line-height:1.65}.flip .back .a b{color:var(--grn)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--grn);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--grn)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){.filebox{grid-template-columns:1fr}header.hero{padding:96px 0 36px}.flip{height:260px}.stage{width:100px}.disklayer{flex-direction:column}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>14강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#structure">구조</a>
+    <a class="chip" href="#trace">열기추적</a>
+    <a class="chip" href="#fd">핸들</a>
+    <a class="chip" href="#cache">캐시</a>
+    <a class="chip" href="#practice">실무</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 5 · I/O와 파일 시스템</span>
+  <h1>파일 시스템 <span class="g">기본</span></h1>
+  <p class="sub">세이브 파일 한 줄 읽는 코드 뒤에서, <code class="inl">Open</code>은 정확히 뭘 하고 있을까? 파일 핸들, inode, 디렉토리 매핑을 직접 추적해본다.</p>
+  <div class="meta">
+    <div class="m">🗂️ 파일 = 메타데이터 + 데이터</div>
+    <div class="m">🧩 선수지식 <b>2강 · 3강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 의문</div>
+  <h2 class="sec"><span class="n">1</span>"파일을 연다"는 게 뭘까</h2>
+  <p class="lead">게임에서 세이브 파일을 읽는 코드는 이렇게 생겼다.</p>
+  <div class="card">
+    <pre><span class="t">FString</span> SaveData;
+<span class="t">FFileHelper</span>::LoadFileToString(SaveData, <span class="s">TEXT("Save01.sav")</span>);</pre>
+    <p style="margin-top:14px">이 한 줄은 내부적으로 세 단계로 펼쳐진다.</p>
+    <pre><span class="c">// 의사 코드로 펼치면</span>
+FileHandle = Open(<span class="s">"Save01.sav"</span>);   <span class="c">// 1. 파일 "열기"</span>
+Read(FileHandle, Buffer);          <span class="c">// 2. 내용 읽기</span>
+Close(FileHandle);                 <span class="c">// 3. 파일 "닫기"</span></pre>
+    <p style="text-align:center;margin-top:18px;font-size:16px">"읽기"는 알겠는데, <b class="tagline">"연다"와 "닫는다"는 정확히 뭘 하는 걸까?</b> 파일은 SSD에 그대로 있는데, 연다고 어디로 옮겨지는 것도 아닌데.</p>
+    <p class="hint" style="text-align:center">답을 알려면 파일 시스템이 파일을 어떻게 관리하는지 봐야 한다. ↓</p>
+  </div>
+</div></section>
+
+<!-- 2. 파일 구조 -->
+<section id="structure"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 구조</div>
+  <h2 class="sec"><span class="n">2</span>파일은 두 부분 + 이름표는 따로</h2>
+  <p class="lead">디스크에 있는 파일 하나는 사실 <b>메타데이터</b>와 <b>실제 데이터</b> 두 가지로 구성된다. 그리고 놀랍게도 <b class="tagline">파일 이름은 이 안에 없다.</b></p>
+  <div class="card">
+    <div class="filebox">
+      <div class="fb">
+        <h4>📋 메타데이터 (inode / MFT 레코드)</h4>
+        <table>
+          <tr><td>inode 번호</td><td class="hi">12345</td></tr>
+          <tr><td>크기</td><td>4096 bytes</td></tr>
+          <tr><td>수정 시각</td><td>2026-06-15</td></tr>
+          <tr><td>권한</td><td>읽기/쓰기</td></tr>
+          <tr><td>데이터 위치</td><td class="hi">[블록 17, 42, 9]</td></tr>
+        </table>
+      </div>
+      <div class="fb">
+        <h4>💾 실제 데이터 (디스크 블록)</h4>
+        <table>
+          <tr><td>블록 17</td><td>바이트 조각 A</td></tr>
+          <tr><td>블록 42</td><td>바이트 조각 B</td></tr>
+          <tr><td>블록 9</td><td>바이트 조각 C</td></tr>
+        </table>
+        <p class="hint" style="margin-top:12px">순서대로 붙어있지 않고 디스크 여기저기 흩어져 있을 수 있다.</p>
+      </div>
+    </div>
+    <p style="margin-top:18px">유닉스 계열(Linux, macOS)에서 메타데이터 덩어리를 <b>inode(아이노드)</b>라 부른다. 파일 하나당 inode 하나. <b>Windows NTFS</b>는 MFT(Master File Table)의 레코드가 같은 역할을 한다 — 이름은 다르지만 개념은 같다: "이름 빼고 파일에 관한 모든 정보 + 데이터 위치".</p>
+    <p class="hint">핵심: <b style="color:var(--txt)">파일 = inode(메타데이터) + 데이터 블록들.</b> 이름은 다른 곳이 관리한다.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--cyan)">그럼 이름은 어디에? — 디렉토리가 관리</div>
+    <p class="lead" style="margin-top:0">디렉토리(폴더)는 <b>"이름 → inode 번호"</b> 매핑표를 들고 있는 <b>특별한 파일</b>이다.</p>
+    <div class="diragram">
+      <div class="dirtable">
+        <div class="th"><span>이름</span><span>inode 번호</span></div>
+        <div class="row hi"><span>Save01.sav</span><span>12345</span></div>
+        <div class="row"><span>Save02.sav</span><span>12389</span></div>
+        <div class="row"><span>Config.ini</span><span>9001</span></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="fb" style="min-width:180px">
+        <h4>inode 12345</h4>
+        <p style="font-size:13px;color:var(--dim);margin-top:8px">실제 파일 본체. 이름은 없고 크기·권한·데이터 위치만.</p>
+      </div>
+    </div>
+    <p class="hint">이름과 inode가 분리돼 있으니 <b>여러 이름이 같은 inode를 가리킬 수 있다</b> — 이게 <b class="tagline">하드 링크</b>다. 심볼릭(소프트) 링크는 반대로 "다른 경로를 가리키는" 별도 파일(바로가기)이라 원본이 지워지면 깨진다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 킬러: 경로 추적기 -->
+<section id="trace"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 킬러 · 직접 추적</div>
+  <h2 class="sec"><span class="n">3</span>파일 열기 ~ 읽기 경로 추적기</h2>
+  <p class="lead">경로를 입력하면 <b>디렉토리 엔트리 → inode/MFT 레코드 → 데이터 블록</b> 순서로 실제 조회 과정을 단계별로 보여준다. <b class="tagline">페이지 캐시 HIT/MISS</b>를 바꿔가며 디스크까지 내려가는지, 시간이 얼마나 달라지는지 비교해보자.</p>
+  <div class="card">
+    <div class="pathrow">
+      <input type="text" id="pathInput" value="/SaveGames/Save01.sav" spellcheck="false">
+      <button class="btn cyan" id="pathGo">🔍 경로 분석</button>
+    </div>
+    <div class="presets">
+      <span class="preset" data-p="/SaveGames/Save01.sav">/SaveGames/Save01.sav</span>
+      <span class="preset" data-p="/Config.ini">/Config.ini</span>
+      <span class="preset" data-p="/Content/Maps/World/Zone3/Level.umap">/Content/Maps/World/Zone3/Level.umap</span>
+    </div>
+    <div class="cachetoggle">
+      <span class="lab">페이지·디렉토리 캐시 상태</span>
+      <button class="ctbtn on hit" data-c="hit" id="ctHit">✓ HIT — 이미 읽은 적 있음</button>
+      <button class="ctbtn miss" data-c="miss" id="ctMiss">✗ MISS — 처음 읽음</button>
+    </div>
+
+    <div class="disklayer">
+      <div class="lyr" id="lyrCache">커널 캐시 (dentry / inode / page cache)</div>
+      <div class="conn" id="lyrConn">⇅</div>
+      <div class="lyr" id="lyrDisk">디스크 (SSD/HDD)</div>
+    </div>
+
+    <div class="stages" id="stages"></div>
+    <div class="tracelog" id="traceLog">경로를 입력하고 ▶ 재생을 눌러보세요.</div>
+    <div class="traceclock" id="traceClock"></div>
+
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn amber" id="traceStep">⏭ 한 단계씩</button>
+      <button class="btn grn" id="tracePlay">▶ 전체 재생</button>
+      <button class="btn ghost" id="traceReset">↺ 초기화</button>
+      <button class="btn cyan" id="traceCompare">📊 HIT vs MISS 비교</button>
+    </div>
+    <div class="cmpbars" id="traceCmp" style="display:none">
+      <div class="row hit"><div class="nm">HIT</div><div class="track"><i></i></div></div>
+      <div class="row miss"><div class="nm">MISS</div><div class="track"><i></i></div></div>
+      <div class="hint" id="cmpHint"></div>
+    </div>
+    <p class="hint">경로가 깊을수록 디렉토리 탐색 단계가 늘어난다. OS는 이 경로 해석 결과를 <b>dentry 캐시</b>에, 파일 내용은 <b>페이지 캐시</b>에 담아 재접근을 빠르게 만든다.</p>
+  </div>
+</div></section>
+
+<!-- 4. 파일 디스크립터 -->
+<section id="fd"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 진짜 의미</div>
+  <h2 class="sec"><span class="n">4</span>"연다" = 핸들을 받는 것</h2>
+  <p class="lead"><code class="inl">Open("Save01.sav")</code>이 하는 일을 순서대로 풀면 이렇다.</p>
+  <div class="card">
+    <pre><span class="c">1. 경로 해석 → inode 12345 찾음 (위의 디렉토리 탐색)</span>
+<span class="c">2. 권한 검사 (이 프로세스가 읽어도 되나?)</span>
+<span class="c">3. inode를 메모리에 올림</span>
+<span class="c">4. 커널에 "열린 파일" 항목을 만듦 (현재 읽기 위치 = 0 등)</span>
+<span class="c">5. 이 프로세스의 파일 디스크립터 테이블에 등록</span>
+<span class="c">6. 그 번호(파일 디스크립터 / 핸들)를 반환</span></pre>
+    <p style="text-align:center;margin-top:16px;font-size:16px">핵심: <b class="tagline">"연다"는 데이터를 옮기는 게 아니라, 커널에 "이 파일을 쓸 준비" 상태를 만들고 그 핸들을 받는 것.</b> "닫는다"는 그 항목을 정리하는 것.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--cyan)">열린 파일을 가리키는 번호표</div>
+    <p class="lead" style="margin-top:0">유닉스는 <b>파일 디스크립터(fd)</b> — 작은 정수, Windows는 <b>파일 핸들(HANDLE)</b> — 불투명한 값을 쓴다.</p>
+    <table class="fdtable">
+      <tr><th>fd</th><th>가리키는 것</th></tr>
+      <tr class="res"><td>0</td><td>표준 입력 (stdin)</td></tr>
+      <tr class="res"><td>1</td><td>표준 출력 (stdout)</td></tr>
+      <tr class="res"><td>2</td><td>표준 에러 (stderr)</td></tr>
+      <tr class="usr"><td>3</td><td>Save01.sav (읽기 위치 0) ← Open이 반환한 것</td></tr>
+      <tr class="usr"><td>4</td><td>Config.ini</td></tr>
+    </table>
+    <p class="hint">fd 0, 1, 2가 입출력에 예약돼 있다. <code class="inl">printf</code>가 stdout(fd 1)으로 나가는 게 이거다.</p>
+    <div class="eyebrow" style="color:var(--cyan);margin-top:20px">왜 직접 inode를 안 주고 핸들을 줄까</div>
+    <p>보안 — 프로세스가 디스크 구조를 직접 못 만지게, 커널이 핸들을 통해서만 접근을 허용한다. 상태 관리 — "지금 어디까지 읽었나(오프셋)"를 커널이 핸들마다 관리한다. 추상화 — 파일, 소켓, 파이프, 디바이스가 다 같은 fd로 추상화된다("Everything is a file").</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--cyan)">언리얼 / Win32와 연결</div>
+    <pre><span class="c">// 언리얼 추상화</span>
+<span class="t">IFileHandle</span>* Handle = <span class="t">IPlatformFile</span>::GetPlatformPhysical().OpenRead(*FilePath);
+<span class="c">//          ↑ 내부적으로 Windows의 CreateFile() 호출</span>
+
+<span class="c">// Win32 직접 (언리얼이 내부에서 이렇게 부름)</span>
+<span class="t">HANDLE</span> hFile = <span class="k">CreateFile</span>(
+    L<span class="s">"Save01.sav"</span>,
+    GENERIC_READ,           <span class="c">// 읽기 권한</span>
+    FILE_SHARE_READ,        <span class="c">// 다른 프로세스도 읽기는 허용</span>
+    nullptr,
+    OPEN_EXISTING,          <span class="c">// 기존 파일 열기</span>
+    FILE_ATTRIBUTE_NORMAL,
+    nullptr);
+<span class="c">// hFile 이 파일 핸들. 이걸로 ReadFile/WriteFile/CloseHandle.</span></pre>
+    <p class="hint"><code class="inl">CreateFile</code>이라는 이름이 헷갈리는데, 만들기 전용이 아니라 <b>"열기"도 한다.</b> 위처럼 <code class="inl">OPEN_EXISTING</code>이면 기존 파일 열기 — Windows API의 대표적인 작명 함정이다. 언리얼의 <code class="inl">FFileHelper</code>, <code class="inl">IFileManager</code>, <code class="inl">IPlatformFile</code>이 결국 이런 OS 콜로 내려간다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 버퍼링/페이지 캐시 -->
+<section id="cache"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 성능</div>
+  <h2 class="sec"><span class="n">5</span>매번 디스크 가면 느리니까 — 버퍼링</h2>
+  <p class="lead">2강에서 "시스템 콜은 비싸다"고 했다. 파일 I/O는 시스템 콜 + 디스크 접근이라 더 비싸다. 그래서 여러 층의 버퍼/캐시가 낀다.</p>
+  <div class="card">
+    <pre><span class="c">우리 코드
+    ↓ fread / 라이브러리 버퍼 (유저 공간)
+C 런타임 버퍼
+    ↓ read() 시스템 콜
+커널 페이지 캐시 (RAM)  ← OS가 디스크 내용을 RAM에 캐싱
+    ↓ (캐시 미스일 때만)
+디스크 (SSD/HDD)</span></pre>
+    <div class="eyebrow" style="color:var(--cyan);margin-top:20px">페이지 캐시 — 한 번 읽은 파일은 RAM에 남는다</div>
+    <p>OS는 디스크에서 읽은 파일 내용을 <b>RAM(페이지 캐시)</b>에 보관한다. 같은 파일을 또 읽으면 디스크에 안 가고 RAM에서 바로 준다.</p>
+    <pre><span class="c">// 처음 읽기 — 디스크 접근. 느림 (수 ms)</span>
+<span class="t">FFileHelper</span>::LoadFileToString(S, <span class="s">TEXT("Big.txt")</span>);
+
+<span class="c">// 두 번째 읽기 — 페이지 캐시에서. 빠름 (수 μs)</span>
+<span class="t">FFileHelper</span>::LoadFileToString(S, <span class="s">TEXT("Big.txt")</span>);</pre>
+    <p class="hint">게임 처음 켤 때 로딩이 느리다가 두 번째부터 빨라지는 게 이 캐시 덕분(과 다른 요인들). 12강의 페이지 캐시/메모리 맵과 같은 메커니즘이다.</p>
+  </div>
+</div></section>
+
+<!-- 6. 게임 개발자 입장 -->
+<section id="practice"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 실무</div>
+  <h2 class="sec"><span class="n">6</span>게임 개발자 입장 — 알아둘 것</h2>
+  <div class="gcards">
+    <div class="gcard"><div class="ic">🔓</div><h4>핸들은 자원이다</h4><p>안 닫으면 핸들 누수. 게임이 오래 돌면 "Too many open files"로 죽을 수 있다.</p></div>
+    <div class="gcard"><div class="ic">📦</div><h4>작은 파일 많이 &lt; 큰 파일 적게</h4><p>Open/Close는 시스템 콜 + 디렉토리 탐색이라 비싸다. 언리얼이 에셋을 <code>.pak</code>으로 묶는 이유.</p></div>
+    <div class="gcard"><div class="ic">🧭</div><h4>경로 탐색도 비용</h4><p>경로가 깊으면 디렉토리를 단계마다 읽어야 한다. 핫 패스에서 매번 풀 경로로 여는 건 피하라.</p></div>
+    <div class="gcard"><div class="ic">🗄️</div><h4>RAII로 자동 정리</h4><p>스코프를 벗어나면 자동으로 닫히게 만들면 누수 걱정이 없다. 8강 FScopeLock과 같은 원리.</p></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--cyan)">핸들 누수 방지 — RAII</div>
+    <pre><span class="c">// ❌ 핸들 누수 가능</span>
+<span class="t">IFileHandle</span>* H = PlatformFile.OpenRead(*Path);
+<span class="k">if</span> (Failed) <span class="k">return</span>;   <span class="c">// H 안 닫고 빠져나감</span>
+
+<span class="c">// ✅ RAII로 자동 정리 (8강 FScopeLock과 같은 원리)</span>
+{
+    <span class="t">TUniquePtr</span>&lt;<span class="t">IFileHandle</span>&gt; H(PlatformFile.OpenRead(*Path));
+    <span class="c">// ... 사용</span>
+}   <span class="c">// 스코프 끝 → 자동 닫힘</span></pre>
+  </div>
+</div></section>
+
+<!-- 7. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 함정</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 8. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 9. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 7 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="15강_블로킹_논블로킹_비동기IO.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">15강 — 블로킹 vs 논블로킹 I/O, 비동기 I/O →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 14강</div>
+</div></footer>
+
+<script>
+/* 3. 킬러 — 파일 열기~읽기 경로 추적기 */
+(function(){
+  var pathInput=document.getElementById('pathInput');
+  var stagesEl=document.getElementById('stages');
+  var logEl=document.getElementById('traceLog');
+  var clockEl=document.getElementById('traceClock');
+  var lyrCache=document.getElementById('lyrCache'), lyrDisk=document.getElementById('lyrDisk'), lyrConn=document.getElementById('lyrConn');
+  var mode='hit'; // 'hit' | 'miss'
+  var COST={dir:{hit:0.01,miss:1.2},inode:{hit:0.01,miss:0.8},block:{hit:0.02,miss:0.65}};
+
+  function hashNum(str,mod,base){
+    var h=0; for(var i=0;i<str.length;i++){h=(h*31+str.charCodeAt(i))>>>0;}
+    return base+(h%mod);
+  }
+  function buildStages(path){
+    var segs=path.split('/').filter(function(s){return s.length>0;});
+    if(segs.length===0)segs=['(루트)'];
+    var dirs=segs.slice(0,-1), filename=segs[segs.length-1];
+    var stages=[], prevLabel='/';
+    dirs.forEach(function(d){
+      stages.push({type:'dir',icon:'📁',label:'디렉토리 "'+prevLabel+'"\n에서 "'+d+'" 검색',resultLabel:'inode #'+hashNum(d,9000,1000)});
+      prevLabel=d;
+    });
+    var fileInode=hashNum(filename,9000,10000);
+    stages.push({type:'dir',icon:'📁',label:'디렉토리 "'+prevLabel+'"\n에서 "'+filename+'" 검색',resultLabel:'inode #'+fileInode});
+    var b1=hashNum(filename+'a',90,1), b2=hashNum(filename+'b',90,1)+30, b3=hashNum(filename+'c',90,1)+60;
+    stages.push({type:'inode',icon:'🪪',label:'inode #'+fileInode+'\n(MFT 레코드) 조회',resultLabel:'블록 ['+b1+','+b2+','+b3+']'});
+    stages.push({type:'block',icon:'💾',label:'데이터 블록\n['+b1+','+b2+','+b3+'] 읽기',resultLabel:'내용 반환 완료'});
+    return stages;
+  }
+
+  var stages=[], pos=-1, playing=false, timer=null, totalMs=0;
+
+  function renderStagesSkeleton(){
+    stagesEl.innerHTML='';
+    stages.forEach(function(s,i){
+      if(i>0){var ar=document.createElement('div');ar.className='sarrow';ar.textContent='→';stagesEl.appendChild(ar);}
+      var d=document.createElement('div');d.className='stage';d.dataset.i=i;
+      d.innerHTML='<div class="ic">'+s.icon+'</div><div class="lb">'+s.label.replace(/\n/g,'<br>')+'</div><div class="st">대기</div>';
+      stagesEl.appendChild(d);
+    });
+  }
+  function stageEls(){return [].slice.call(stagesEl.querySelectorAll('.stage'));}
+
+  function updateLayers(active,isMiss){
+    lyrCache.classList.remove('cachehit','active');
+    lyrDisk.classList.remove('cachehit','active');
+    if(!active){lyrConn.textContent='⇅';return;}
+    if(isMiss){lyrDisk.classList.add('active');lyrConn.textContent='⬇ 디스크로 내려감';}
+    else{lyrCache.classList.add('cachehit');lyrConn.textContent='⬆ 캐시에서 바로 반환';}
+  }
+
+  function reset(){
+    stages=buildStages(pathInput.value.trim()||'/');
+    pos=-1; totalMs=0; playing=false; if(timer){clearInterval(timer);timer=null;}
+    renderStagesSkeleton();
+    logEl.textContent='▶ 재생 또는 ⏭ 한 단계씩을 눌러보세요.';
+    clockEl.textContent='';
+    updateLayers(false,false);
+    document.getElementById('traceCmp').style.display='none';
+  }
+
+  function costOf(stage){
+    var c=COST[stage.type][mode];
+    if(stage.type==='block')c*=3; // 블록 3개 가정
+    return c;
+  }
+
+  function step(){
+    if(pos>=stages.length-1)return false;
+    pos++;
+    var els=stageEls();
+    if(pos>0)els[pos-1].className='stage done-'+mode;
+    els[pos].className='stage active';
+    var s=stages[pos], isMiss=(mode==='miss');
+    updateLayers(true,isMiss);
+    var c=costOf(s);
+    totalMs+=c;
+    logEl.innerHTML=s.label.replace(/\n/g,' ')+' → <b>'+s.resultLabel+'</b> — '+
+      (isMiss?'<b style="color:var(--red)">캐시 MISS</b> (디스크까지 내려감)':'<b style="color:var(--grn)">캐시 HIT</b> (커널 캐시에서 바로)');
+    clockEl.textContent='누적 '+totalMs.toFixed(2)+' ms';
+    if(pos===stages.length-1){
+      els[pos].className='stage done-'+mode;
+      updateLayers(false,false);
+      logEl.innerHTML='완료 — 경로 해석 + 데이터 읽기까지 총 <b style="color:'+(isMiss?'var(--red)':'var(--grn)')+'">'+totalMs.toFixed(2)+' ms</b> ('+(isMiss?'디스크 접근 '+stages.length+'회':'전부 캐시')+')';
+    }
+    return true;
+  }
+  function play(){
+    if(playing)return;
+    if(pos>=stages.length-1)reset();
+    playing=true;
+    timer=setInterval(function(){
+      if(!step()){clearInterval(timer);playing=false;}
+    },700);
+  }
+  function setMode(m){
+    mode=m;
+    document.getElementById('ctHit').classList.toggle('on',m==='hit');
+    document.getElementById('ctMiss').classList.toggle('on',m==='miss');
+    reset();
+  }
+
+  document.getElementById('pathGo').addEventListener('click',reset);
+  pathInput.addEventListener('keydown',function(e){if(e.key==='Enter')reset();});
+  document.querySelectorAll('.preset').forEach(function(p){
+    p.addEventListener('click',function(){pathInput.value=p.dataset.p;reset();});
+  });
+  document.getElementById('ctHit').addEventListener('click',function(){setMode('hit');});
+  document.getElementById('ctMiss').addEventListener('click',function(){setMode('miss');});
+  document.getElementById('tracePlay').addEventListener('click',play);
+  document.getElementById('traceStep').addEventListener('click',function(){
+    if(playing){clearInterval(timer);playing=false;}
+    step();
+  });
+  document.getElementById('traceReset').addEventListener('click',reset);
+  document.getElementById('traceCompare').addEventListener('click',function(){
+    if(playing){clearInterval(timer);playing=false;}
+    var st=buildStages(pathInput.value.trim()||'/');
+    function totalFor(m){
+      var t=0;
+      st.forEach(function(s){var c=COST[s.type][m]; if(s.type==='block')c*=3; t+=c;});
+      return t;
+    }
+    var hitTotal=totalFor('hit'), missTotal=totalFor('miss');
+    var box=document.getElementById('traceCmp');box.style.display='block';
+    var max=missTotal;
+    var hi=box.querySelector('.hit i'), mi=box.querySelector('.miss i');
+    hi.style.width=Math.max(2,(hitTotal/max*100))+'%'; hi.textContent=hitTotal.toFixed(2)+' ms';
+    mi.style.width='100%'; mi.textContent=missTotal.toFixed(2)+' ms';
+    document.getElementById('cmpHint').innerHTML='같은 경로, 같은 단계 수인데 캐시 상태에 따라 약 <b style="color:var(--cyan)">'+(missTotal/hitTotal).toFixed(0)+'배</b> 차이. 게임 로딩이 두 번째부터 빨라지는 이유가 이것.';
+  });
+  reset();
+})();
+
+/* 7. 오해 */
+(function(){
+  var data=[
+    {q:'"파일을 열면 내용이 메모리에 다 올라온다"',a:'아니다. <code>Open</code>은 핸들만 만든다. 내용은 <code>Read</code>를 호출해야 그만큼만 올라온다. <b class="truth">4GB 파일을 열어도 메모리는 거의 안 늘어난다.</b>'},
+    {q:'"파일 이름은 파일 자체에 저장돼 있다"',a:'아니다. 이름은 <b class="truth">디렉토리</b>가 관리하는 "이름 → inode" 매핑에 있다. 파일 본체(inode)에는 이름이 없다. 그래서 같은 파일에 여러 이름(하드링크)이 가능하다.'},
+    {q:'"CreateFile은 파일을 만들기만 한다"',a:'Windows API의 <code>CreateFile</code>은 <b class="truth">열기도 한다.</b> 플래그(<code>OPEN_EXISTING</code>, <code>CREATE_ALWAYS</code> 등)로 동작이 결정된다. 이름이 오해를 부르는 대표 케이스.'},
+    {q:'"파일 닫는 건 안 해도 OS가 알아서 한다"',a:'프로세스가 종료되면 OS가 정리하는 건 맞다. 하지만 게임처럼 오래 도는 프로세스는 그 사이 핸들이 쌓여서 <b class="truth">누수</b>가 된다. 명시적으로 닫아야 한다 — Heap 메모리 누수와 같은 맥락.'},
+    {q:'"두 번 읽으면 두 번 다 디스크에 간다"',a:'OS의 <b class="truth">페이지 캐시</b> 덕분에 두 번째부터는 보통 RAM에서 준다. 그래서 두 번째 읽기가 훨씬 빠르다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 8. 면접 */
+(function(){
+  var qa=[
+    {q:'"파일을 연다"는 게 OS 입장에서 무슨 의미인가요?',a:'데이터를 옮기는 게 아니라, 경로를 해석해 파일의 메타데이터(inode)를 찾고 권한을 검사한 뒤, 커널에 \'열린 파일\' 항목을 만들고 그 핸들(파일 디스크립터)을 프로세스에 돌려주는 동작입니다. 이후 읽기/쓰기는 이 핸들을 통해 이뤄집니다.'},
+    {q:'inode가 뭔가요?',a:'유닉스 계열에서 파일의 메타데이터를 담는 구조입니다. 파일 크기, 권한, 타임스탬프, 그리고 실제 데이터가 디스크 어디에 있는지 블록 위치를 담습니다. <b>파일 이름은 inode에 없고 디렉토리가 따로 관리</b>합니다. Windows NTFS에서는 MFT 레코드가 비슷한 역할을 합니다.'},
+    {q:'파일 이름은 어디에 저장되나요?',a:'디렉토리에 저장됩니다. 디렉토리는 \'이름 → inode 번호\' 매핑을 담은 특별한 파일입니다. 파일 본체인 inode에는 이름이 없어서, 여러 이름이 같은 inode를 가리키는 <b>하드 링크</b>가 가능합니다.'},
+    {q:'파일 디스크립터(핸들)가 뭔가요?',a:'열린 파일을 가리키는 번호표입니다. 유닉스에선 작은 정수, Windows에선 HANDLE입니다. 0,1,2는 표준 입출력에 예약돼 있습니다. 프로세스가 디스크 구조를 직접 만지지 못하게 커널이 핸들을 통해서만 접근을 허용하고, 현재 읽기 위치 같은 상태도 <b>핸들 단위</b>로 관리합니다.'},
+    {q:'하드 링크와 심볼릭 링크의 차이는?',a:'하드 링크는 같은 inode를 가리키는 또 다른 이름이라 원본을 지워도 다른 이름으로 접근 가능합니다. 심볼릭 링크는 다른 경로를 가리키는 별도 파일(바로가기)이라 <b>원본이 사라지면 깨집니다.</b>'},
+    {q:'같은 파일을 두 번 읽으면 왜 두 번째가 빠른가요?',a:'OS의 <b>페이지 캐시</b> 때문입니다. 디스크에서 읽은 내용을 RAM에 캐싱해두고, 같은 파일을 다시 읽으면 디스크에 가지 않고 RAM에서 바로 돌려줍니다. 그래서 두 번째 접근이 수 밀리초에서 수 마이크로초 수준으로 빨라집니다.'},
+    {q:'게임에서 작은 에셋 파일을 .pak으로 묶는 이유는?',a:'파일을 여닫는 Open/Close는 시스템 콜과 디렉토리 탐색을 동반해서 비쌉니다. 작은 파일 수만 개를 각각 여는 것보다 하나의 큰 파일로 묶어 <b>한 번 열고 내부 오프셋으로 접근</b>하는 게 시스템 콜 횟수와 탐색 비용을 크게 줄여줍니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--grn)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 9. 체크 */
+(function(){
+  var items=['"파일을 연다"가 데이터 이동이 아니라 핸들 생성이라는 걸 안다','파일이 메타데이터(inode) + 데이터 블록으로 구성된다는 걸 안다','파일 이름이 디렉토리의 "이름→inode" 매핑에 있다는 걸 안다','파일 디스크립터/핸들이 뭐고 왜 직접 inode를 안 주는지 안다','페이지 캐시 덕분에 재읽기가 빠르다는 걸 안다','핸들을 안 닫으면 누수가 된다는 걸 알고 RAII로 처리할 줄 안다','에셋을 .pak으로 묶는 이유를 시스템 콜 관점에서 설명할 수 있다'];
+  var KEY='os14-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

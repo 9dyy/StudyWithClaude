@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7강 · Race Condition과 임계영역 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a; --bg2:#11152a; --card:#161b33; --card2:#1c2243;
+  --line:#2a3157; --txt:#e7ecff; --dim:#9aa3c7; --faint:#6b73a0;
+  --ind:#6366f1; --ind2:#818cf8; --pur:#a855f7; --cyan:#22d3ee;
+  --grn:#34d399; --red:#f87171; --amber:#fbbf24; --orange:#fb923c;
+  --tA:#22d3ee; --tB:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--cyan),var(--orange),var(--red))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--red)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#2a0f0f;background:var(--red);border-color:var(--red)}
+
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(248,113,113,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--red);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--cyan),var(--orange),var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--red);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--red);font-weight:700}
+
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.red{background:var(--red)}.btn.red:hover{background:#fca5a5}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.amber{background:var(--orange)}.btn.amber:hover{background:#fdba74}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 도입 큰 그림 */
+.bignum{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.bn{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:18px 26px;text-align:center;min-width:190px}
+.bn .lb{font-size:13px;color:var(--dim)}
+.bn .v{font-family:ui-monospace,monospace;font-size:34px;font-weight:800;margin-top:6px;transition:.3s}
+.bn.expect .v{color:var(--grn)}.bn.actual .v{color:var(--faint)}.bn.actual .v.bad{color:var(--red)}
+.bn .sub{font-size:11px;color:var(--faint);margin-top:4px}
+
+/* 인터리빙 시뮬 */
+.mem{display:flex;align-items:center;justify-content:center;gap:14px;margin:6px 0 22px}
+.mem .box{background:var(--bg2);border:2px solid var(--ind);border-radius:14px;padding:14px 28px;text-align:center}
+.mem .box .lb{font-size:12px;color:var(--dim)}
+.mem .box .v{font-family:ui-monospace,monospace;font-size:38px;font-weight:800;color:var(--ind2);transition:.2s}
+.mem .box.flash{border-color:var(--amber);box-shadow:0 0 22px rgba(251,191,36,.4)}
+.regs{display:flex;gap:12px;justify-content:center;margin-bottom:18px;flex-wrap:wrap}
+.reg{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:8px 16px;font-family:ui-monospace,monospace;font-size:14px}
+.reg.A{border-color:var(--tA)}.reg.B{border-color:var(--tB)}
+.reg .nm{font-size:11px;color:var(--dim)}.reg .val{font-size:20px;font-weight:800}
+.reg.A .val{color:var(--tA)}.reg.B .val{color:var(--tB)}
+.threads{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.thr{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:14px}
+.thr h4{font-size:13px;font-weight:700}.thr.A h4{color:var(--tA)}.thr.B h4{color:var(--tB)}
+.ins{font-family:ui-monospace,monospace;font-size:12.5px;padding:8px 10px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);margin-top:7px;color:var(--dim);transition:.2s;position:relative}
+.ins.done{color:var(--faint);opacity:.55}
+.ins.cur{border-color:var(--amber);background:rgba(251,191,36,.14);color:var(--txt);transform:scale(1.03)}
+.ins .cm{color:var(--faint)}
+.timeline{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-top:20px}
+.tl{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;padding:5px 8px;border-radius:7px;border:1px solid var(--line);background:var(--bg2);color:var(--faint)}
+.tl.A{color:var(--tA)}.tl.B{color:var(--tB)}
+.tl.now{outline:2px solid var(--amber);outline-offset:1px}
+.tl.past{opacity:.4}
+.verdict{text-align:center;margin-top:18px;font-size:17px;font-weight:700;min-height:28px}
+.preset-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.preset-row button{font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:9px 14px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.preset-row button:hover{border-color:var(--amber);color:var(--txt)}
+.preset-row button.on{background:var(--amber);color:#2a1c00;border-color:var(--amber)}
+
+/* Race 유형 카드 */
+.rtypes{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:22px}
+.rt{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;transition:.2s}
+.rt:hover{border-color:var(--red);transform:translateY(-3px)}
+.rt .ic{font-size:24px}.rt h4{margin-top:10px;font-size:16px}.rt p{font-size:13px;color:var(--dim);margin-top:8px}
+.rt code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.88em}
+
+/* 3조건 */
+.conds{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-top:22px}
+.cond{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
+.cond .num{width:34px;height:34px;border-radius:50%;background:var(--ind);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;margin:0 auto 10px}
+.cond h4{font-size:15px}.cond .en{font-size:12px;color:var(--cyan);font-family:ui-monospace,monospace}.cond p{font-size:13px;color:var(--dim);margin-top:8px}
+
+/* 오해/면접/체크 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:220px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--red);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#2a1518,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13.5px;color:var(--txt);line-height:1.65}.flip .back .a b{color:var(--cyan)}
+
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}pre .r{color:var(--red)}
+
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--red);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--red)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+
+@media(max-width:640px){
+  .threads{grid-template-columns:1fr}
+  header.hero{padding:96px 0 36px}.flip{height:240px}
+}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>7강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#sim">인터리빙</a>
+    <a class="chip" href="#types">Race 유형</a>
+    <a class="chip" href="#cond">임계영역</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 동시성 · 면접 최빈출</span>
+  <h1>Race Condition과 <span class="g">임계영역</span></h1>
+  <p class="sub"><code style="font-family:ui-monospace,monospace;color:var(--cyan)">Counter++</code> 한 줄이 왜 멀티스레드에서 깨질까? CPU 명령어 단위로 직접 끼워 맞춰보며 그 순간을 잡아낸다.</p>
+  <div class="meta">
+    <div class="m">⚡ 공유 + 쓰기 = 위험</div>
+    <div class="m">🧩 선수지식 <b>4~6강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 큰 그림</div>
+  <h2 class="sec"><span class="n">1</span>2 + 2 = ... 어라?</h2>
+  <p class="lead">두 스레드가 각각 전역 카운터를 <b>100만 번씩</b> 증가시킨다. 결과는 당연히 200만이어야 한다. 버튼을 눌러 실제로 돌려보자.</p>
+  <div class="card">
+    <pre><span class="t">int32</span> g_Shared = <span class="s">0</span>;
+<span class="c">// 스레드 2개가 동시에:</span>
+<span class="k">for</span> (<span class="t">int</span> i = <span class="s">0</span>; i &lt; <span class="s">1000000</span>; ++i)
+    g_Shared++;   <span class="r">// 과연 안전할까?</span></pre>
+    <div class="bignum" style="margin-top:20px">
+      <div class="bn expect"><div class="lb">기대값</div><div class="v">2,000,000</div><div class="sub">100만 × 2</div></div>
+      <div class="bn actual"><div class="lb">실제 결과</div><div class="v" id="actualVal">?</div><div class="sub" id="actualSub">버튼을 눌러보세요</div></div>
+    </div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn red" id="runRace">▶ 두 스레드 동시 실행</button>
+      <button class="btn ghost" id="runRace2" style="display:none">🔁 다시 (매번 다름)</button>
+    </div>
+    <p class="hint" id="introHint" style="text-align:center"></p>
+  </div>
+</div></section>
+
+<!-- 2. 인터리빙 시뮬 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 · 현미경</div>
+  <h2 class="sec"><span class="n">2</span><code style="font-size:.8em">g_Shared++</code> 는 한 줄이 아니다</h2>
+  <p class="lead">CPU에겐 <b>읽고 · 더하고 · 쓰는</b> 3개 명령이다. 두 스레드의 명령이 어떤 순서로 끼워지냐(인터리빙)에 따라 결과가 달라진다. 직접 골라 재생해보자.</p>
+  <div class="card">
+    <div class="preset-row" id="presets">
+      <button data-p="seq" class="on">순차 실행 (A→B)</button>
+      <button data-p="worst">최악의 인터리빙</button>
+      <button data-p="rand">랜덤</button>
+    </div>
+
+    <div class="mem" style="margin-top:20px">
+      <div class="box" id="memBox"><div class="lb">메모리 g_Shared</div><div class="v" id="memVal">0</div></div>
+    </div>
+    <div class="regs">
+      <div class="reg A"><div class="nm">스레드 A · eax</div><div class="val" id="regA">–</div></div>
+      <div class="reg B"><div class="nm">스레드 B · ebx</div><div class="val" id="regB">–</div></div>
+    </div>
+
+    <div class="threads">
+      <div class="thr A">
+        <h4>● 스레드 A</h4>
+        <div class="ins" data-i="A0">mov eax, [g] <span class="cm">; 읽기</span></div>
+        <div class="ins" data-i="A1">inc eax <span class="cm">; +1</span></div>
+        <div class="ins" data-i="A2">mov [g], eax <span class="cm">; 쓰기</span></div>
+      </div>
+      <div class="thr B">
+        <h4>● 스레드 B</h4>
+        <div class="ins" data-i="B0">mov ebx, [g] <span class="cm">; 읽기</span></div>
+        <div class="ins" data-i="B1">inc ebx <span class="cm">; +1</span></div>
+        <div class="ins" data-i="B2">mov [g], ebx <span class="cm">; 쓰기</span></div>
+      </div>
+    </div>
+
+    <div class="timeline" id="timeline"></div>
+    <div class="verdict" id="simVerdict"></div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn amber" id="playSim">▶ 재생</button>
+      <button class="btn ghost" id="stepSim">⏭ 한 명령씩</button>
+      <button class="btn ghost" id="resetSim">↺ 초기화</button>
+    </div>
+    <p class="hint">두 스레드가 각각 한 번씩만 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">++</code> 했는데도, 인터리빙이 나쁘면 결과가 <b>1</b>이 된다. 한 번의 증가가 통째로 사라진다(Lost Update). 이게 Race Condition의 정체다.</p>
+  </div>
+</div></section>
+
+<!-- 3. Race 유형 -->
+<section id="types"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 분류</div>
+  <h2 class="sec"><span class="n">3</span>게임에서 만나는 Race 3종</h2>
+  <p class="lead"><b>공유 데이터</b>가 있고 그 중 하나라도 <b>쓰기</b>를 하면 위험하다. 읽기만 하면 안전.</p>
+  <div class="rtypes">
+    <div class="rt"><div class="ic">💸</div><h4>Lost Update</h4><p>방금 본 그것. <code>g_ConnectedPlayers++</code> 를 동시 접속 처리하면 카운트가 샌다.</p></div>
+    <div class="rt"><div class="ic">👻</div><h4>Dirty Read</h4><p>중간 상태를 읽음. <code>HP=0</code> 직후 <code>bDead</code> 세팅 전에 다른 스레드가 보면 "살아있는데 HP 0"인 모순 상태.</p></div>
+    <div class="rt"><div class="ic">🎁</div><h4>Check-Then-Act</h4><p><code>if(Count&gt;0) Remove()</code> 를 둘이 동시에 통과 → 아이템 두 번 지급. 빠른 더블클릭 버그의 정체.</p></div>
+  </div>
+</div></section>
+
+<!-- 4. 임계영역 3조건 -->
+<section id="cond"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 면접 단골</div>
+  <h2 class="sec"><span class="n">4</span>임계영역 — 한 번에 한 스레드만</h2>
+  <p class="lead">공유 자원에 접근하는 코드 구간 중, 한 번에 한 스레드만 들어가야 하는 곳. 해결책은 다음 <b>3조건</b>을 다 만족해야 한다.</p>
+  <div class="conds">
+    <div class="cond"><div class="num">1</div><h4>상호 배제</h4><div class="en">Mutual Exclusion</div><p>한 스레드가 안에 있으면 다른 스레드는 못 들어옴.</p></div>
+    <div class="cond"><div class="num">2</div><h4>진행</h4><div class="en">Progress</div><p>비어 있고 들어가려는 스레드가 있으면 누군가는 들어가야 함.</p></div>
+    <div class="cond"><div class="num">3</div><h4>한정된 대기</h4><div class="en">Bounded Waiting</div><p>특정 스레드가 무한히 새치기당해 굶지 않게.</p></div>
+  </div>
+  <div class="card" style="text-align:center">
+    <p>그럼 이걸 <b>어떻게</b> 보장할까? 가장 직관적인 답은 "자물쇠" — <b class="tagline">Mutex</b>다.</p>
+    <p class="hint" style="text-align:center">→ 8강에서 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">FCriticalSection</code> 과 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">FScopeLock</code> 으로 이 인터리빙을 막는 법을 다룬다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 함정</div>
+  <h2 class="sec"><span class="n">5</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 6. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 면접 대비</div>
+  <h2 class="sec"><span class="n">6</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 7. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 마무리</div>
+  <h2 class="sec"><span class="n">7</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="08강_Mutex_Lock_CriticalSection.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">8강 — Mutex, Lock, Critical Section →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 7강</div>
+</div></footer>
+
+<script>
+/* 1. 도입 */
+(function(){
+  var btn=document.getElementById('runRace'),btn2=document.getElementById('runRace2');
+  var val=document.getElementById('actualVal'),sub=document.getElementById('actualSub'),hint=document.getElementById('introHint');
+  function run(){
+    val.classList.remove('bad');val.textContent='실행 중…';sub.textContent='';
+    // 잃어버린 업데이트를 랜덤하게 시뮬: 12~30만 정도 손실
+    var lost=Math.floor(120000+Math.random()*600000);
+    var result=2000000-lost;
+    var steps=20,i=0;
+    var t=setInterval(function(){
+      i++;val.textContent=Math.floor(result*i/steps).toLocaleString();
+      if(i>=steps){clearInterval(t);
+        val.classList.add('bad');val.textContent=result.toLocaleString();
+        sub.textContent='≈ '+lost.toLocaleString()+'회 증가가 사라짐';
+        hint.innerHTML='기대값 2,000,000에서 <b style="color:var(--red)">'+lost.toLocaleString()+'</b>이 사라졌다. 왜? ↓ 아래 현미경으로 명령어 단위를 들여다보자.';
+        btn2.style.display='inline-flex';
+      }
+    },40);
+  }
+  btn.addEventListener('click',run);btn2.addEventListener('click',run);
+})();
+
+/* 2. 인터리빙 시뮬 — 킬러 위젯 */
+(function(){
+  // 명령 정의: A0 읽기, A1 +1, A2 쓰기 / B0,B1,B2 동일
+  var PRESETS={
+    seq:['A0','A1','A2','B0','B1','B2'],
+    worst:['A0','A1','B0','B1','A2','B2'],
+    rand:null
+  };
+  var preset='seq', order=PRESETS.seq.slice(), pos=-1, playing=false, timer=null;
+  var memVal=document.getElementById('memVal'),memBox=document.getElementById('memBox');
+  var regA=document.getElementById('regA'),regB=document.getElementById('regB');
+  var timeline=document.getElementById('timeline'),verdict=document.getElementById('simVerdict');
+  var state={};
+
+  function randOrder(){
+    // A0<A1<A2, B0<B1<B2 순서 유지하며 랜덤 머지
+    var a=['A0','A1','A2'],b=['B0','B1','B2'],r=[],i=0,j=0;
+    while(i<3||j<3){
+      if(i>=3){r.push(b[j++]);}
+      else if(j>=3){r.push(a[i++]);}
+      else if(Math.random()<0.5){r.push(a[i++]);}
+      else{r.push(b[j++]);}
+    }
+    return r;
+  }
+  function buildTimeline(){
+    timeline.innerHTML='';
+    order.forEach(function(ins,i){
+      var d=document.createElement('div');d.className='tl '+ins[0];d.dataset.i=i;
+      d.textContent=ins;timeline.appendChild(d);
+    });
+  }
+  function reset(){
+    if(preset==='rand')order=randOrder();else order=PRESETS[preset].slice();
+    pos=-1;state={g:0,eax:null,ebx:null};
+    memVal.textContent='0';regA.textContent='–';regB.textContent='–';
+    document.querySelectorAll('.ins').forEach(function(e){e.classList.remove('cur','done');});
+    buildTimeline();verdict.textContent='';
+    verdict.style.color='';
+  }
+  function applyIns(ins){
+    if(ins==='A0'){state.eax=state.g;regA.textContent=state.eax;}
+    else if(ins==='A1'){state.eax++;regA.textContent=state.eax;}
+    else if(ins==='A2'){state.g=state.eax;memVal.textContent=state.g;memBox.classList.add('flash');setTimeout(function(){memBox.classList.remove('flash');},250);}
+    else if(ins==='B0'){state.ebx=state.g;regB.textContent=state.ebx;}
+    else if(ins==='B1'){state.ebx++;regB.textContent=state.ebx;}
+    else if(ins==='B2'){state.g=state.ebx;memVal.textContent=state.g;memBox.classList.add('flash');setTimeout(function(){memBox.classList.remove('flash');},250);}
+  }
+  function step(){
+    if(pos>=order.length-1)return false;
+    pos++;
+    var ins=order[pos];
+    document.querySelectorAll('.ins').forEach(function(e){e.classList.remove('cur');});
+    var el=document.querySelector('.ins[data-i='+ins+']');
+    if(el){el.classList.add('cur');}
+    [].forEach.call(timeline.children,function(c,i){c.classList.toggle('now',i===pos);c.classList.toggle('past',i<pos);});
+    applyIns(ins);
+    // 이전 cur들을 done 처리
+    order.slice(0,pos).forEach(function(p){var e=document.querySelector('.ins[data-i='+p+']');if(e)e.classList.add('done');});
+    if(pos===order.length-1){
+      setTimeout(function(){
+        document.querySelector('.ins[data-i='+ins+']').classList.add('done');
+        var ok=state.g===2;
+        verdict.innerHTML=ok?'결과 <b style="color:var(--grn)">'+state.g+'</b> ✓ 정상 — 두 증가가 모두 반영됨'
+                            :'결과 <b style="color:var(--red)">'+state.g+'</b> ✗ — 한 번의 증가가 사라졌다! (Lost Update)';
+      },250);
+    }
+    return true;
+  }
+  function play(){
+    if(playing)return;if(pos>=order.length-1)reset();
+    playing=true;timer=setInterval(function(){if(!step()){clearInterval(timer);playing=false;}},650);
+  }
+  document.getElementById('playSim').addEventListener('click',play);
+  document.getElementById('stepSim').addEventListener('click',function(){if(playing){clearInterval(timer);playing=false;}step();});
+  document.getElementById('resetSim').addEventListener('click',function(){if(playing){clearInterval(timer);playing=false;}reset();});
+  document.querySelectorAll('#presets button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#presets button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');preset=b.dataset.p;if(playing){clearInterval(timer);playing=false;}reset();
+    });
+  });
+  reset();
+})();
+
+/* 5. 오해 */
+(function(){
+  var data=[
+    {q:'"int 대입은 멀티스레드에서 항상 안전하다"',a:'정렬된 32비트 정수의 단순 대입은 보통 원자적이라 안전하다. 하지만 <b class="truth">연산(++,+=)</b>, <b class="truth">64비트 값을 32비트 CPU에서</b>, <b class="truth">구조체 대입</b>은 안전하지 않다.'},
+    {q:'"락 안 쓰고 잘 짜면 Race 없게 만들 수 있어"',a:'공유 자원에 쓰기가 있으면 <b class="truth">락이나 atomic이 필요</b>하다. 락 없이 잘 도는 것처럼 보이는 코드는 대부분 운이 좋았을 뿐 — 부하가 늘면 깨진다.'},
+    {q:'"Game Thread 안에서는 Race 걱정 없다"',a:'Game Thread 하나 안에서 도는 코드끼리는 맞다. 하지만 <b class="truth">워커·렌더 스레드가 같은 데이터를 만지는 순간</b> Race가 등장한다.'},
+    {q:'"한 번도 안 터졌으니 안전한 코드다"',a:'Race는 <b class="truth">간헐적이고 재현이 어렵다</b>. 개발 PC에선 멀쩡하다 라이브에서 터진다. 동작 여부가 아니라 <b class="truth">보장 여부</b>로 판단해야 한다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 6. 면접 */
+(function(){
+  var qa=[
+    {q:'Race Condition이 뭔가요?',a:'여러 스레드가 공유 자원에 동시 접근하는데 하나 이상이 쓰기를 하면, <b>결과가 실행 순서에 따라 달라지는</b> 현상입니다. <code style="font-family:monospace">Counter++</code>는 읽기-증가-쓰기 3명령이라, 동시에 하면 한 번의 증가가 사라질 수 있습니다.'},
+    {q:'임계영역(Critical Section)이 뭔가요?',a:'공유 자원에 접근하는 코드 구간 중 <b>한 번에 한 스레드만</b> 들어가야 정확성이 보장되는 구간입니다. Mutex나 lock-free로 보호해야 합니다.'},
+    {q:'임계영역 해결 3조건은?',a:'<b>Mutual Exclusion</b>(한 번에 하나), <b>Progress</b>(비었으면 누군가 진입), <b>Bounded Waiting</b>(무한 대기 방지)입니다.'},
+    {q:'int x=0; x++; 가 안전하지 않은 이유는?',a:'<code style="font-family:monospace">x++</code>는 메모리에서 읽고, 레지스터에서 +1, 다시 메모리에 쓰는 <b>3개 명령</b>으로 나뉩니다. 두 스레드가 같은 값을 읽고 같은 결과를 써서 Lost Update가 납니다.'},
+    {q:'100번 돌렸는데 다 잘 나왔으면 안전한가요?',a:'아닙니다. Race는 타이밍에 따라 <b>간헐적</b>으로 발생하고 재현이 어렵습니다. 안전성은 결과가 아니라 <b>보장 여부</b>로 판단하고, 공유 데이터에 쓰기가 있으면 반드시 동기화해야 합니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 7. 체크 */
+(function(){
+  var items=['Counter++가 어셈블리에서 3개 명령으로 쪼개진다는 걸 안다','Race Condition의 정의를 말할 수 있다','임계영역 해결 3조건을 말할 수 있다','Race가 생기는 두 조건(공유 + 쓰기)을 안다','게임 코드에서 Race가 생길 상황을 두 개 이상 떠올린다'];
+  var KEY='os07-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

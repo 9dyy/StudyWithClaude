@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2강 · 커널 모드와 유저 모드, 시스템 콜 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--ind),var(--cyan))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800}nav .logo b{color:var(--ind2)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--ind);border-color:var(--ind)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(99,102,241,.2),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--ind2);background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--ind2),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--ind2);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--ind2);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.red{background:var(--red)}.btn.red:hover{background:#fca5a5}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 권한 데모 */
+.rings{display:flex;flex-direction:column;align-items:center;gap:0;margin:6px 0 20px}
+.ring-row{display:flex;gap:14px;width:100%;max-width:520px}
+.ringbox{flex:1;border-radius:14px;padding:16px;text-align:center;border:1px solid var(--line);transition:.3s}
+.ringbox.user{background:rgba(34,211,238,.08);border-color:rgba(34,211,238,.3)}
+.ringbox.kernel{background:rgba(168,85,247,.08);border-color:rgba(168,85,247,.3)}
+.ringbox .r{font-family:ui-monospace,monospace;font-size:12px;color:var(--faint)}
+.ringbox .nm{font-weight:800;font-size:16px;margin-top:4px}
+.ringbox.user .nm{color:var(--cyan)}.ringbox.kernel .nm{color:var(--pur)}
+.ringbox .d{font-size:12px;color:var(--dim);margin-top:6px}
+.ringbox.flash-ok{box-shadow:0 0 22px rgba(52,211,153,.4);border-color:var(--grn)}
+.ringbox.flash-bad{box-shadow:0 0 22px rgba(248,113,113,.4);border-color:var(--red);animation:shake .3s 2}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.perm-actions{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.perm{display:flex;align-items:center;gap:12px;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;cursor:pointer;transition:.15s}
+.perm:hover{border-color:var(--ind)}
+.perm .ic{font-size:20px}
+.perm .txt{flex:1}
+.perm .txt .t{font-size:13.5px;font-weight:600}
+.perm .txt .c{font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);margin-top:2px}
+.perm .res{font-size:12px;font-weight:700;min-width:90px;text-align:right}
+.perm .res.ok{color:var(--grn)}.perm .res.bad{color:var(--red)}
+
+/* mode switch 비용 */
+.cost-bars .row{display:flex;align-items:center;gap:12px;margin-top:12px}
+.cost-bars .row .nm{width:150px;font-size:13px;font-weight:700}
+.cost-bars .row .tr{flex:1;height:30px;background:var(--bg2);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+.cost-bars .row .tr i{display:block;height:100%;width:0;transition:1.1s cubic-bezier(.2,.8,.2,1);border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:#04102a}
+.cost-bars .batch i{background:linear-gradient(90deg,var(--grn),var(--cyan))}
+.cost-bars .each i{background:linear-gradient(90deg,var(--orange),var(--red))}
+.cost-note{text-align:center;margin-top:16px;font-size:14px;color:var(--dim);min-height:22px}
+
+/* 시스템콜 종류 표 */
+.sctable{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px}
+.sctable th,.sctable td{border:1px solid var(--line);padding:9px 12px;text-align:left}
+.sctable th{background:var(--card2);color:var(--dim);font-size:12px}
+.sctable td.api{font-family:ui-monospace,monospace;color:var(--cyan);font-size:12px}
+.sctable tr:hover td{background:var(--card2)}
+
+/* 오해/면접/체크 공통 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:215px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--ind2);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#15193a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}pre .r{color:var(--red)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--ind);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--ind2)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:235px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>2강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#mode">권한</a>
+    <a class="chip" href="#cost">시스템콜 비용</a>
+    <a class="chip" href="#kinds">종류</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · OS 기초</span>
+  <h1>커널 모드와 유저 모드, <span class="g">시스템 콜</span></h1>
+  <p class="sub">내 게임이 카톡 메모리를 훔쳐볼 수 없는 이유, 그리고 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">for</code>문에서 파일을 만 번 쓰면 왜 느린지. CPU의 권한 레벨을 직접 건드려본다.</p>
+  <div class="meta">
+    <div class="m">🔐 ring 0 / ring 3</div>
+    <div class="m">🧩 선수지식 <b>1강</b></div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 만약에</div>
+  <h2 class="sec"><span class="n">1</span>이 코드가 그냥 되면 큰일이다</h2>
+  <p class="lead">게임 코드가 다른 프로세스(카톡, 크롬)의 메모리를 마음대로 읽을 수 있다면? 비밀번호도 메시지도 다 털린다.</p>
+  <div class="card">
+    <pre><span class="k">void</span> Hack() {
+    <span class="c">// 다른 프로세스(카톡)의 메모리를 통째로 읽기</span>
+    <span class="k">char</span>* Other = (<span class="k">char</span>*)<span class="s">0x12345678</span>;
+    <span class="k">char</span> Stolen = *Other;   <span class="r">// 이게 되면 안 된다!</span>
+}</pre>
+    <p style="text-align:center;margin-top:16px">CPU가 차원에서 이걸 막는다. 그 장치가 <b class="tagline">유저 모드 / 커널 모드</b>. 아래에서 직접 시도해보자. ↓</p>
+  </div>
+</div></section>
+
+<!-- 2. 권한 데모 -->
+<section id="mode"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 · 권한 체험</div>
+  <h2 class="sec"><span class="n">2</span>유저 모드에선 뭘 할 수 있고 뭘 못하나</h2>
+  <p class="lead">우리 게임은 <b style="color:var(--cyan)">유저 모드(ring 3)</b>에서 돈다. 아래 동작을 눌러보면, 직접 할 수 있는 건 OK, 막히는 건 OS에 부탁(시스템 콜)해야 한다.</p>
+  <div class="card">
+    <div class="rings"><div class="ring-row">
+      <div class="ringbox user" id="ringUser"><div class="r">ring 3</div><div class="nm">유저 모드</div><div class="d">내 게임·크롬·디스코드<br>자기 메모리만, 하드웨어 직접 X</div></div>
+      <div class="ringbox kernel" id="ringKernel"><div class="r">ring 0</div><div class="nm">커널 모드</div><div class="d">OS 커널·드라이버<br>모든 메모리·하드웨어 OK</div></div>
+    </div></div>
+    <div class="perm-actions" id="permActions"></div>
+    <p class="hint" id="permHint">동작을 클릭해보세요. 막히는 동작은 결국 시스템 콜로 OS에 "대신 해줘" 부탁해야 합니다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 시스템콜 비용 -->
+<section id="cost"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 비용 실험</div>
+  <h2 class="sec"><span class="n">3</span>시스템 콜은 비싸다 — mode switch</h2>
+  <p class="lead">시스템 콜은 유저→커널로 넘어가는 <b>mode switch</b>를 동반한다(레지스터 저장, 커널 스택 전환, 인자 검증). 같은 데이터를 쓰는데 시스템 콜 횟수만 다르게 해보자.</p>
+  <div class="card">
+    <div class="cost-bars" id="costBars">
+      <div class="row batch"><div class="nm">📦 한 번에 쓰기<br><span style="font-weight:400;color:var(--faint);font-size:11px">syscall 1번</span></div><div class="tr"><i></i></div></div>
+      <div class="row each"><div class="nm">🐢 한 줄씩 10만 번<br><span style="font-weight:400;color:var(--faint);font-size:11px">syscall 100,000번</span></div><div class="tr"><i></i></div></div>
+    </div>
+    <div class="cost-note" id="costNote"></div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn grn" id="costBtn">▶ 두 방식 비교</button>
+    </div>
+    <p class="hint">엔진들이 <b>메모리 풀·배치 I/O·버퍼링</b>을 쓰는 이유가 이것 — 시스템 콜 횟수를 줄이려고. <code style="font-family:ui-monospace,monospace;color:var(--cyan)">UE_LOG</code>를 디버그 빌드에서 미친 듯이 찍으면 느려지는 것도 콘솔 출력이 시스템 콜이라서다.</p>
+  </div>
+</div></section>
+
+<!-- 4. 종류 -->
+<section id="kinds"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 정리</div>
+  <h2 class="sec"><span class="n">4</span>시스템 콜의 대표 종류</h2>
+  <div class="card">
+    <table class="sctable">
+      <thead><tr><th>분류</th><th>예시 (Win32)</th><th>게임에서</th></tr></thead>
+      <tbody>
+        <tr><td>프로세스</td><td class="api">CreateProcess</td><td>외부 프로세스(런처) 실행</td></tr>
+        <tr><td>스레드</td><td class="api">CreateThread</td><td>비동기 작업</td></tr>
+        <tr><td>메모리</td><td class="api">VirtualAlloc</td><td>큰 메모리 할당</td></tr>
+        <tr><td>파일</td><td class="api">CreateFile / ReadFile</td><td>에셋 로딩, 세이브</td></tr>
+        <tr><td>네트워크</td><td class="api">socket / send / recv</td><td>멀티플레이 통신</td></tr>
+        <tr><td>동기화</td><td class="api">WaitForSingleObject</td><td>스레드 동기화</td></tr>
+        <tr><td>시간</td><td class="api">QueryPerformanceCounter</td><td>프레임 타임 측정</td></tr>
+      </tbody>
+    </table>
+    <p class="hint">언리얼의 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">FPlatformMemory</code>·<code style="font-family:ui-monospace,monospace;color:var(--cyan)">FPlatformFile</code>·<code style="font-family:ui-monospace,monospace;color:var(--cyan)">FRunnableThread</code>가 다 내부적으로 이걸 부른다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 함정</div>
+  <h2 class="sec"><span class="n">5</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 6. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 면접 대비</div>
+  <h2 class="sec"><span class="n">6</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 7. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 마무리</div>
+  <h2 class="sec"><span class="n">7</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 4 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="03강_프로세스_메모리구조.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">3강 — 프로세스의 메모리 구조 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 2강</div>
+</div></footer>
+
+<script>
+/* 2. 권한 데모 */
+(function(){
+  var acts=[
+    {ic:'✅',t:'내 게임의 변수 읽기',c:'int x = MyVar;',ok:true,msg:'유저 모드에서 가능 — 내 프로세스 메모리는 마음대로'},
+    {ic:'🚫',t:'다른 프로세스(카톡) 메모리 읽기',c:'char c = *(char*)0x12345678;',ok:false,msg:'Access Violation! CPU가 차단 — 다른 프로세스 메모리엔 못 닿는다'},
+    {ic:'🚫',t:'SSD에 직접 명령 보내기',c:'SendNvmeCommand(ERASE_ALL);',ok:false,msg:'차단 — 하드웨어 직접 제어는 커널 모드 전용. 특권 명령'},
+    {ic:'🔄',t:'파일 읽기 (OS에 부탁)',c:'ReadFile(handle, buf, ...);',ok:true,msg:'시스템 콜로 커널에 부탁 → OS가 대신 SSD를 읽어줌'}
+  ];
+  var box=document.getElementById('permActions'),hint=document.getElementById('permHint');
+  var ringUser=document.getElementById('ringUser'),ringKernel=document.getElementById('ringKernel');
+  acts.forEach(function(a){
+    var el=document.createElement('div');el.className='perm';
+    el.innerHTML='<span class="ic">'+a.ic+'</span><div class="txt"><div class="t">'+a.t+'</div><div class="c">'+a.c+'</div></div><div class="res"></div>';
+    el.addEventListener('click',function(){
+      var res=el.querySelector('.res');
+      ringUser.classList.remove('flash-ok','flash-bad');ringKernel.classList.remove('flash-ok','flash-bad');
+      if(a.ok){res.textContent='✓ OK';res.className='res ok';ringUser.classList.add('flash-ok');
+        if(a.t.indexOf('부탁')>=0)ringKernel.classList.add('flash-ok');}
+      else{res.textContent='✗ 차단';res.className='res bad';ringUser.classList.add('flash-bad');}
+      hint.innerHTML=(a.ok?'<span style="color:var(--grn)">':'<span style="color:var(--red)">')+a.msg+'</span>';
+    });
+    box.appendChild(el);
+  });
+})();
+
+/* 3. 시스템콜 비용 */
+(function(){
+  var box=document.getElementById('costBars'),note=document.getElementById('costNote');
+  document.getElementById('costBtn').addEventListener('click',function(){
+    var batch=6, each=100; // 상대 시간
+    var max=each;
+    var rows=box.querySelectorAll('.row i');
+    rows[0].style.width=(batch/max*100)+'%';rows[0].textContent='≈6 ms';
+    rows[1].style.width='100%';rows[1].textContent='≈100 ms';
+    note.innerHTML='같은 양을 쓰는데 한 줄씩 쓰면 약 <b style="color:var(--red)">15배</b> 느리다. 차이의 정체는 누적된 <b style="color:var(--ind2)">mode switch</b> 비용.';
+  });
+})();
+
+/* 5. 오해 */
+(function(){
+  var data=[
+    {q:'"함수 호출 = 시스템 콜"',a:'아니다. <b class="truth">유저 모드 안에서 끝나는 함수 호출</b>(MyAdd, FMath::Sqrt 등)은 시스템 콜이 아니다. CreateThread·ReadFile처럼 커널로 넘어가는 것만 시스템 콜.'},
+    {q:'"커널 모드 = 빠름, 유저 모드 = 느림"',a:'전혀 아니다. <b class="truth">권한의 차이일 뿐 속도 자체는 같다.</b> 비싼 건 모드를 \'바꾸는\' 비용(mode switch)이다.'},
+    {q:'"디버거가 다른 프로세스 메모리를 보는 건?"',a:'디버거도 유저 모드 프로그램이다. <code>OpenProcess</code>·<code>ReadProcessMemory</code> 같은 <b class="truth">특수 시스템 콜</b>을 부르고 OS가 권한을 확인해 허락해주는 것. 통로는 결국 시스템 콜 하나뿐.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 6. 면접 */
+(function(){
+  var qa=[
+    {q:'유저 모드와 커널 모드의 차이는?',a:'CPU의 권한 레벨 차이입니다. <b>유저 모드(ring 3)</b>는 자기 프로세스 메모리만 접근하고 특권 명령을 못 씁니다. <b>커널 모드(ring 0)</b>는 모든 메모리·하드웨어에 접근합니다. 응용은 유저 모드, 커널·드라이버는 커널 모드에서 돕니다.'},
+    {q:'시스템 콜이 뭐고 왜 비싼가요?',a:'유저 모드가 커널 기능을 호출하는 통로입니다. <code style="font-family:monospace">syscall</code> 명령으로 커널 모드로 진입하는데 레지스터 저장·커널 스택 전환·인자 검증의 <b>mode switch</b>가 일어나 일반 함수 호출보다 훨씬 비쌉니다.'},
+    {q:'일반 함수 호출과 시스템 콜의 차이는?',a:'일반 함수 호출은 유저 모드 안에서 끝나 모드 전환이 없습니다. 시스템 콜은 유저→커널로 넘어갔다 돌아오는 <b>모드 스위치</b>가 일어납니다.'},
+    {q:'게임에서 다른 프로세스 메모리를 직접 읽을 수 있나요?',a:'유저 모드라 직접은 못 합니다. CPU가 차단해 Access Violation이 납니다. <code style="font-family:monospace">ReadProcessMemory</code> 같은 시스템 콜로 OS에 부탁하고 권한이 있으면 대신 읽어줍니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 7. 체크 */
+(function(){
+  var items=['유저 모드와 커널 모드가 CPU의 권한 레벨이라는 걸 안다','시스템 콜이 mode switch를 동반하는 비싼 호출이라는 걸 안다','for문에서 작은 파일을 만 번 쓰면 왜 느린지 설명할 수 있다','유저 모드 함수 호출과 시스템 콜을 구분할 수 있다'];
+  var KEY='os02-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

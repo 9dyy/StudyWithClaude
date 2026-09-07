@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3강 · 프로세스의 메모리 구조 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --stack:#22d3ee;--heap:#a855f7;--bss:#fbbf24;--data:#fb923c;--text:#34d399;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--cyan),var(--grn))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800}nav .logo b{color:var(--cyan)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#04243a;background:var(--cyan);border-color:var(--cyan)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(34,211,238,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--cyan),var(--grn));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--cyan);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 변수 배치기 */
+.layout-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:6px}
+@media(max-width:720px){.layout-grid{grid-template-columns:1fr}}
+.codecol .codeln{font-family:ui-monospace,monospace;font-size:12.5px;padding:9px 11px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);margin-bottom:7px;cursor:pointer;transition:.15s;color:var(--dim);border-left:3px solid transparent}
+.codecol .codeln:hover{border-color:var(--ind);color:var(--txt)}
+.codecol .codeln.act{color:var(--txt);background:var(--card2)}
+.codecol .codeln .cm{color:var(--faint)}
+.memcol .memmap{display:flex;flex-direction:column;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.memcol .addr{font-family:ui-monospace,monospace;font-size:10px;color:var(--faint);text-align:right;padding:2px 6px}
+.seg{padding:13px 14px;transition:.25s;border-bottom:1px solid rgba(0,0,0,.3);opacity:.5}
+.seg:last-child{border-bottom:none}
+.seg .sn{font-weight:800;font-size:14px}
+.seg .sd{font-size:11px;color:var(--dim);margin-top:2px}
+.seg.stack{background:rgba(34,211,238,.12)}.seg.stack .sn{color:var(--stack)}
+.seg.gap{background:var(--bg2);text-align:center;font-size:11px;color:var(--faint);padding:6px;opacity:.4}
+.seg.heap{background:rgba(168,85,247,.12)}.seg.heap .sn{color:var(--heap)}
+.seg.bss{background:rgba(251,191,36,.12)}.seg.bss .sn{color:var(--bss)}
+.seg.data{background:rgba(251,146,60,.12)}.seg.data .sn{color:var(--data)}
+.seg.text{background:rgba(52,211,153,.12)}.seg.text .sn{color:var(--text)}
+.seg.lit{opacity:1;box-shadow:inset 0 0 0 2px currentColor}
+.seg.stack.lit{box-shadow:inset 0 0 0 2px var(--stack)}
+.seg.heap.lit{box-shadow:inset 0 0 0 2px var(--heap)}
+.seg.bss.lit{box-shadow:inset 0 0 0 2px var(--bss)}
+.seg.data.lit{box-shadow:inset 0 0 0 2px var(--data)}
+.seg.text.lit{box-shadow:inset 0 0 0 2px var(--text)}
+.explain{margin-top:16px;padding:14px 16px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font-size:14px;color:var(--dim);min-height:54px}
+.explain b{color:var(--txt)}
+
+/* 포인터 */
+.ptr-demo{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:6px;flex-wrap:wrap}
+.ptr-box{text-align:center}
+.ptr-box .lab{font-size:12px;color:var(--dim);margin-bottom:6px}
+.ptr-box .cell{font-family:ui-monospace,monospace;background:var(--bg2);border:2px solid;border-radius:10px;padding:14px 20px;font-size:15px;font-weight:700}
+.ptr-box.stack .cell{border-color:var(--stack);color:var(--stack)}
+.ptr-box.heap .cell{border-color:var(--heap);color:var(--heap)}
+.ptr-arrow{font-size:24px;color:var(--faint)}
+
+/* 스택 오버플로 */
+.so-demo .slabel{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:8px}
+.so-demo input[type=range]{width:100%;accent-color:var(--cyan);height:6px}
+.so-stack{margin-top:18px;height:170px;border:1px solid var(--line);border-radius:12px;background:var(--bg2);position:relative;overflow:hidden;display:flex;flex-direction:column-reverse;padding:4px;gap:2px}
+.so-frame{height:13px;border-radius:3px;background:linear-gradient(90deg,var(--cyan),var(--ind));flex-shrink:0;transition:.1s}
+.so-limit{position:absolute;top:8px;left:0;right:0;border-top:2px dashed var(--red);text-align:right;padding-right:8px}
+.so-limit b{font-size:11px;color:var(--red);background:var(--bg);padding:0 4px;position:relative;top:-10px}
+.so-verdict{margin-top:14px;text-align:center;font-size:15px;font-weight:700;min-height:24px}
+
+/* 같은 exe */
+.dup{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.dup .proc{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12.5px}
+.dup .proc h4{font-size:13px;margin-bottom:8px}
+.dup .proc .seg2{padding:6px 10px;border-radius:6px;margin-top:5px;font-family:ui-monospace,monospace;font-size:11px}
+.dup .proc .seg2.indep{background:var(--bg2);border:1px solid var(--line);color:var(--dim)}
+.dup .proc .seg2.shared{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.4);color:var(--text)}
+
+/* 오해/면접/체크 공통 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:220px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--cyan);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#0f2a2e,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--cyan);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--cyan)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:240px}.dup{grid-template-columns:1fr}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>3강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#map">변수 배치기</a>
+    <a class="chip" href="#ptr">포인터</a>
+    <a class="chip" href="#overflow">스택 오버플로</a>
+    <a class="chip" href="#dup">2번 실행</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · OS 기초</span>
+  <h1>프로세스의 <span class="g">메모리 구조</span></h1>
+  <p class="sub">내가 짠 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">.exe</code>가 실행되면 변수들은 메모리 어디에 살까? 코드 한 줄씩 클릭하며 Text·Data·BSS·Heap·Stack을 직접 짚어본다.</p>
+  <div class="meta">
+    <div class="m">🗺️ 5개 메모리 영역</div>
+    <div class="m">🧩 선수지식 <b>1~2강</b></div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 시작</div>
+  <h2 class="sec"><span class="n">1</span>.exe 더블클릭하면 무슨 일이?</h2>
+  <p class="lead">디스크의 정적인 바이트(<code style="font-family:ui-monospace,monospace;color:var(--cyan)">.exe</code>)가 메모리에 올라와 도는 실체가 <b>프로세스</b>다. OS가 메모리에 영역을 잡고 코드·데이터를 배치한 뒤 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">main()</code>으로 점프한다.</p>
+  <div class="card">
+    <p style="text-align:center;font-size:15px"><b style="color:var(--faint)">.exe 파일</b> = 디스크의 정적 바이트 &nbsp;→&nbsp; <b class="tagline">프로세스</b> = 메모리에서 도는 실체</p>
+    <p style="text-align:center;margin-top:10px;color:var(--dim);font-size:14px">그 프로세스의 메모리는 5개 영역으로 나뉜다. 아래에서 어떤 변수가 어디 사는지 직접 짚어보자. ↓</p>
+  </div>
+</div></section>
+
+<!-- 2. 변수 배치기 -->
+<section id="map"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 · 변수 배치기</div>
+  <h2 class="sec"><span class="n">2</span>이 변수는 어디에 사는가</h2>
+  <p class="lead">왼쪽 코드의 각 줄을 <b>클릭</b>하면, 오른쪽 메모리 지도에서 그 변수가 사는 영역이 점등된다.</p>
+  <div class="card">
+    <div class="layout-grid">
+      <div class="codecol" id="codeCol"></div>
+      <div class="memcol">
+        <div class="addr">높은 주소 0xFFFF…</div>
+        <div class="memmap">
+          <div class="seg stack" data-seg="stack"><div class="sn">Stack</div><div class="sd">지역변수·함수인자·리턴주소 (위→아래로 자람)</div></div>
+          <div class="seg gap" data-seg="gap">↓ &nbsp; 빈 공간 &nbsp; ↑</div>
+          <div class="seg heap" data-seg="heap"><div class="sn">Heap</div><div class="sd">new·malloc 동적 할당 (아래→위로 자람)</div></div>
+          <div class="seg bss" data-seg="bss"><div class="sn">BSS</div><div class="sd">초기화 안 된 전역/static (0으로 채워짐)</div></div>
+          <div class="seg data" data-seg="data"><div class="sn">Data</div><div class="sd">초기화된 전역/static 변수</div></div>
+          <div class="seg text" data-seg="text"><div class="sn">Text</div><div class="sd">기계어 코드 (읽기 전용)</div></div>
+        </div>
+        <div class="addr">낮은 주소 0x0000…</div>
+      </div>
+    </div>
+    <div class="explain" id="explain">코드 줄을 클릭해보세요.</div>
+  </div>
+</div></section>
+
+<!-- 3. 포인터 -->
+<section id="ptr"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 헷갈리는 곳</div>
+  <h2 class="sec"><span class="n">3</span>포인터 변수 vs 가리키는 대상</h2>
+  <p class="lead"><code style="font-family:ui-monospace,monospace;color:var(--cyan)">int* p = new int(42);</code> — <b>p</b>와 <b>42</b>는 서로 다른 영역에 산다.</p>
+  <div class="card">
+    <div class="ptr-demo">
+      <div class="ptr-box stack"><div class="lab">포인터 변수 <code style="font-family:ui-monospace,monospace">p</code> (지역변수)</div><div class="cell">p = 0x7ff…</div><div class="lab" style="margin-top:6px;color:var(--stack)">Stack</div></div>
+      <div class="ptr-arrow">→</div>
+      <div class="ptr-box heap"><div class="lab">가리키는 대상 <code style="font-family:ui-monospace,monospace">*p</code></div><div class="cell">42</div><div class="lab" style="margin-top:6px;color:var(--heap)">Heap</div></div>
+    </div>
+    <p class="hint" style="text-align:center">함수가 끝나면 <b style="color:var(--stack)">p</b>는 사라지지만 <b style="color:var(--heap)">Heap의 42</b>는 그대로 남는다. <code style="font-family:ui-monospace,monospace;color:var(--cyan)">delete</code>로 풀지 않으면 → <b style="color:var(--red)">메모리 누수</b>.</p>
+  </div>
+</div></section>
+
+<!-- 4. 스택 오버플로 -->
+<section id="overflow"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 슬라이더 실험</div>
+  <h2 class="sec"><span class="n">4</span>스택 오버플로를 만들어보기</h2>
+  <p class="lead">함수를 호출할 때마다 스택 프레임이 쌓인다. 재귀 깊이를 늘려 스택 한도를 넘겨보자.</p>
+  <div class="card so-demo">
+    <div class="slabel"><span>재귀 호출 깊이</span><span id="soLab" style="font-family:ui-monospace,monospace;color:var(--cyan);font-weight:700">5</span></div>
+    <input type="range" id="soRange" min="1" max="20" value="5">
+    <div class="so-stack" id="soStack"><div class="so-limit"><b>스택 한도 (1~8MB)</b></div></div>
+    <div class="so-verdict" id="soVerdict"></div>
+    <p class="hint">스택 오버플로의 두 원인: <b>① 재귀가 너무 깊음</b>, <b>② 함수 안에 너무 큰 지역 배열</b>(<code style="font-family:ui-monospace,monospace;color:var(--cyan)">FVertex v[100000]</code>). 큰 데이터는 Heap(TArray·new)에 잡아야 한다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 같은 exe 2번 -->
+<section id="dup"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 격리와 공유</div>
+  <h2 class="sec"><span class="n">5</span>같은 exe를 2번 띄우면?</h2>
+  <p class="lead">각자 독립된 주소 공간을 갖는다. Stack·Heap·Data·BSS는 따로지만, 읽기 전용인 <b style="color:var(--text)">Text(코드)</b>는 OS가 물리적으로 공유시켜 RAM을 아낀다.</p>
+  <div class="card">
+    <div class="dup">
+      <div class="proc"><h4>🎮 프로세스 A (MyGame.exe)</h4>
+        <div class="seg2 indep">Stack — A 것</div><div class="seg2 indep">Heap — A 것</div>
+        <div class="seg2 indep">BSS/Data — A 것</div><div class="seg2 shared">Text — 공유 ♻</div></div>
+      <div class="proc"><h4>🎮 프로세스 B (같은 exe)</h4>
+        <div class="seg2 indep">Stack — B 것</div><div class="seg2 indep">Heap — B 것</div>
+        <div class="seg2 indep">BSS/Data — B 것</div><div class="seg2 shared">Text — 공유 ♻</div></div>
+    </div>
+    <p class="hint" style="text-align:center">A의 전역변수 변경은 B에 안 보인다(다른 주소 공간). 단, 스레드는 다르다 — 같은 프로세스의 스레드들은 Heap·Data를 <b>공유</b>한다(4강).</p>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_프로세스_vs_스레드.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">4강 — 프로세스 vs 스레드 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 3강</div>
+</div></footer>
+
+<script>
+/* 2. 변수 배치기 */
+(function(){
+  var lines=[
+    {code:'int g_Counter = <span class="cm">0;</span>',segs:['data'],ex:'<b>g_Counter</b> — 초기값이 있는 전역변수 → <b style="color:var(--data)">Data</b> 영역.'},
+    {code:'int g_Buffer[1000];',segs:['bss'],ex:'<b>g_Buffer</b> — 초기화 안 된 전역 배열 → <b style="color:var(--bss)">BSS</b>. 프로그램 시작 시 OS가 0으로 채운다. exe 용량은 거의 안 먹음.'},
+    {code:'void Tick() <span class="cm">{ ... }</span>',segs:['text'],ex:'함수의 <b>기계어 코드</b> → <b style="color:var(--text)">Text</b> 영역. 읽기 전용.'},
+    {code:'  int Local = <span class="cm">10;</span>',segs:['stack'],ex:'<b>Local</b> — 함수 안 지역변수 → <b style="color:var(--stack)">Stack</b>. 함수 끝나면 자동 해제.'},
+    {code:'  static int s_Calls = <span class="cm">0;</span>',segs:['data'],ex:'<b>s_Calls</b> — static은 지역에 있어도 <b style="color:var(--data)">Data</b>(또는 BSS). Stack 아님! 함수가 끝나도 값이 유지된다.'},
+    {code:'  auto* Arr = new TArray&lt;int&gt;();',segs:['stack','heap'],ex:'<b>Arr</b>(포인터)는 <b style="color:var(--stack)">Stack</b>, <b>new로 만든 객체</b>는 <b style="color:var(--heap)">Heap</b>. 내부 버퍼도 Heap.'},
+    {code:'  FVector V(1,2,3);',segs:['stack'],ex:'<b>V</b> — USTRUCT 값 타입 지역변수 → <b style="color:var(--stack)">Stack</b>.'}
+  ];
+  var col=document.getElementById('codeCol'),explain=document.getElementById('explain');
+  var segEls={};document.querySelectorAll('.seg').forEach(function(s){segEls[s.dataset.seg]=s;});
+  function clearSegs(){for(var k in segEls)segEls[k].classList.remove('lit');}
+  lines.forEach(function(l){
+    var d=document.createElement('div');d.className='codeln';d.innerHTML=l.code;
+    d.addEventListener('click',function(){
+      document.querySelectorAll('.codeln').forEach(function(e){e.classList.remove('act');});
+      d.classList.add('act');clearSegs();
+      l.segs.forEach(function(s){segEls[s].classList.add('lit');});
+      explain.innerHTML=l.ex;
+    });
+    col.appendChild(d);
+  });
+})();
+
+/* 4. 스택 오버플로 */
+(function(){
+  var range=document.getElementById('soRange'),lab=document.getElementById('soLab');
+  var stack=document.getElementById('soStack'),verdict=document.getElementById('soVerdict');
+  var LIMIT=11; // 프레임 개수 한도(시각적)
+  function update(){
+    var n=+range.value;lab.textContent=n;
+    // 기존 프레임 제거(limit 라인 제외)
+    [].slice.call(stack.querySelectorAll('.so-frame')).forEach(function(e){e.remove();});
+    var over=n>LIMIT;
+    var show=Math.min(n,16);
+    for(var i=0;i<show;i++){
+      var f=document.createElement('div');f.className='so-frame';
+      if(over&&i>=LIMIT)f.style.background='linear-gradient(90deg,var(--red),var(--orange))';
+      stack.appendChild(f);
+    }
+    if(over)verdict.innerHTML='<span style="color:var(--red)">💥 STACK OVERFLOW</span> — 한도를 넘어 크래시!';
+    else if(n>=LIMIT-2)verdict.innerHTML='<span style="color:var(--amber)">⚠ 한도에 근접</span>';
+    else verdict.innerHTML='<span style="color:var(--grn)">정상</span> — 프레임 '+n+'개 쌓임';
+  }
+  range.addEventListener('input',update);update();
+})();
+
+/* 6. 오해 */
+(function(){
+  var data=[
+    {q:'"전역 변수는 무조건 Data 영역"',a:'초기화 여부로 갈린다. 초기값 있으면 <b class="truth">Data</b>, 없으면 <b class="truth">BSS</b>. BSS는 exe 용량을 거의 안 먹는다(크기만 기록).'},
+    {q:'"Stack이 Heap보다 무조건 빠르다"',a:'Stack <b class="truth">할당/해제</b>가 거의 공짜인 건 맞다. 하지만 이미 할당된 메모리를 <b class="truth">읽고 쓰는 속도는 같다</b>. 빠른 건 접근이 아니라 할당.'},
+    {q:'"Heap에 할당하면 OS가 알아서 정리"',a:'프로세스가 <b class="truth">종료될 때</b>만 회수한다. 살아있는 동안은 안 풀어줘서 누수가 생긴다. 일반 <code>new</code>는 직접 <code>delete</code>, 언리얼 UObject는 GC가 관리.'},
+    {q:'"스택 오버플로 = 힙 부족"',a:'전혀 다르다. <b class="truth">스택 오버플로</b>는 호출 너무 깊거나 큰 지역변수(1~8MB 한도). <b class="truth">힙 부족(OOM)</b>은 new를 너무 많이 한 것.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'프로세스의 메모리 구조를 설명해보세요.',a:'5개 영역입니다. <b>Text</b>(코드, 읽기 전용), <b>Data</b>(초기화된 전역), <b>BSS</b>(초기화 안 된 전역, 0으로 채워짐), <b>Heap</b>(동적 할당, 아래→위), <b>Stack</b>(함수 호출·지역변수, 위→아래).'},
+    {q:'Stack과 Heap의 차이는?',a:'Stack은 함수 호출 시 자동 할당/해제, 비용 거의 0, 크기 제한 1~8MB. Heap은 <code style="font-family:monospace">new</code>로 명시적 할당/해제, 비용 있고 크기는 시스템 메모리만큼 큽니다.'},
+    {q:'같은 프로그램을 두 번 실행하면?',a:'프로세스 2개가 각자 독립 가상 주소 공간을 갖습니다. Stack/Heap/Data/BSS는 별개고, <b>Text(코드)</b>는 읽기 전용이라 OS가 물리 메모리를 공유시킬 수 있습니다.'},
+    {q:'int* p = new int(5); 에서 p와 5는?',a:'지역 변수 <b>p</b>는 Stack, new로 할당한 <b>5</b>는 Heap입니다. 함수가 끝나면 p는 사라지지만 Heap의 5는 남아 누수가 되므로 <code style="font-family:monospace">delete</code>해야 합니다.'},
+    {q:'스택 오버플로는 언제 발생하나요?',a:'재귀가 너무 깊거나 함수 안에 너무 큰 지역 배열을 선언했을 때입니다. 스택은 1~8MB로 제한되어, 프레임이 계속 쌓여 한도를 넘으면 크래시가 납니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['Text/Data/BSS/Heap/Stack 5개 영역을 그리고 설명할 수 있다','지역/전역(초기화 O·X)/new 객체가 각각 어느 영역인지 안다','포인터 변수와 가리키는 대상이 다른 영역일 수 있다는 걸 안다','스택 오버플로의 원인을 두 가지 댈 수 있다','큰 배열을 지역변수로 만들면 안 되는 이유를 안다'];
+  var KEY='os03-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

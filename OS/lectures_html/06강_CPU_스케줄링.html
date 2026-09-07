@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6강 · CPU 스케줄링과 컨텍스트 스위칭 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --p1:#22d3ee;--p2:#a855f7;--p3:#fbbf24;--p4:#34d399;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--ind),var(--cyan))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800}nav .logo b{color:var(--ind2)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--ind);border-color:var(--ind)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(99,102,241,.2),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--ind2);background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--ind2),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--ind2);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--ind2);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 프로세스 표 */
+.ptable{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}
+.ptable th,.ptable td{border:1px solid var(--line);padding:8px;text-align:center}
+.ptable th{background:var(--card2);color:var(--dim);font-size:12px}
+.ptable .pdot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* 알고리즘 선택 */
+.algo-pick{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.algo-pick button{font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;padding:9px 16px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.algo-pick button:hover{border-color:var(--ind);color:var(--txt)}
+.algo-pick button.on{background:var(--ind);color:#fff;border-color:var(--ind)}
+
+/* 간트차트 */
+.gantt{margin-top:22px}
+.gantt .axis{display:flex;font-family:ui-monospace,monospace;font-size:10px;color:var(--faint);margin-top:4px}
+.gantt-track{display:flex;height:46px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--bg2)}
+.gblock{height:100%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#04102a;border-right:1px solid rgba(0,0,0,.25);transition:width .2s;white-space:nowrap;overflow:hidden}
+.gantt-stats{display:flex;gap:12px;justify-content:center;margin-top:16px;flex-wrap:wrap}
+.gstat{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:10px 18px;text-align:center}
+.gstat .v{font-size:22px;font-weight:800;font-family:ui-monospace,monospace;color:var(--cyan)}
+.gstat .k{font-size:11px;color:var(--dim)}
+.algo-note{text-align:center;margin-top:14px;font-size:14px;color:var(--dim);min-height:22px}
+.cmpbars{margin-top:18px;display:none}
+.cmpbars .row{display:flex;align-items:center;gap:10px;margin-top:8px}
+.cmpbars .row .l{width:70px;font-size:13px;font-weight:700}
+.cmpbars .row .tr{flex:1;height:24px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.cmpbars .row .tr i{display:block;height:100%;width:0;transition:.6s;border-radius:6px;background:linear-gradient(90deg,var(--ind),var(--cyan));display:flex;align-items:center;justify-content:flex-end;padding-right:8px;font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:#04102a}
+
+/* 스레드 상태 */
+.states{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:6px;align-items:center}
+.stnode{padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card2);text-align:center;font-weight:700;font-size:13px}
+.stnode .en{font-size:10px;color:var(--faint);font-family:ui-monospace,monospace;display:block;margin-top:2px}
+.stnode.ready{border-color:var(--cyan)}.stnode.run{border-color:var(--grn)}.stnode.wait{border-color:var(--amber)}.stnode.term{border-color:var(--faint)}
+.starr{color:var(--faint);font-size:18px}
+
+/* 스레드 수 슬라이더 */
+.thr-demo .slabel{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:8px}
+.thr-demo input[type=range]{width:100%;accent-color:var(--ind);height:6px}
+.thr-bar{margin-top:18px;height:36px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);overflow:hidden;position:relative}
+.thr-bar i{display:block;height:100%;width:0;transition:.2s;border-radius:9px;display:flex;align-items:center;padding-left:12px;font-size:13px;font-weight:700;color:#04102a}
+.thr-bar .core-line{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--cyan)}
+.thr-bar .core-line b{position:absolute;top:-20px;left:6px;font-size:11px;color:var(--cyan);white-space:nowrap}
+.thr-verdict{margin-top:16px;text-align:center;font-size:15px;font-weight:600;min-height:24px}
+
+/* 오해/면접/체크 공통 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:220px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--ind2);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#15193a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--ind);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--ind2)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:240px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>6강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#gantt">스케줄링</a>
+    <a class="chip" href="#state">상태</a>
+    <a class="chip" href="#switch">스위칭 비용</a>
+    <a class="chip" href="#inv">우선순위 역전</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 프로세스와 스레드</span>
+  <h1>CPU 스케줄링과 <span class="g">컨텍스트 스위칭</span></h1>
+  <p class="sub">16코어로 어떻게 200개 스레드를 굴릴까? 스케줄링 알고리즘을 직접 돌려 간트차트로 비교하고, 스레드를 몇 개 만들어야 빠른지 슬라이더로 찾는다.</p>
+  <div class="meta">
+    <div class="m">📊 FCFS · RR · Priority</div>
+    <div class="m">🧩 선수지식 <b>4~5강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 착시</div>
+  <h2 class="sec"><span class="n">1</span>동시에 도는 것처럼 보이는 마술</h2>
+  <p class="lead">CPU 코어 1개는 한 순간에 명령어 하나만 처리한다. 그런데 게임·디스코드·크롬·VS… 200개 프로세스가 동시에 도는 것처럼 보인다. 어떻게?</p>
+  <div class="card">
+    <p style="text-align:center;font-size:16px">답: OS가 <b class="tagline">빠르게 스레드를 갈아끼우면서</b> "지금 0.01ms는 너, 다음은 너" 하고 돌린다. 우리 눈엔 동시처럼 보일 뿐.</p>
+    <p style="text-align:center;margin-top:12px;color:var(--dim);font-size:14px">그 "누구를 먼저, 얼마나" 정하는 규칙이 <b>스케줄링 알고리즘</b>이다. ↓ 직접 돌려보자.</p>
+  </div>
+</div></section>
+
+<!-- 2. 간트차트 -->
+<section id="gantt"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 시뮬레이터</div>
+  <h2 class="sec"><span class="n">2</span>스케줄링 간트차트 — 알고리즘별 비교</h2>
+  <p class="lead">프로세스 4개(모두 시각 0에 도착)를 같은 조건으로 <b>FCFS·RR·Priority</b>에 돌린다. 누가 먼저 끝나고 평균 대기시간이 어떻게 달라지는지 보자.</p>
+  <div class="card">
+    <table class="ptable">
+      <thead><tr><th>프로세스</th><th>실행 시간(버스트)</th><th>우선순위</th></tr></thead>
+      <tbody>
+        <tr><td><span class="pdot" style="background:var(--p1)"></span>P1</td><td>5</td><td>3</td></tr>
+        <tr><td><span class="pdot" style="background:var(--p2)"></span>P2</td><td>3</td><td>1 (최고)</td></tr>
+        <tr><td><span class="pdot" style="background:var(--p3)"></span>P3</td><td>6</td><td>4 (최저)</td></tr>
+        <tr><td><span class="pdot" style="background:var(--p4)"></span>P4</td><td>2</td><td>2</td></tr>
+      </tbody>
+    </table>
+    <div class="algo-pick" id="algoPick">
+      <button data-a="FCFS" class="on">FCFS</button>
+      <button data-a="RR">Round Robin (q=2)</button>
+      <button data-a="PRIO">Priority</button>
+    </div>
+    <div class="gantt">
+      <div class="gantt-track" id="ganttTrack"></div>
+      <div class="axis" id="ganttAxis"></div>
+    </div>
+    <div class="gantt-stats">
+      <div class="gstat"><div class="v" id="avgWait">–</div><div class="k">평균 대기시간</div></div>
+      <div class="gstat"><div class="v" id="totalTime">–</div><div class="k">총 완료 시간</div></div>
+      <div class="gstat"><div class="v" id="switchCount">–</div><div class="k">컨텍스트 스위칭</div></div>
+    </div>
+    <div class="algo-note" id="algoNote"></div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn grn" id="cmpBtn">📊 평균 대기시간 3개 비교</button>
+    </div>
+    <div class="cmpbars" id="cmpBars">
+      <div class="row"><div class="l">FCFS</div><div class="tr"><i></i></div></div>
+      <div class="row"><div class="l">RR</div><div class="tr"><i></i></div></div>
+      <div class="row"><div class="l">Priority</div><div class="tr"><i></i></div></div>
+    </div>
+    <p class="hint">RR은 응답성이 좋지만 스위칭이 잦고, Priority는 평균 대기를 줄이지만 낮은 우선순위가 굶을 수 있다(Starvation). 현대 OS는 이들을 섞어 쓴다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 스레드 상태 -->
+<section id="state"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 상태 머신</div>
+  <h2 class="sec"><span class="n">3</span>스레드의 4가지 상태</h2>
+  <p class="lead">스레드는 항상 한 상태에 있다. 타임슬라이스를 다 쓰면 Ready로, I/O나 락을 기다리면 Waiting으로 간다.</p>
+  <div class="card">
+    <div class="states">
+      <div class="stnode ready">Ready<span class="en">돌 준비됨</span></div>
+      <span class="starr">⇄</span>
+      <div class="stnode run">Running<span class="en">CPU 점유</span></div>
+      <span class="starr">→</span>
+      <div class="stnode wait">Waiting<span class="en">I/O·락 대기</span></div>
+      <span class="starr">→</span>
+      <div class="stnode term">Terminated<span class="en">종료</span></div>
+    </div>
+    <p class="hint" style="text-align:center">Running→Ready(타임슬라이스 소진) · Running→Waiting(I/O 시작) · Waiting→Ready(I/O 완료). 언리얼 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">WaitForCompletion()</code>이 Waiting으로 보내는 예.</p>
+  </div>
+</div></section>
+
+<!-- 4. 스레드 수 슬라이더 -->
+<section id="switch"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 슬라이더 실험</div>
+  <h2 class="sec"><span class="n">4</span>스레드를 몇 개 만들어야 빠를까</h2>
+  <p class="lead">"스레드 100개면 100배 빠르겠지?" 아니다. 코어는 16개. 슬라이더로 스레드 수를 늘리며 실효 처리량을 보자.</p>
+  <div class="card thr-demo">
+    <div class="slabel"><span>만든 스레드 수</span><span id="thrLab" style="font-family:ui-monospace,monospace;color:var(--ind2);font-weight:700">16개</span></div>
+    <input type="range" id="thrRange" min="1" max="128" value="16">
+    <div class="thr-bar">
+      <i id="thrBar"></i>
+      <div class="core-line" style="left:12.5%"><b>코어 16개</b></div>
+    </div>
+    <div class="thr-verdict" id="thrVerdict"></div>
+    <p class="hint">CPU 바운드 작업은 <b>코어 수 ≈ 최적</b>. 그 이상은 컨텍스트 스위칭(레지스터 저장/복원 + 캐시·TLB 식음)만 늘어 오히려 느려진다. 그래서 언리얼 TaskGraph는 코어 수에 맞춰 워커를 만든다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 우선순위 역전 -->
+<section id="inv"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 면접 단골</div>
+  <h2 class="sec"><span class="n">5</span>우선순위 역전 (Priority Inversion)</h2>
+  <div class="card">
+    <pre><span class="c">우선순위:  H &gt; M &gt; L</span>
+L 이 락을 잡음  →  H 가 그 락을 기다림 (H 멈춤)
+M 이 깨어남     →  L 보다 우선순위 높아 M 이 CPU 차지
+L 이 못 돌아 락 해제 못 함  →  <span class="t">H 가 M 때문에 무한 대기</span> 😱</pre>
+    <p style="margin-top:14px"><b style="color:var(--grn)">해결 — Priority Inheritance:</b> L이 H가 기다리는 락을 잡는 동안, L의 우선순위를 일시적으로 H 수준으로 올려 M이 못 끼어들게 한다.</p>
+    <p class="hint">💡 실화: 1997년 화성 탐사선 Pathfinder가 이 문제로 계속 리셋됐다. 우선순위 상속을 켜는 패치로 해결.</p>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="07강_Race_Condition.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">7강 — Race Condition과 임계영역 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 6강</div>
+</div></footer>
+
+<script>
+/* 2. 간트차트 시뮬 */
+var PROCS=[{id:'P1',burst:5,prio:3,c:'var(--p1)'},{id:'P2',burst:3,prio:1,c:'var(--p2)'},{id:'P3',burst:6,prio:4,c:'var(--p3)'},{id:'P4',burst:2,prio:2,c:'var(--p4)'}];
+function colorOf(id){return PROCS.filter(function(p){return p.id===id;})[0].c;}
+function simulate(algo){
+  var blocks=[],t=0,switches=0;
+  var finish={};
+  if(algo==='FCFS'){
+    PROCS.forEach(function(p){blocks.push({id:p.id,start:t,len:p.burst});t+=p.burst;finish[p.id]=t;});
+    switches=PROCS.length-1;
+  }else if(algo==='PRIO'){
+    var sorted=PROCS.slice().sort(function(a,b){return a.prio-b.prio;});
+    sorted.forEach(function(p){blocks.push({id:p.id,start:t,len:p.burst});t+=p.burst;finish[p.id]=t;});
+    switches=PROCS.length-1;
+  }else{ // RR q=2
+    var q=2, rem={}, queue=PROCS.map(function(p){return p.id;});
+    PROCS.forEach(function(p){rem[p.id]=p.burst;});
+    var last=null;
+    while(queue.length){
+      var id=queue.shift();var run=Math.min(q,rem[id]);
+      blocks.push({id:id,start:t,len:run});t+=run;rem[id]-=run;
+      if(last!==null)switches++;last=id;
+      if(rem[id]>0)queue.push(id);else finish[id]=t;
+    }
+  }
+  // 평균 대기 = 완료시각 - 버스트 (도착 0 가정), 합/4
+  var totalWait=0;PROCS.forEach(function(p){totalWait+=(finish[p.id]-p.burst);});
+  return {blocks:blocks,total:t,avgWait:(totalWait/PROCS.length),switches:switches};
+}
+(function(){
+  var track=document.getElementById('ganttTrack'),axis=document.getElementById('ganttAxis');
+  var avgWait=document.getElementById('avgWait'),totalTime=document.getElementById('totalTime'),switchCount=document.getElementById('switchCount');
+  var note=document.getElementById('algoNote');
+  var algo='FCFS';
+  var notes={FCFS:'먼저 온 순서대로 끝까지. 단순하지만 긴 작업이 앞에 오면 뒤가 한참 기다린다(Convoy Effect).',
+    RR:'타임슬라이스 2씩 돌아가며. 응답성↑, 대신 스위칭 횟수가 많아진다.',
+    PRIO:'우선순위 높은(숫자 작은) 순. 평균 대기는 줄지만 P3(최저)가 가장 오래 기다린다.'};
+  function render(){
+    var r=simulate(algo);var unit=100/r.total;
+    track.innerHTML='';r.blocks.forEach(function(b){
+      var d=document.createElement('div');d.className='gblock';d.style.background=colorOf(b.id);d.style.width='0';
+      d.textContent=b.len>=1?b.id:'';track.appendChild(d);
+      setTimeout(function(){d.style.width=(b.len*unit)+'%';},30);
+    });
+    axis.innerHTML='';for(var i=0;i<=r.total;i++){var a=document.createElement('div');a.style.width=unit+'%';a.textContent=i%2===0?i:'';axis.appendChild(a);}
+    avgWait.textContent=r.avgWait.toFixed(2);totalTime.textContent=r.total;switchCount.textContent=r.switches+'회';
+    note.textContent=notes[algo];
+  }
+  document.querySelectorAll('#algoPick button').forEach(function(b){
+    b.addEventListener('click',function(){document.querySelectorAll('#algoPick button').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on');algo=b.dataset.a;render();});
+  });
+  document.getElementById('cmpBtn').addEventListener('click',function(){
+    var box=document.getElementById('cmpBars');box.style.display='block';
+    var res={FCFS:simulate('FCFS').avgWait,RR:simulate('RR').avgWait,PRIO:simulate('PRIO').avgWait};
+    var max=Math.max(res.FCFS,res.RR,res.PRIO);
+    var rows=box.querySelectorAll('.row i');
+    rows[0].style.width=(res.FCFS/max*100)+'%';rows[0].textContent=res.FCFS.toFixed(2);
+    rows[1].style.width=(res.RR/max*100)+'%';rows[1].textContent=res.RR.toFixed(2);
+    rows[2].style.width=(res.PRIO/max*100)+'%';rows[2].textContent=res.PRIO.toFixed(2);
+  });
+  render();
+})();
+
+/* 4. 스레드 수 슬라이더 */
+(function(){
+  var CORES=16, range=document.getElementById('thrRange'),lab=document.getElementById('thrLab');
+  var bar=document.getElementById('thrBar'),verdict=document.getElementById('thrVerdict');
+  function update(){
+    var n=+range.value;lab.textContent=n+'개';
+    // 실효 처리량 모델: 코어까지 선형 증가, 이후 스위칭 오버헤드로 하락
+    var base=Math.min(n,CORES);
+    var overhead=n>CORES?(n-CORES)*0.015:0; // 초과 스레드당 1.5% 손실
+    var eff=base*(1-overhead);if(eff<base*0.3)eff=base*0.3;
+    var peak=CORES; var pct=eff/peak*100;
+    bar.style.width=Math.max(8,pct)+'%';
+    var good=Math.abs(n-CORES)<=2;
+    bar.style.background=n<=CORES?'linear-gradient(90deg,var(--grn),var(--cyan))':(n<=CORES*2?'linear-gradient(90deg,var(--cyan),var(--amber))':'linear-gradient(90deg,var(--amber),var(--red))');
+    bar.textContent='실효 처리량 '+eff.toFixed(1);
+    if(n<CORES)verdict.innerHTML='<span style="color:var(--amber)">코어가 남는다</span> — '+(CORES-n)+'개 코어가 놀고 있음';
+    else if(good)verdict.innerHTML='<span style="color:var(--grn)">최적 ✓</span> 코어 수에 맞춰 거의 다 활용';
+    else if(n<=CORES*2)verdict.innerHTML='<span style="color:var(--amber)">과잉</span> 스위칭 오버헤드가 슬슬 발생';
+    else verdict.innerHTML='<span style="color:var(--red)">스위칭 지옥</span> — 처리량이 오히려 떨어진다';
+  }
+  range.addEventListener('input',update);update();
+})();
+
+/* 6. 오해 */
+(function(){
+  var data=[
+    {q:'"코어 수보다 스레드를 많이 만들면 더 빠르다"',a:'명확한 NO. CPU 바운드면 <b class="truth">코어 수 = 최적</b>. 그 이상은 컨텍스트 스위칭만 늘어 느려진다. I/O 바운드면 약간 더 만드는 게 좋지만 100배는 금물.'},
+    {q:'"Sleep(0)은 아무것도 안 한다"',a:'Windows에서 <code>Sleep(0)</code>은 "동등한 우선순위의 다른 Ready 스레드가 있으면 <b class="truth">양보</b>"의 의미다. 흔한 트릭이지만 권장하지 않음.'},
+    {q:'"컨텍스트 스위칭은 OS만의 문제다"',a:'스위칭 후 <b class="truth">캐시·TLB가 식어</b> 그 다음 우리 코드가 느려지는 게 진짜 비용. 게임 성능에 직접 영향을 준다.'},
+    {q:'"Game Thread는 OS가 무조건 빠르게 돌려준다"',a:'OS는 Game Thread가 뭔지 모른다. 우선순위만 높게 설정됐을 뿐, <b class="truth">더 높은 우선순위 프로세스(안티치트·백신·윈도 업데이트)</b>가 있으면 밀린다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'컨텍스트 스위칭이 뭔가요?',a:'OS가 CPU에서 도는 스레드를 다른 스레드로 바꾸는 동작입니다. 현재 스레드의 레지스터를 <b>TCB</b>에 저장하고 새 스레드 것을 복원합니다. 다른 프로세스로 바꾸면 페이지 테이블·TLB도 교체해 더 비쌉니다.'},
+    {q:'컨텍스트 스위칭 비용이 왜 큰가요?',a:'직접 비용(레지스터 저장/복원)보다 <b>간접 비용</b>이 큽니다. 스위칭 후 캐시·TLB가 식어 한동안 캐시 미스가 쏟아져 느려집니다.'},
+    {q:'스레드를 코어 수보다 훨씬 많이 만들면?',a:'동시 실행은 코어 수만큼이고 나머지는 Ready 큐에서 대기합니다. 스위칭이 잦아져 오버헤드↑·캐시 효율↓. CPU 바운드는 <b>코어 수만큼</b>이 최적이라 스레드 풀을 씁니다.'},
+    {q:'스레드 상태들을 설명해보세요.',a:'<b>Ready</b>(CPU 대기), <b>Running</b>(실행 중), <b>Waiting</b>(I/O·락 대기), <b>Terminated</b>(종료). 타임슬라이스 소진→Ready, I/O 시작→Waiting, I/O 완료→Ready.'},
+    {q:'우선순위 역전이 뭔가요?',a:'낮은 우선순위가 락을 쥔 채 높은 우선순위가 그 락을 기다리는데, 중간 우선순위가 CPU를 차지해 낮은 게 못 돌고 결국 높은 게 무한 대기하는 현상. <b>Priority Inheritance</b>로 해결합니다.'},
+    {q:'Round Robin이 뭔가요?',a:'각 스레드에 같은 크기 타임슬라이스를 주고 돌아가며 CPU를 할당하는 방식. 공정성·응답성이 좋아 대부분의 OS가 우선순위 스케줄링과 결합해 씁니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['스레드의 4가지 상태와 전이 조건을 안다','컨텍스트 스위칭의 직접/간접 비용을 구분해 설명할 수 있다','스레드를 코어 수보다 훨씬 많이 만들면 안 되는 이유를 안다','Round Robin·Priority가 뭔지 한 문장으로 말할 수 있다','우선순위 역전과 해결책(Priority Inheritance)을 안다'];
+  var KEY='os06-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

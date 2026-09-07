@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>운영체제 강의 · 언리얼 C++ 클라 개발자용</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:960px;margin:0 auto;padding:0 20px}
+
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--cyan),var(--ind),var(--pur))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--ind2)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--ind);border-color:var(--ind)}
+
+header.hero{padding:110px 0 40px;position:relative;overflow:hidden;text-align:center}
+header.hero::before{content:"";position:absolute;top:-140px;left:50%;transform:translateX(-50%);width:800px;height:460px;background:radial-gradient(ellipse,rgba(99,102,241,.22),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--ind2);background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(32px,6vw,52px);line-height:1.14;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--cyan),var(--ind2),var(--pur));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin:18px auto 0;max-width:600px}
+
+/* 전체 진행 */
+.overall{max-width:560px;margin:30px auto 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:var(--shadow)}
+.overall .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.overall .top .t{font-size:14px;font-weight:700}
+.overall .top .n{font-family:ui-monospace,monospace;font-size:13px;color:var(--dim)}
+.overall .pbar{height:12px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.overall .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--grn));transition:1s}
+.overall .stats{display:flex;gap:20px;justify-content:center;margin-top:16px;font-size:13px;color:var(--dim);flex-wrap:wrap}
+.overall .stats b{color:var(--txt);font-family:ui-monospace,monospace}
+
+/* 파트 */
+.part{padding:36px 0 8px;border-top:1px solid var(--line);margin-top:24px}
+.part:first-of-type{border-top:none}
+.part-head{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.part-head .pill{font-size:12px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:.03em}
+.part-head h2{font-size:20px;font-weight:800;letter-spacing:-.01em}
+.part-head .desc{font-size:13px;color:var(--faint);margin-left:auto;text-align:right}
+.p1 .pill{background:rgba(34,211,238,.15);color:var(--cyan)}
+.p2 .pill{background:rgba(99,102,241,.15);color:var(--ind2)}
+.p3 .pill{background:rgba(248,113,113,.15);color:var(--red)}
+.p4 .pill{background:rgba(251,191,36,.15);color:var(--amber)}
+.p5 .pill{background:rgba(52,211,153,.15);color:var(--grn)}
+.pb .pill{background:rgba(168,85,247,.15);color:var(--pur)}
+
+.lecs{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px;margin-top:14px}
+.lec{display:block;text-decoration:none;color:inherit;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;transition:.2s;position:relative;overflow:hidden}
+.lec.live{cursor:pointer}
+.lec.live:hover{border-color:var(--accent,var(--ind));transform:translateY(-3px);box-shadow:var(--shadow)}
+.lec.soon{opacity:.62;cursor:default}
+.lec .num{font-family:ui-monospace,monospace;font-size:12px;color:var(--faint);font-weight:700}
+.lec h3{font-size:16px;margin-top:6px;letter-spacing:-.01em}
+.lec .one{font-size:12.5px;color:var(--dim);margin-top:8px;min-height:34px}
+.lec .foot{display:flex;align-items:center;gap:8px;margin-top:12px}
+.lec .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px}
+.lec .badge.live{background:var(--accent,var(--ind));color:#fff}
+.lec .badge.doc{background:var(--card2);color:var(--faint);border:1px solid var(--line)}
+.lec .badge.killer{background:rgba(251,191,36,.16);color:var(--amber);border:1px solid rgba(251,191,36,.35)}
+.lec .arrow{margin-left:auto;color:var(--faint);font-size:16px;transition:.2s}
+.lec.live:hover .arrow{color:var(--accent,var(--ind));transform:translateX(3px)}
+.lec .prog{margin-top:12px}
+.lec .prog .mini{height:6px;background:var(--bg2);border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.lec .prog .mini i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.6s}
+.lec .prog .lbl{font-size:10.5px;color:var(--faint);margin-top:4px;text-align:right;font-family:ui-monospace,monospace}
+.lec .done-flag{position:absolute;top:12px;right:12px;font-size:12px;color:var(--grn);display:none}
+.lec.complete .done-flag{display:block}
+.lec.complete{border-color:rgba(52,211,153,.4)}
+
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center;margin-top:40px}
+footer .cap{color:var(--faint);font-size:13px}
+footer .reset{margin-top:14px;font-size:12px;color:var(--faint);background:none;border:1px solid var(--line);padding:6px 14px;border-radius:8px;cursor:pointer}
+footer .reset:hover{border-color:var(--red);color:var(--red)}
+
+@media(max-width:600px){.part-head .desc{display:none}header.hero{padding:90px 0 30px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS <b>강의</b></div>
+  <div class="chips">
+    <a class="chip" href="#p1">기초</a>
+    <a class="chip" href="#p2">프로세스</a>
+    <a class="chip" href="#p3">동시성</a>
+    <a class="chip" href="#p4">메모리</a>
+    <a class="chip" href="#p5">I/O</a>
+    <a class="chip" href="#pb">보너스</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">언리얼 C++ 클라이언트 개발자를 위한</span>
+  <h1>운영체제 <span class="g">강의 시리즈</span></h1>
+  <p class="sub">게임 개발 상황으로 배우는 CS — 직접 눌러보고, 시뮬레이션하고, 면접 답변까지. 본강 15강 + 보너스.</p>
+  <div class="overall">
+    <div class="top"><span class="t">전체 학습 진행</span><span class="n" id="ovNum">0%</span></div>
+    <div class="pbar"><i id="ovBar"></i></div>
+    <div class="stats">
+      <span>인터랙티브 <b id="ovLive">6</b> / 16강</span>
+      <span>셀프체크 <b id="ovCheck">0</b> 항목 완료</span>
+    </div>
+  </div>
+</div></header>
+
+<div class="wrap" id="grid"></div>
+
+<footer><div class="wrap">
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 이직 대비 CS 복습</div>
+  <button class="reset" id="resetAll">학습 진행 기록 초기화</button>
+</div></footer>
+
+<script>
+var PARTS=[
+  {id:'p1',cls:'p1',pill:'PART 1',title:'OS 기초',desc:'OS가 뭘 하는 놈인지',accent:'var(--cyan)',lecs:[
+    {n:1,t:'운영체제란 무엇인가',one:'OS가 왜 필요한가. 시스템 콜의 여정을 따라가본다.',file:'01강_운영체제란.html',killer:'시스템 콜 여정',checks:4,key:'os01-check'},
+    {n:2,t:'커널/유저 모드, 시스템 콜',one:'권한 차단을 직접 시도하고 mode switch 비용을 비교한다.',file:'02강_커널모드_유저모드_시스템콜.html',killer:'권한 체험·비용 비교',checks:4,key:'os02-check'},
+    {n:3,t:'프로세스의 메모리 구조',one:'코드 줄을 클릭해 변수가 사는 영역을 짚어본다.',file:'03강_프로세스_메모리구조.html',killer:'변수 배치기',checks:5,key:'os03-check'}
+  ]},
+  {id:'p2',cls:'p2',pill:'PART 2',title:'프로세스와 스레드',desc:'언리얼이 왜 멀티스레드인지',accent:'var(--ind)',lecs:[
+    {n:4,t:'프로세스 vs 스레드',one:'스레드·프로세스 메모리 공유를 직접 실험해본다.',file:'04강_프로세스_vs_스레드.html',killer:'메모리 공유 비교기',checks:5,key:'os04-check'},
+    {n:5,t:'언리얼의 스레드 구조',one:'Game·Render·RHI 파이프라인 병목을 직접 조절해본다.',file:'05강_언리얼의_스레드_구조.html',killer:'프레임 파이프라인 시뮬',checks:5,key:'os05-check'},
+    {n:6,t:'CPU 스케줄링·컨텍스트 스위칭',one:'FCFS/RR/Priority를 간트차트로 비교해본다.',file:'06강_CPU_스케줄링.html',killer:'스케줄링 간트차트',checks:5,key:'os06-check'}
+  ]},
+  {id:'p3',cls:'p3',pill:'PART 3',title:'동시성',desc:'면접에서 가장 많이 묻는 곳',accent:'var(--red)',lecs:[
+    {n:7,t:'Race Condition과 임계영역',one:'Counter++ 인터리빙을 명령 단위로 끼워 맞춰본다.',file:'07강_Race_Condition.html',killer:'인터리빙 현미경',checks:5,key:'os07-check'},
+    {n:8,t:'Mutex, Lock, Critical Section',one:'Mutex·RWLock·세마포어로 락 대기를 직접 돌려본다.',file:'08강_Mutex_Lock_CriticalSection.html',killer:'락 획득 시뮬레이터',checks:6,key:'os08-check'},
+    {n:9,t:'Atomic과 Lock-Free',one:'CAS 경쟁/재시도를 단계별로 보고 속도를 비교한다.',file:'09강_Atomic_LockFree.html',killer:'CAS 시뮬',checks:6,key:'os09-check'},
+    {n:10,t:'데드락 (Deadlock)',one:'락을 엇갈리게 잡아 교착을 만들고 토글로 푼다.',file:'10강_Deadlock.html',killer:'교착 재현기',checks:6,key:'os10-check'}
+  ]},
+  {id:'p4',cls:'p4',pill:'PART 4',title:'메모리 관리',desc:'성능 최적화의 근거',accent:'var(--amber)',lecs:[
+    {n:11,t:'가상 메모리와 페이징',one:'가상 주소를 직접 입력해 물리 주소로 변환해본다.',file:'11강_가상메모리와_페이징.html',killer:'주소 변환기·TLB',checks:7,key:'os11-check'},
+    {n:12,t:'페이지 폴트와 스왑',one:'FIFO/LRU/OPT를 돌려 폴트 수를 비교한다.',file:'12강_페이지폴트와_스왑.html',killer:'교체 알고리즘 시뮬',checks:7,key:'os12-check'},
+    {n:13,t:'캐시와 메모리 계층',one:'배열 vs 링크드리스트 순회를 레이스로 비교한다.',file:'13강_캐시와_메모리계층.html',killer:'순회 레이스',checks:6,key:'os13-check'}
+  ]},
+  {id:'p5',cls:'p5',pill:'PART 5',title:'I/O와 파일 시스템',desc:'비동기 로딩의 정체',accent:'var(--grn)',lecs:[
+    {n:14,t:'파일 시스템 기본',one:'경로를 입력해 파일 열기 과정을 직접 추적해본다.',file:'14강_파일시스템_기본.html',killer:'파일 열기 추적기',checks:7,key:'os14-check'},
+    {n:15,t:'블로킹/논블로킹/비동기 I/O',one:'블로킹·폴링·비동기를 프레임으로 직접 비교해본다.',file:'15강_블로킹_논블로킹_비동기IO.html',killer:'프레임 타임라인 비교',checks:7,key:'os15-check'}
+  ]},
+  {id:'pb',cls:'pb',pill:'BONUS',title:'면접 정리',desc:'',accent:'var(--pur)',lecs:[
+    {n:'★',t:'클라 개발자 OS 면접 BEST 20',one:'20문항 모범답변 + 꼬리질문 + 실전 시뮬레이터.',file:'보너스_OS면접질문_BEST20.html',killer:'면접 시뮬레이터',checks:20,key:'osbonus-check'}
+  ]}
+];
+
+var grid=document.getElementById('grid');
+var totalChecks=0, doneChecks=0;
+
+PARTS.forEach(function(p){
+  var sec=document.createElement('section');sec.className='part '+p.cls;sec.id=p.id;
+  var head='<div class="part-head"><span class="pill">'+p.pill+'</span><h2>'+p.title+'</h2>'+(p.desc?'<span class="desc">'+p.desc+'</span>':'')+'</div>';
+  var lecs='<div class="lecs">';
+  p.lecs.forEach(function(l){
+    var live=!!l.file;
+    var prog='';
+    if(live && l.checks){
+      var saved={};try{saved=JSON.parse(localStorage.getItem(l.key)||'{}');}catch(e){}
+      var d=Object.keys(saved).filter(function(k){return saved[k];}).length;
+      totalChecks+=l.checks;doneChecks+=Math.min(d,l.checks);
+      var pct=Math.round(d/l.checks*100);
+      var complete=d>=l.checks;
+      prog='<div class="prog"><div class="mini"><i style="width:'+pct+'%"></i></div><div class="lbl">셀프체크 '+d+'/'+l.checks+'</div></div>';
+      l._complete=complete;
+    }
+    var badges='';
+    if(live){badges+='<span class="badge live">▶ 인터랙티브</span>';if(l.killer)badges+='<span class="badge killer">⚡ '+l.killer+'</span>';}
+    else{badges+='<span class="badge doc">문서 강의</span>';}
+    var cls='lec '+(live?'live':'soon')+(l._complete?' complete':'');
+    var tag=live?'a':'div';
+    var attrs='class="'+cls+'"'+(live?' href="'+l.file+'"':'')+' style="--accent:'+p.accent+'"';
+    lecs+='<'+tag+' '+attrs+'>'+
+      '<span class="done-flag">✓ 완료</span>'+
+      '<div class="num">'+(typeof l.n==='number'?String(l.n).padStart(2,'0')+'강':l.n)+'</div>'+
+      '<h3>'+l.t+'</h3>'+
+      '<div class="one">'+l.one+'</div>'+
+      '<div class="foot">'+badges+(live?'<span class="arrow">→</span>':'')+'</div>'+
+      prog+
+      '</'+tag+'>';
+  });
+  lecs+='</div>';
+  sec.innerHTML=head+lecs;grid.appendChild(sec);
+});
+
+/* 전체 진행 */
+(function(){
+  var liveCount=0;PARTS.forEach(function(p){p.lecs.forEach(function(l){if(l.file)liveCount++;});});
+  document.getElementById('ovLive').textContent=liveCount;
+  document.getElementById('ovCheck').textContent=doneChecks;
+  var pct=totalChecks?Math.round(doneChecks/totalChecks*100):0;
+  document.getElementById('ovNum').textContent=pct+'%';
+  setTimeout(function(){document.getElementById('ovBar').style.width=pct+'%';},200);
+})();
+
+/* 초기화 */
+document.getElementById('resetAll').addEventListener('click',function(){
+  if(confirm('모든 강의의 셀프체크 진행 기록을 지울까요?')){
+    PARTS.forEach(function(p){p.lecs.forEach(function(l){if(l.key)localStorage.removeItem(l.key);});});
+    location.reload();
+  }
+});
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('.part')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=0;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top<160)cur=i;}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

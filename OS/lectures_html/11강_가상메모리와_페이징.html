@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11강 · 가상 메모리와 페이징 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a; --bg2:#11152a; --card:#161b33; --card2:#1c2243;
+  --line:#2a3157; --txt:#e7ecff; --dim:#9aa3c7; --faint:#6b73a0;
+  --ind:#6366f1; --ind2:#818cf8; --pur:#a855f7; --cyan:#22d3ee;
+  --grn:#34d399; --red:#f87171; --amber:#fbbf24;
+  --virt:#38bdf8; --phys:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);
+  line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+/* 진행바 */
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--ind),var(--pur),var(--cyan))}
+
+/* 네비 */
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;
+  background:rgba(11,14,26,.82);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}
+nav .logo b{color:var(--ind2)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;
+  border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--ind);border-color:var(--ind)}
+
+/* 히어로 */
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;background:radial-gradient(ellipse,rgba(99,102,241,.25),transparent 70%);
+  filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--ind2);
+  background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);
+  padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--ind2),var(--pur),var(--cyan));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:620px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+
+/* 섹션 공통 */
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--ind2);font-weight:700}
+
+/* 버튼 */
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;
+  padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;
+  display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.amber{background:var(--phys)}.btn.amber:hover{background:#fdba74}
+.btn.cyan{background:var(--cyan);color:#04243a}.btn.cyan:hover{background:#67e8f9}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* ── 도입 미스터리 ── */
+.mystery{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.proc{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:center}
+.proc h4{font-size:14px;color:var(--dim);font-weight:600}
+.proc .addr{font-family:ui-monospace,monospace;font-size:15px;color:var(--virt);margin-top:10px}
+.proc .val{font-family:ui-monospace,monospace;font-size:34px;font-weight:800;margin-top:8px;color:var(--faint);transition:.4s}
+.proc .val.show{color:var(--amber)}
+.qbox{text-align:center;margin-top:18px;font-size:17px;color:var(--dim)}
+#mysteryAnswer{margin-top:18px;max-height:0;overflow:hidden;transition:max-height .5s ease;}
+#mysteryAnswer.open{max-height:300px}
+#mysteryAnswer .inner{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);
+  border-radius:12px;padding:18px;color:var(--txt)}
+
+/* ── 주소 변환기 ── */
+.translator label{font-size:13px;color:var(--dim);display:block;margin-bottom:8px}
+.addr-input{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.addr-input .pre{font-family:ui-monospace,monospace;color:var(--faint);font-size:20px}
+.addr-input input{font-family:ui-monospace,monospace;font-size:20px;background:var(--bg2);
+  border:1px solid var(--line);color:var(--virt);padding:10px 14px;border-radius:10px;width:170px;letter-spacing:1px}
+.addr-input input:focus{outline:none;border-color:var(--virt)}
+.bits{display:flex;margin-top:22px;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.bits .seg{padding:14px 10px;text-align:center}
+.bits .seg.vpn{background:rgba(56,189,248,.14);flex:5}
+.bits .seg.off{background:rgba(251,146,60,.14);flex:3}
+.bits .seg .lab{font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+.bits .seg.vpn .lab{color:var(--virt)}
+.bits .seg.off .lab{color:var(--phys)}
+.bits .seg .v{font-family:ui-monospace,monospace;font-size:19px;font-weight:700;margin-top:4px}
+.flowdown{text-align:center;color:var(--faint);font-size:22px;margin:14px 0;letter-spacing:6px}
+.result-box{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;
+  margin-top:8px;padding:20px;border-radius:14px;background:var(--card2);border:1px solid var(--line);transition:.3s}
+.result-box.fault{background:rgba(248,113,113,.12);border-color:var(--red)}
+.result-box .pa{font-family:ui-monospace,monospace;font-size:26px;font-weight:800;color:var(--phys)}
+.result-box .lab{font-size:13px;color:var(--dim)}
+.fault-msg{color:var(--red);font-weight:700}
+.preset{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.preset button{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--bg2);
+  border:1px solid var(--line);color:var(--dim);padding:6px 12px;border-radius:8px;cursor:pointer}
+.preset button:hover{border-color:var(--virt);color:var(--virt)}
+
+/* ── 페이지 테이블 ── */
+.ptable{width:100%;border-collapse:collapse;margin-top:18px;font-family:ui-monospace,monospace}
+.ptable th,.ptable td{border:1px solid var(--line);padding:11px;text-align:center;font-size:14px}
+.ptable th{background:var(--card2);color:var(--dim);font-size:12px;letter-spacing:.03em}
+.ptable td{transition:.2s}
+.ptable tr.valid:hover td{background:rgba(52,211,153,.12);cursor:pointer}
+.ptable tr.invalid:hover td{background:rgba(248,113,113,.12);cursor:pointer}
+.ptable .ok{color:var(--grn);font-weight:700}
+.ptable .no{color:var(--red);font-weight:700}
+#ptOut{margin-top:14px;min-height:24px;font-size:14px;text-align:center;color:var(--dim)}
+
+/* ── TLB 시뮬 ── */
+.tlb-stage{display:grid;grid-template-columns:1fr;gap:16px;margin-top:8px}
+.tlb-slots{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.slot{width:78px;height:64px;border-radius:11px;border:1.5px dashed var(--line);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-family:ui-monospace,monospace;font-size:13px;color:var(--faint);transition:.3s;background:var(--bg2)}
+.slot.filled{border-style:solid;border-color:var(--ind);background:rgba(99,102,241,.12);color:var(--txt)}
+.slot.flash-hit{border-color:var(--grn);background:rgba(52,211,153,.22);transform:scale(1.08)}
+.slot.flash-miss{border-color:var(--red);background:rgba(248,113,113,.18)}
+.slot .vpn{font-size:15px;font-weight:700}
+.slot .tag{font-size:10px;color:var(--faint)}
+.tlb-readout{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.stat{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 18px;text-align:center;min-width:96px}
+.stat .num{font-size:24px;font-weight:800;font-family:ui-monospace,monospace}
+.stat .lb{font-size:11px;color:var(--dim);margin-top:2px}
+.stat.hit .num{color:var(--grn)}.stat.miss .num{color:var(--red)}.stat.cyc .num{color:var(--amber)}
+.access-log{font-family:ui-monospace,monospace;font-size:13px;background:var(--bg2);border:1px solid var(--line);
+  border-radius:10px;padding:12px;min-height:46px;text-align:center;margin-top:4px;color:var(--dim)}
+.verdict{text-align:center;margin-top:14px;font-size:15px;min-height:24px;font-weight:600}
+
+/* ── 이득 카드 그리드 ── */
+.benefits{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-top:22px}
+.benefit{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;cursor:pointer;transition:.2s;position:relative;overflow:hidden}
+.benefit:hover{border-color:var(--ind);transform:translateY(-3px)}
+.benefit .ic{font-size:26px}
+.benefit h4{margin-top:10px;font-size:16px}
+.benefit p{font-size:13.5px;color:var(--dim);margin-top:8px}
+
+/* ── 오해 아코디언 ── */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px;position:relative}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+
+/* ── 면접 플립카드 ── */
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:210px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;
+  display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--pur);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2347,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13.5px;color:var(--txt);line-height:1.65}
+.flip .back .a b{color:var(--ind2)}
+
+/* ── 셀프체크 ── */
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}
+.ck.done span{color:var(--dim)}
+
+/* 코드 */
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;
+  font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+
+/* 푸터 */
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--ind);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}
+footer .nx .t{font-weight:700;color:var(--ind2)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+
+@media(max-width:640px){
+  .mystery{grid-template-columns:1fr}
+  header.hero{padding:96px 0 36px}
+  .flip{height:230px}
+}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">OS · <b>11강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+    <div class="chips">
+      <a class="chip" href="#intro">도입</a>
+      <a class="chip" href="#translate">주소변환</a>
+      <a class="chip" href="#pagetable">페이지테이블</a>
+      <a class="chip" href="#tlb">TLB</a>
+      <a class="chip" href="#why">이득</a>
+      <a class="chip" href="#myth">오해</a>
+      <a class="chip" href="#quiz">면접</a>
+      <a class="chip" href="#check">체크</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="kicker">Part 4 · 메모리 관리</span>
+    <h1>가상 메모리와 <span class="g">페이징</span></h1>
+    <p class="sub">모든 프로세스가 똑같이 <code style="font-family:ui-monospace,monospace;color:var(--virt)">0x0</code>부터 시작하는 주소를 쓰는데도 충돌하지 않는 마술. 그 비밀을 직접 눌러보며 이해한다.</p>
+    <div class="meta">
+      <div class="m">🎯 가상→물리 변환의 원리</div>
+      <div class="m">🧩 선수지식 <b>3강·4강</b></div>
+      <div class="m">⏱️ 약 20분</div>
+    </div>
+  </div>
+</header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 미스터리</div>
+  <h2 class="sec"><span class="n">1</span>이상한 일이 벌어진다</h2>
+  <p class="lead">게임을 <b>두 개</b> 띄우고 같은 코드의 전역 변수 주소를 찍어본다. 버튼을 눌러 실행해보자.</p>
+  <div class="card">
+    <div class="mystery">
+      <div class="proc">
+        <h4>프로세스 A (게임.exe)</h4>
+        <div class="addr">&amp;g_Value = 0x1234_0000</div>
+        <div class="val" id="vA">?</div>
+      </div>
+      <div class="proc">
+        <h4>프로세스 B (같은 게임.exe)</h4>
+        <div class="addr">&amp;g_Value = 0x1234_0000</div>
+        <div class="val" id="vB">?</div>
+      </div>
+    </div>
+    <div class="qbox" id="mq">두 프로세스의 변수가 <b style="color:var(--virt)">똑같은 주소</b>에 있다. 값은?</div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn" id="runMystery">▶ 두 프로세스 실행</button>
+      <button class="btn ghost" id="revealMystery" disabled>🔍 어떻게 가능하지?</button>
+    </div>
+    <div id="mysteryAnswer"><div class="inner">
+      <b style="color:var(--virt)">저 주소는 진짜 주소가 아니다.</b> 물리 RAM은 하나뿐인데 같은 주소에 다른 값이라니 — 답은,
+      각 프로세스가 보는 <b>0x1234_0000</b>은 <b class="tagline">가상 주소(Virtual Address)</b>이고,
+      OS가 뒤에서 둘을 <b>서로 다른 물리 위치</b>로 연결해주기 때문이다. 아래에서 그 변환을 직접 돌려보자. ↓
+    </div></div>
+  </div>
+</div></section>
+
+<!-- 2. 주소 변환기 -->
+<section id="translate"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 인터랙티브</div>
+  <h2 class="sec"><span class="n">2</span>가상 주소를 물리 주소로 변환해보기</h2>
+  <p class="lead">가상 주소는 <b style="color:var(--virt)">페이지 번호</b> + <b style="color:var(--phys)">오프셋</b>으로 나뉜다(4KB 페이지 = 하위 12비트가 오프셋). 페이지 번호만 페이지 테이블에서 프레임으로 바꾸고, 오프셋은 그대로 붙인다.</p>
+  <div class="card translator">
+    <label>가상 주소를 입력하거나 프리셋을 눌러보세요</label>
+    <div class="addr-input">
+      <span class="pre">0x</span>
+      <input id="vaInput" value="12345678" maxlength="8" spellcheck="false">
+      <button class="btn cyan" id="convertBtn">변환 →</button>
+    </div>
+    <div class="preset">
+      <button data-a="12345678">0x12345678</button>
+      <button data-a="12340000">0x12340000</button>
+      <button data-a="0A00B678">0x0A00B678</button>
+      <button data-a="00005FFF">0x00005FFF</button>
+      <button data-a="DEAD0000">0xDEAD0000 (폴트?)</button>
+    </div>
+
+    <div class="bits">
+      <div class="seg vpn"><div class="lab">페이지 번호 (VPN)</div><div class="v" id="bVpn">0x12345</div></div>
+      <div class="seg off"><div class="lab">오프셋</div><div class="v" id="bOff">0x678</div></div>
+    </div>
+
+    <div class="flowdown">↓ &nbsp;페이지 테이블 조회 &nbsp;↓</div>
+
+    <div class="result-box" id="resBox">
+      <div>
+        <div class="lab">프레임 번호</div>
+        <div class="pa" id="rFrame" style="font-size:22px">0x0A00</div>
+      </div>
+      <div style="font-size:24px;color:var(--faint)">＋</div>
+      <div>
+        <div class="lab">오프셋</div>
+        <div class="pa" id="rOff2" style="font-size:22px;color:var(--phys)">0x678</div>
+      </div>
+      <div style="font-size:24px;color:var(--faint)">＝</div>
+      <div>
+        <div class="lab">물리 주소 (Physical)</div>
+        <div class="pa" id="rPhys">0x0A00678</div>
+      </div>
+    </div>
+    <p class="hint" id="transHint">오프셋(하위 12비트)은 변환 없이 그대로 따라옵니다. 페이지 번호만 테이블을 거칩니다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 페이지 테이블 -->
+<section id="pagetable"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 클릭해보기</div>
+  <h2 class="sec"><span class="n">3</span>페이지 테이블 — 프로세스마다 하나씩</h2>
+  <p class="lead">"가상 페이지 → 물리 프레임" 매핑표. 각 행을 클릭해보자. <b style="color:var(--grn)">유효 비트가 O</b>면 변환 성공, <b style="color:var(--red)">X</b>면 <b>페이지 폴트</b>가 난다(→ 다음 강의 12강).</p>
+  <div class="card">
+    <table class="ptable">
+      <thead><tr><th>페이지 번호</th><th>프레임 번호</th><th>유효 비트</th><th>의미</th></tr></thead>
+      <tbody id="ptBody"></tbody>
+    </table>
+    <div id="ptOut">행을 클릭하면 결과가 여기 표시됩니다.</div>
+  </div>
+</div></section>
+
+<!-- 4. TLB -->
+<section id="tlb"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 시뮬레이션</div>
+  <h2 class="sec"><span class="n">4</span>TLB — 변환 결과를 캐싱한다</h2>
+  <p class="lead">매번 페이지 테이블을 뒤지면 느리니까, 최근 변환을 <b>TLB</b>라는 초고속 캐시(여기선 4칸)에 저장한다. 핵심 질문: <b class="tagline">메모리를 어떻게 접근하느냐</b>에 따라 Hit율이 갈린다.</p>
+  <div class="card">
+    <div class="tlb-stage">
+      <div class="tlb-slots" id="tlbSlots"></div>
+      <div class="access-log" id="tlbLog">접근을 시작하면 여기에 로그가 쌓입니다.</div>
+      <div class="tlb-readout">
+        <div class="stat hit"><div class="num" id="sHit">0</div><div class="lb">TLB Hit (4 cyc)</div></div>
+        <div class="stat miss"><div class="num" id="sMiss">0</div><div class="lb">TLB Miss (200 cyc)</div></div>
+        <div class="stat cyc"><div class="num" id="sCyc">0</div><div class="lb">총 사이클</div></div>
+      </div>
+      <div class="verdict" id="tlbVerdict"></div>
+    </div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn" id="seqBtn">📦 TArray 순차 순회</button>
+      <button class="btn amber" id="rndBtn">🎲 포인터 랜덤 접근</button>
+      <button class="btn ghost" id="tlbReset">↺ 초기화</button>
+    </div>
+    <p class="hint">순차 순회는 같은 페이지를 연달아 건드려 <b style="color:var(--grn)">Hit</b>이 많고, 랜덤 접근은 매번 다른 페이지라 <b style="color:var(--red)">Miss</b>가 쏟아진다. 13강 캐시 강의의 "연속 메모리가 빠른 이유"가 여기서 시작된다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 이득 -->
+<section id="why"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 왜 이렇게까지</div>
+  <h2 class="sec"><span class="n">5</span>가상 메모리가 주는 4가지 이득</h2>
+  <div class="benefits">
+    <div class="benefit"><div class="ic">🛡️</div><h4>프로세스 격리</h4><p>A가 무슨 주소를 써도 B의 물리 메모리엔 닿을 수 없다. 게임이 죽어도 디스코드는 멀쩡한 이유.</p></div>
+    <div class="benefit"><div class="ic">🧩</div><h4>단편화 해결</h4><p>물리 RAM이 조각나 있어도 가상에선 연속으로 보인다. <code style="font-family:ui-monospace,monospace;color:var(--cyan)">TArray</code>가 1GB를 연속으로 잡는 비결.</p></div>
+    <div class="benefit"><div class="ic">💽</div><h4>RAM보다 큰 메모리</h4><p>안 쓰는 페이지는 SSD로 내려놨다가(스왑) 필요할 때 올린다. 12강 주제.</p></div>
+    <div class="benefit"><div class="ic">♻️</div><h4>코드 공유</h4><p>같은 exe를 두 번 띄워도 코드 영역은 물리적으로 한 벌만. 두 프로세스가 같은 물리 위치를 가리킨다.</p></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">게임 개발자 관점</div>
+    <p style="margin-top:6px"><b>"Reserve 했는데 작업 관리자 메모리가 안 늘어나네?"</b></p>
+    <pre><span class="t">TArray</span>&lt;<span class="t">int32</span>&gt; Arr;
+Arr.Reserve(<span class="s">1000000</span>);   <span class="c">// 가상 주소 공간은 잡았지만…</span>
+<span class="c">// 실제로 그 페이지를 건드리기 전엔 물리 RAM이 안 붙는다</span></pre>
+    <p class="hint">처음 쓸 때 페이지 폴트가 나면서 그제서야 물리 프레임이 할당된다. 이걸 <b class="tagline">demand paging</b>(lazy allocation)이라 한다.</p>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <p class="lead">질문을 먼저 떠올려보고, 카드를 눌러 모범 답변과 비교하세요.</p>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 셀프체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <p class="lead">설명할 수 있으면 체크. 진행 상황은 이 브라우저에 저장됩니다.</p>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 7 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="12강_페이지폴트와_스왑.html">
+    <div style="text-align:left"><div class="s">다음 강의</div><div class="t">12강 — 페이지 폴트와 스왑 →</div></div>
+  </a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 11강</div>
+</div></footer>
+
+<script>
+/* ───────── 1. 도입 미스터리 ───────── */
+(function(){
+  var runBtn=document.getElementById('runMystery'), revBtn=document.getElementById('revealMystery');
+  var vA=document.getElementById('vA'), vB=document.getElementById('vB'), mq=document.getElementById('mq');
+  var ans=document.getElementById('mysteryAnswer');
+  runBtn.addEventListener('click',function(){
+    vA.textContent='?';vB.textContent='?';vA.classList.remove('show');vB.classList.remove('show');
+    setTimeout(function(){vA.textContent='42';vA.classList.add('show');},300);
+    setTimeout(function(){vB.textContent='99';vB.classList.add('show');
+      mq.innerHTML='같은 주소 <b style="color:var(--virt)">0x1234_0000</b> 인데 값이 <b style="color:var(--amber)">42</b> ≠ <b style="color:var(--amber)">99</b>?!';
+      revBtn.disabled=false;},700);
+  });
+  revBtn.addEventListener('click',function(){ans.classList.toggle('open');});
+})();
+
+/* ───────── 2 & 3. 주소 변환 + 페이지 테이블 (공유 매핑) ───────── */
+var PAGE_BITS=12; // 4KB
+// 데모용 페이지테이블: vpn 일부만 정의, 나머지는 해시로 생성하되 특정 패턴은 invalid
+function lookupFrame(vpn){
+  // 일부러 invalid 만드는 규칙: vpn의 하위 4비트가 0xD 이면 미할당(폴트)
+  if((vpn & 0xF)===0xD) return {valid:false};
+  // 결정적 해시로 프레임 생성 (0~0xFFFFF 범위)
+  var h=(vpn*2654435761)>>>0;
+  var frame=(h>>>11)&0xFFFFF;
+  return {valid:true,frame:frame};
+}
+function toHex(n,pad){var s=(n>>>0).toString(16).toUpperCase();while(pad&&s.length<pad)s='0'+s;return s;}
+
+(function(){
+  var input=document.getElementById('vaInput'),btn=document.getElementById('convertBtn');
+  var bVpn=document.getElementById('bVpn'),bOff=document.getElementById('bOff');
+  var rFrame=document.getElementById('rFrame'),rOff2=document.getElementById('rOff2'),rPhys=document.getElementById('rPhys');
+  var resBox=document.getElementById('resBox'),hint=document.getElementById('transHint');
+
+  function convert(){
+    var raw=input.value.replace(/[^0-9a-fA-F]/g,'');if(!raw){raw='0';}
+    var addr=parseInt(raw,16)>>>0;
+    var off=addr & 0xFFF;
+    var vpn=addr>>>PAGE_BITS;
+    bVpn.textContent='0x'+toHex(vpn);
+    bOff.textContent='0x'+toHex(off,3);
+    rOff2.textContent='0x'+toHex(off,3);
+    var r=lookupFrame(vpn);
+    if(!r.valid){
+      resBox.classList.add('fault');
+      rFrame.innerHTML='<span class="fault-msg">—</span>';
+      rPhys.innerHTML='<span class="fault-msg">⚠ PAGE FAULT</span>';
+      hint.innerHTML='이 페이지는 <b style="color:var(--red)">유효 비트 X</b> — 물리 메모리에 없습니다. OS가 끼어들어 페이지를 올려야 합니다 (12강 페이지 폴트).';
+    }else{
+      resBox.classList.remove('fault');
+      rFrame.textContent='0x'+toHex(r.frame);
+      var physHi=r.frame; // frame number
+      // 물리주소 = frame<<12 | off  (32비트+ 가능하므로 문자열 조합)
+      var phys=toHex(physHi)+toHex(off,3);
+      rPhys.textContent='0x'+phys;
+      hint.innerHTML='<b style="color:var(--phys)">오프셋(하위 12비트)</b>은 변환 없이 그대로 따라옵니다. <b style="color:var(--virt)">페이지 번호</b>만 테이블을 거쳐 프레임이 됩니다.';
+    }
+    rPhys.parentElement.animate([{opacity:.3,transform:'scale(.96)'},{opacity:1,transform:'scale(1)'}],{duration:300});
+  }
+  btn.addEventListener('click',convert);
+  input.addEventListener('keyup',function(e){if(e.key==='Enter')convert();});
+  document.querySelectorAll('.preset button').forEach(function(b){
+    b.addEventListener('click',function(){input.value=b.dataset.a;convert();
+      document.getElementById('translate').scrollIntoView({behavior:'smooth',block:'center'});});
+  });
+  convert();
+})();
+
+/* 페이지 테이블 인터랙티브 */
+(function(){
+  var rows=[
+    {p:0,valid:true,note:'정상 매핑'},
+    {p:1,valid:true,note:'정상 매핑'},
+    {p:2,valid:false,note:'아직 할당 안 됨'},
+    {p:3,valid:true,note:'정상 매핑'},
+    {p:0xD,valid:false,note:'스왑 아웃됨'},
+    {p:7,valid:true,note:'정상 매핑'}
+  ];
+  var body=document.getElementById('ptBody'),out=document.getElementById('ptOut');
+  rows.forEach(function(r){
+    var fr=lookupFrame(r.p);
+    var valid=r.valid && fr.valid;
+    var tr=document.createElement('tr');
+    tr.className=valid?'valid':'invalid';
+    tr.innerHTML='<td>0x'+toHex(r.p)+'</td>'+
+      '<td>'+(valid?'0x'+toHex(fr.frame):'<span class="no">(없음)</span>')+'</td>'+
+      '<td class="'+(valid?'ok':'no')+'">'+(valid?'O':'X')+'</td>'+
+      '<td style="color:var(--dim);font-size:12px">'+r.note+'</td>';
+    tr.addEventListener('click',function(){
+      if(valid){
+        out.innerHTML='✅ 페이지 <b>0x'+toHex(r.p)+'</b> → 프레임 <b style="color:var(--phys)">0x'+toHex(fr.frame)+'</b> 로 변환 성공. 곧장 물리 메모리 접근.';
+        out.style.color='var(--grn)';
+      }else{
+        out.innerHTML='⚠️ 페이지 <b>0x'+toHex(r.p)+'</b> 는 유효 비트 X → <b style="color:var(--red)">페이지 폴트!</b> OS가 디스크에서 페이지를 가져와야 한다.';
+        out.style.color='var(--red)';
+      }
+    });
+    body.appendChild(tr);
+  });
+})();
+
+/* ───────── 4. TLB 시뮬 ───────── */
+(function(){
+  var CAP=4, tlb=[], hits=0,miss=0,cyc=0, busy=false;
+  var slotsEl=document.getElementById('tlbSlots'),logEl=document.getElementById('tlbLog');
+  var sHit=document.getElementById('sHit'),sMiss=document.getElementById('sMiss'),sCyc=document.getElementById('sCyc');
+  var verdict=document.getElementById('tlbVerdict');
+
+  function render(flashIdx,type){
+    slotsEl.innerHTML='';
+    for(var i=0;i<CAP;i++){
+      var d=document.createElement('div');d.className='slot';
+      if(tlb[i]!==undefined){d.classList.add('filled');
+        d.innerHTML='<div class="vpn">0x'+toHex(tlb[i])+'</div><div class="tag">page</div>';}
+      else{d.innerHTML='<div class="tag">empty</div>';}
+      if(i===flashIdx)d.classList.add(type==='hit'?'flash-hit':'flash-miss');
+      slotsEl.appendChild(d);
+    }
+  }
+  function updateStats(){sHit.textContent=hits;sMiss.textContent=miss;sCyc.textContent=cyc;}
+  function reset(){tlb=[];hits=0;miss=0;cyc=0;render(-1);updateStats();
+    logEl.textContent='접근을 시작하면 여기에 로그가 쌓입니다.';verdict.textContent='';}
+  reset();
+
+  function access(vpn,cb){
+    var idx=tlb.indexOf(vpn);
+    if(idx!==-1){ // HIT
+      hits++;cyc+=4; tlb.splice(idx,1);tlb.unshift(vpn); // LRU 최신화
+      render(0,'hit');
+      logEl.innerHTML='접근 page <b>0x'+toHex(vpn)+'</b> → <b style="color:var(--grn)">TLB HIT</b> ✓ (4 cycle)';
+    }else{ // MISS
+      miss++;cyc+=200; tlb.unshift(vpn); if(tlb.length>CAP)tlb.pop();
+      render(0,'miss');
+      logEl.innerHTML='접근 page <b>0x'+toHex(vpn)+'</b> → <b style="color:var(--red)">TLB MISS</b> ✗ 페이지 테이블 조회 (200 cycle)';
+    }
+    updateStats();
+    setTimeout(cb,420);
+  }
+  function runSeq(seq,label){
+    if(busy)return;busy=true;reset();
+    var i=0;
+    (function step(){
+      if(i>=seq.length){
+        busy=false;
+        var rate=Math.round(hits/(hits+miss)*100);
+        verdict.innerHTML=label+' → Hit율 <b style="color:'+(rate>=60?'var(--grn)':'var(--red)')+'">'+rate+'%</b>, 총 <b style="color:var(--amber)">'+cyc+' cycle</b>';
+        return;
+      }
+      access(seq[i++],step);
+    })();
+  }
+
+  // 순차: 연속 페이지를 여러 번씩 (TArray 순회 = 한 페이지에 여러 원소)
+  document.getElementById('seqBtn').addEventListener('click',function(){
+    runSeq([0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3],'📦 순차 순회 (연속 메모리)');
+  });
+  // 랜덤: 매번 흩어진 페이지
+  document.getElementById('rndBtn').addEventListener('click',function(){
+    var seq=[];for(var i=0;i<16;i++)seq.push(Math.floor(Math.random()*40)+10);
+    runSeq(seq,'🎲 랜덤 접근 (흩어진 포인터)');
+  });
+  document.getElementById('tlbReset').addEventListener('click',function(){if(!busy)reset();});
+})();
+
+/* ───────── 6. 오해 아코디언 ───────── */
+(function(){
+  var data=[
+    {q:'"포인터 주소는 진짜 메모리 위치다"',
+     a:'C++에서 보는 모든 주소는 <b class="truth">가상 주소</b>다. 진짜 물리 주소는 커널과 MMU만 안다. 그래서 두 프로세스가 같은 주소 값을 가져도 충돌하지 않는다.'},
+    {q:'"32비트 프로그램은 메모리를 4GB까지 쓸 수 있다"',
+     a:'32비트 <b class="truth">가상</b> 주소 공간이 4GB인 거지, 실제 RAM이 4GB라는 뜻이 아니다. 게다가 일부는 커널 영역이라 유저는 보통 2GB만. 64비트는 가상 공간이 훨씬 커서 이 제약이 사실상 사라진다.'},
+    {q:'"malloc 하면 바로 물리 RAM이 잡힌다"',
+     a:'대부분의 OS는 <b class="truth">처음 그 메모리에 쓸 때</b> 물리 프레임을 붙인다(demand paging). <code>malloc(1GB)</code> 해도 안 건드리면 물리 RAM은 거의 안 늘어난다.'},
+    {q:'"페이지 크기는 항상 4KB다"',
+     a:'기본은 4KB지만, 큰 메모리엔 <b class="truth">Large/Huge Page</b>(2MB, 1GB)도 쓴다. 페이지가 크면 페이지 테이블 엔트리가 줄어 TLB 효율이 올라간다. 일부 고성능 게임·서버가 활용.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){
+    var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary>'+
+      '<div class="body">'+d.a+'</div>';
+    box.appendChild(det);
+  });
+})();
+
+/* ───────── 7. 면접 플립카드 ───────── */
+(function(){
+  var qa=[
+    {q:'가상 메모리가 뭔가요? 왜 쓰나요?',
+     a:'각 프로세스에게 독립된 연속 주소 공간이 있는 것처럼 보여주고, <b>OS와 MMU</b>가 가상 주소를 물리 주소로 변환합니다. 격리, 단편화 해결, RAM보다 큰 메모리, 코드 공유 같은 이점을 얻습니다.'},
+    {q:'같은 주소인데 값이 다른 게 어떻게 가능한가요?',
+     a:'그 주소가 <b>가상 주소</b>이기 때문입니다. 각 프로세스는 자기 페이지 테이블을 가지고, 같은 가상 주소라도 다른 물리 프레임으로 매핑됩니다.'},
+    {q:'페이징이 뭔가요?',
+     a:'가상/물리 메모리를 고정 크기(보통 4KB) <b>페이지/프레임</b>으로 나누고 페이지 테이블로 매핑하는 기법. 가상 주소는 페이지 번호+오프셋으로 나뉩니다.'},
+    {q:'페이지 테이블이 뭔가요?',
+     a:'가상 페이지→물리 프레임 매핑표로 <b>프로세스마다 하나</b>씩 있습니다. 프레임 번호, 유효 비트, 권한 비트 등이 들어가고, 컨텍스트 스위칭 때 교체됩니다.'},
+    {q:'TLB가 뭔가요?',
+     a:'가상→물리 변환 결과를 캐싱하는 MMU 안의 <b>고속 캐시</b>. Hit이면 변환이 거의 공짜, Miss면 페이지 테이블을 뒤져야 해서 느립니다. 컨텍스트 스위칭 시 무효화되어 한동안 느려집니다.'},
+    {q:'malloc 1GB 하면 즉시 물리 1GB가 쓰이나요?',
+     a:'아닙니다. <b>demand paging</b>으로 가상 주소만 예약하고, 처음 접근할 때 페이지 폴트로 물리 프레임을 붙입니다. 안 건드리면 물리 메모리는 거의 안 늘어납니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){
+    var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in">'+
+      '<div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div>'+
+      '</div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});
+    grid.appendChild(c);
+  });
+})();
+
+/* ───────── 8. 셀프체크 ───────── */
+(function(){
+  var items=[
+    '가상 주소와 물리 주소의 차이를 설명할 수 있다',
+    '두 프로세스가 같은 가상 주소를 쓰는데 충돌하지 않는 이유를 안다',
+    '페이지와 프레임이 뭔지, 보통 크기가 얼마인지 안다',
+    '가상 주소가 페이지 번호 + 오프셋으로 나뉘는 걸 안다',
+    '페이지 테이블과 TLB의 역할을 구분할 수 있다',
+    '컨텍스트 스위칭에서 TLB가 왜 무효화되는지 안다',
+    'demand paging(처음 쓸 때 물리 할당)을 설명할 수 있다'
+  ];
+  var KEY='os11-check';
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){
+    var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';
+    pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}
+  }
+  items.forEach(function(t,i){
+    var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});
+    list.appendChild(row);
+  });
+  update();
+})();
+
+/* ───────── 진행바 + 네비 스파이 ───────── */
+(function(){
+  var bar=document.getElementById('bar');
+  var secs=[].slice.call(document.querySelectorAll('section'));
+  var chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){
+    var st=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?st/h*100:0)+'%';
+    var cur=secs.length-1;
+    for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});
+  }
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

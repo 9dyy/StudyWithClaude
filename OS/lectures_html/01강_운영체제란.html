@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1강 · 운영체제란 무엇인가 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a; --bg2:#11152a; --card:#161b33; --card2:#1c2243;
+  --line:#2a3157; --txt:#e7ecff; --dim:#9aa3c7; --faint:#6b73a0;
+  --ind:#6366f1; --ind2:#818cf8; --pur:#a855f7; --cyan:#22d3ee;
+  --grn:#34d399; --red:#f87171; --amber:#fbbf24; --orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);
+  line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;
+  background:linear-gradient(90deg,var(--ind),var(--cyan))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;
+  background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}
+nav .logo b{color:var(--cyan)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#04243a;background:var(--cyan);border-color:var(--cyan)}
+
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);
+  width:700px;height:400px;background:radial-gradient(ellipse,rgba(34,211,238,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--cyan);
+  background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--ind2),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--cyan);font-weight:700}
+
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.cyan{background:var(--cyan);color:#04243a}.btn.cyan:hover{background:#67e8f9}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 도입 토글 */
+.switch-wrap{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:6px}
+.switch-wrap .lab{font-size:15px;font-weight:700;color:var(--faint);transition:.2s}
+.switch-wrap .lab.act{color:var(--cyan)}
+.toggle{width:78px;height:40px;border-radius:30px;background:var(--bg2);border:1px solid var(--line);position:relative;cursor:pointer;transition:.25s;flex-shrink:0}
+.toggle.on{background:rgba(34,211,238,.2);border-color:var(--cyan)}
+.toggle .knob{position:absolute;top:3px;left:3px;width:32px;height:32px;border-radius:50%;background:var(--red);transition:.25s}
+.toggle.on .knob{left:43px;background:var(--cyan)}
+.os-demo{margin-top:20px}
+.os-demo pre{transition:.2s}
+.os-state{text-align:center;margin-top:14px;font-size:15px;font-weight:600;min-height:24px}
+
+/* 두 역할 카드 */
+.roles{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:6px}
+.role{background:var(--card2);border:1px solid var(--line);border-radius:15px;padding:20px;transition:.2s}
+.role:hover{border-color:var(--ind)}
+.role .ic{font-size:28px}.role h4{margin-top:10px;font-size:17px}.role p{font-size:14px;color:var(--dim);margin-top:8px}
+.cpu-demo{margin-top:14px}
+.cpu-track{height:34px;border-radius:9px;background:var(--bg2);border:1px solid var(--line);display:flex;overflow:hidden;position:relative}
+.cpu-track .slice{height:100%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#04102a;transition:.3s;white-space:nowrap}
+.cpu-legend{display:flex;gap:12px;justify-content:center;margin-top:10px;font-size:12px;color:var(--dim);flex-wrap:wrap}
+.cpu-legend .lg{display:flex;align-items:center;gap:5px}
+.cpu-legend .dot{width:10px;height:10px;border-radius:3px}
+
+/* 계층 스택 + 여정 */
+.stack{position:relative;margin-top:8px}
+.layer{border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin:10px 0;background:var(--card2);transition:.25s;cursor:pointer;position:relative;z-index:1}
+.layer:hover{border-color:var(--ind2)}
+.layer.lit{border-color:var(--cyan);background:rgba(34,211,238,.1);box-shadow:0 0 24px rgba(34,211,238,.25)}
+.layer .tt{font-weight:700;font-size:15px;display:flex;align-items:center;gap:10px}
+.layer .tt .badge{font-size:11px;color:var(--faint);background:var(--bg2);border:1px solid var(--line);padding:2px 8px;border-radius:20px;margin-left:auto}
+.layer .ds{font-size:13px;color:var(--dim);margin-top:6px}
+.layer .api{font-family:ui-monospace,monospace;font-size:13px;color:var(--cyan);margin-top:8px;min-height:0;opacity:0;max-height:0;overflow:hidden;transition:.3s}
+.layer.lit .api{opacity:1;max-height:30px;margin-top:8px}
+.hw-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.hw{flex:1;min-width:80px;text-align:center;padding:10px 6px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);font-size:12px;color:var(--dim);transition:.25s}
+.hw.lit{border-color:var(--cyan);background:rgba(34,211,238,.18);color:var(--txt);transform:translateY(-3px)}
+.hw .ic{font-size:20px;display:block}
+.func-btns{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px}
+.func-btns button{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:600;cursor:pointer;
+  padding:9px 13px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);color:var(--ind2);transition:.15s}
+.func-btns button:hover{border-color:var(--cyan);color:var(--cyan)}
+.func-btns button:disabled{opacity:.4}
+.journey-log{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--bg2);border:1px solid var(--line);
+  border-radius:10px;padding:12px;margin-top:16px;min-height:70px;color:var(--dim);line-height:1.9}
+.journey-log .step{opacity:0;transform:translateX(-8px);transition:.3s}
+.journey-log .step.show{opacity:1;transform:none}
+.journey-log .step b{color:var(--cyan)}
+
+/* 매핑 표 */
+.maptable{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+.maptable th,.maptable td{border:1px solid var(--line);padding:10px 12px;text-align:left}
+.maptable th{background:var(--card2);color:var(--dim);font-size:12px}
+.maptable td.fn{font-family:ui-monospace,monospace;color:var(--ind2)}
+.maptable td.api{font-family:ui-monospace,monospace;color:var(--cyan)}
+.maptable tr:hover td{background:var(--card2)}
+
+/* 오해 / 면접 / 체크 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:215px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--cyan);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#10283a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13.5px;color:var(--txt);line-height:1.65}
+.flip .back .a b{color:var(--cyan)}
+
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}pre .r{color:var(--red)}
+
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--ind);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}
+footer .nx .t{font-weight:700;color:var(--ind2)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+
+@media(max-width:640px){
+  .roles{grid-template-columns:1fr}
+  header.hero{padding:96px 0 36px}
+  .flip{height:235px}
+}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>1강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#roles">두 역할</a>
+    <a class="chip" href="#journey">시스템콜</a>
+    <a class="chip" href="#map">언리얼 매핑</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · OS 기초 · 첫 강의</span>
+  <h1>운영체제란 <span class="g">무엇인가</span></h1>
+  <p class="sub">언리얼 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">UE_LOG</code> 한 줄을 찍을 때, 그 아래에서 OS는 무슨 일을 할까? OS가 "도대체 왜 필요한가"를 직접 켜고 끄며 체감한다.</p>
+  <div class="meta">
+    <div class="m">🧭 자원 관리자 + 하드웨어 추상화</div>
+    <div class="m">🧩 선수지식 없음</div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입: OS 토글 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 직접 켜고 끄기</div>
+  <h2 class="sec"><span class="n">1</span>OS가 없는 세상을 상상해보자</h2>
+  <p class="lead">게임에서 로그 한 줄 출력하는 일. OS 스위치를 꺼보면, 이 단순한 일이 얼마나 끔찍해지는지 보인다.</p>
+  <div class="card">
+    <div class="switch-wrap">
+      <span class="lab" id="labOff">OS 없음</span>
+      <div class="toggle on" id="osToggle"><div class="knob"></div></div>
+      <span class="lab act" id="labOn">OS 있음</span>
+    </div>
+    <div class="os-demo">
+      <pre id="osCode"></pre>
+      <div class="os-state" id="osState"></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 2. 두 역할 -->
+<section id="roles"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · OS의 정체</div>
+  <h2 class="sec"><span class="n">2</span>OS가 하는 두 가지 일</h2>
+  <p class="lead">운영체제는 결국 이 둘로 요약된다. 첫째 카드의 버튼을 눌러 "자원 관리"가 무슨 뜻인지 보자.</p>
+  <div class="roles">
+    <div class="role">
+      <div class="ic">🗂️</div>
+      <h4>① 자원 관리자</h4>
+      <p>CPU·메모리·디스크를 여러 프로그램이 사이좋게 나눠 쓰도록 분배한다.</p>
+      <div class="cpu-demo">
+        <div class="cpu-track" id="cpuTrack"></div>
+        <div class="cpu-legend">
+          <span class="lg"><span class="dot" style="background:var(--cyan)"></span>게임</span>
+          <span class="lg"><span class="dot" style="background:var(--amber)"></span>크롬</span>
+          <span class="lg"><span class="dot" style="background:var(--pur)"></span>디스코드</span>
+        </div>
+        <div class="btnrow" style="justify-content:center">
+          <button class="btn cyan" id="cpuSchedule">▶ OS가 CPU 나눠주기</button>
+          <button class="btn ghost" id="cpuChaos">⚠ OS 없이 동시 접근</button>
+        </div>
+      </div>
+    </div>
+    <div class="role">
+      <div class="ic">🔌</div>
+      <h4>② 하드웨어 추상화</h4>
+      <p>모니터가 4K든 1080p든, GPU가 뭐든 — 게임은 "텍스트 출력해줘" 한 줄만 부르면 된다. OS가 하드웨어 차이를 다 통역한다.</p>
+      <p style="margin-top:12px;font-size:13px;color:var(--faint)">덕분에 우리는 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">UE_LOG</code> 한 줄로 끝낸다. 그 아래에서 무슨 일이 일어나는지는 ↓ 다음 섹션에서 직접 따라가본다.</p>
+    </div>
+  </div>
+</div></section>
+
+<!-- 3. 시스템 콜 여정 -->
+<section id="journey"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 인터랙션</div>
+  <h2 class="sec"><span class="n">3</span>언리얼 함수가 하드웨어까지 내려가는 길</h2>
+  <p class="lead">게임은 하드웨어를 <b>직접</b> 만지지 않는다. 항상 OS를 거친다. 아래 언리얼 함수 버튼을 누르면, 그 호출이 4개 계층을 타고 하드웨어까지 내려갔다 오는 걸 볼 수 있다.</p>
+  <div class="card">
+    <div class="func-btns" id="funcBtns">
+      <button data-f="log">UE_LOG(...)</button>
+      <button data-f="time">FPlatformTime::Seconds()</button>
+      <button data-f="file">LoadFileToString(...)</button>
+      <button data-f="thread">FRunnableThread::Create(...)</button>
+    </div>
+    <div class="stack" id="stack">
+      <div class="layer" data-l="app">
+        <div class="tt">🎮 응용 프로그램 <span class="badge">유저 모드</span></div>
+        <div class="ds">내 게임 (.exe) — 언리얼 함수를 호출</div>
+        <div class="api" id="apiApp"></div>
+      </div>
+      <div class="layer" data-l="sys">
+        <div class="tt">🚪 시스템 콜 (Win32 API) <span class="badge">OS의 창구</span></div>
+        <div class="ds">언리얼이 부르는 실제 OS API</div>
+        <div class="api" id="apiSys"></div>
+      </div>
+      <div class="layer" data-l="ker">
+        <div class="tt">⚙️ 커널 <span class="badge">커널 모드</span></div>
+        <div class="ds">스케줄러 · 메모리 관리자 · 파일 시스템 · 드라이버</div>
+        <div class="api" id="apiKer"></div>
+      </div>
+      <div class="layer" data-l="hw">
+        <div class="tt">🔩 하드웨어</div>
+        <div class="hw-row">
+          <div class="hw" data-h="cpu"><span class="ic">🧠</span>CPU</div>
+          <div class="hw" data-h="ram"><span class="ic">📊</span>RAM</div>
+          <div class="hw" data-h="disk"><span class="ic">💽</span>SSD</div>
+          <div class="hw" data-h="con"><span class="ic">🖥️</span>콘솔</div>
+          <div class="hw" data-h="timer"><span class="ic">⏱️</span>타이머</div>
+        </div>
+      </div>
+    </div>
+    <div class="journey-log" id="jLog">위 버튼을 눌러 시스템 콜의 여정을 따라가보세요.</div>
+  </div>
+  <p class="hint">계층(레이어)을 직접 클릭하면 각 단계 설명도 볼 수 있다. 유저 모드와 커널 모드의 경계가 바로 <b class="tagline">시스템 콜</b> — 다음 2강의 주제다.</p>
+</div></section>
+
+<!-- 4. 매핑 표 -->
+<section id="map"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 정리</div>
+  <h2 class="sec"><span class="n">4</span>언리얼 함수 → OS API → 하드웨어</h2>
+  <p class="lead">우리가 매일 쓰는 언리얼 함수들이 사실 OS 기능을 부르고 있다. 엔진이 두꺼운 이유 중 하나 — 이 다리를 플랫폼마다 다르게 놔준다.</p>
+  <div class="card">
+    <table class="maptable">
+      <thead><tr><th>언리얼 함수</th><th>내부 OS API (Windows)</th><th>닿는 하드웨어</th></tr></thead>
+      <tbody>
+        <tr><td class="fn">UE_LOG(...)</td><td class="api">WriteConsole / WriteFile</td><td>콘솔 / 디스크</td></tr>
+        <tr><td class="fn">FPlatformTime::Seconds()</td><td class="api">QueryPerformanceCounter</td><td>하드웨어 타이머</td></tr>
+        <tr><td class="fn">LoadFileToString(...)</td><td class="api">ReadFile</td><td>SSD</td></tr>
+        <tr><td class="fn">FRunnableThread::Create(...)</td><td class="api">CreateThread</td><td>CPU 스케줄러</td></tr>
+        <tr><td class="fn">TArray::Reserve(...)</td><td class="api">VirtualAlloc</td><td>RAM (가상 메모리)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div></section>
+
+<!-- 5. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 함정</div>
+  <h2 class="sec"><span class="n">5</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 6. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 면접 대비</div>
+  <h2 class="sec"><span class="n">6</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 7. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 마무리</div>
+  <h2 class="sec"><span class="n">7</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 4 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="02강_커널모드_유저모드_시스템콜.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">2강 — 커널 모드와 유저 모드, 시스템 콜 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 1강</div>
+</div></footer>
+
+<script>
+/* 1. OS 토글 */
+(function(){
+  var tg=document.getElementById('osToggle'),code=document.getElementById('osCode'),state=document.getElementById('osState');
+  var labOn=document.getElementById('labOn'),labOff=document.getElementById('labOff');
+  var ON='<span class="c">// OS가 있으면 — 한 줄이면 끝</span>\n'+
+    '<span class="k">void</span> Log() {\n'+
+    '    <span class="t">UE_LOG</span>(LogTemp, Log, <span class="s">TEXT("Hello")</span>);\n'+
+    '    <span class="c">// OS가 콘솔 종류·폰트·드라이버를 알아서 처리</span>\n'+
+    '}';
+  var OFF='<span class="c">// OS가 없으면 — 이걸 직접 다 해야 한다</span>\n'+
+    '<span class="k">int</span> main() {\n'+
+    '    <span class="r">// 1. CPUID로 코어 수 확인, APIC에 코드 할당</span>\n'+
+    '    <span class="r">// 2. RAM 컨트롤러를 두드려 주소 영역 잡기</span>\n'+
+    '    <span class="r">// 3. GPU PCIe 레지스터에 명령 큐 만들기</span>\n'+
+    '    <span class="r">// 4. 그것도 마우스·GPU·SSD 모델마다 다르게…</span>\n'+
+    '    <span class="r">// ...게임 코드는 대체 어디?</span>\n'+
+    '}';
+  function render(on){
+    tg.classList.toggle('on',on);
+    code.innerHTML=on?ON:OFF;
+    state.innerHTML=on?'<span style="color:var(--cyan)">✓ OS가 하드웨어를 추상화 — 게임은 한 줄만 부르면 된다</span>'
+                     :'<span style="color:var(--red)">✗ 하드웨어를 직접 제어 — 모델마다 코드를 새로 짜야 한다</span>';
+    labOn.classList.toggle('act',on);labOff.classList.toggle('act',!on);
+  }
+  tg.addEventListener('click',function(){render(!tg.classList.contains('on'));});
+  render(true);
+})();
+
+/* 2. 자원 관리 데모 */
+(function(){
+  var track=document.getElementById('cpuTrack');
+  var cols={게임:'var(--cyan)',크롬:'var(--amber)',디스코드:'var(--pur)'};
+  function schedule(){
+    track.innerHTML='';
+    var seq=['게임','크롬','게임','디스코드','게임','크롬','게임','디스코드'];
+    seq.forEach(function(p,i){
+      var s=document.createElement('div');s.className='slice';
+      s.style.background=cols[p];s.style.width='0';s.textContent='';
+      track.appendChild(s);
+      setTimeout(function(){s.style.width=(100/seq.length)+'%';if(i%2===0)s.textContent=p;},i*120);
+    });
+  }
+  function chaos(){
+    track.innerHTML='';
+    ['게임','크롬','디스코드'].forEach(function(p){
+      var s=document.createElement('div');s.className='slice';
+      s.style.position='absolute';s.style.left='0';s.style.top='0';s.style.width='100%';
+      s.style.background=cols[p];s.style.opacity='.5';s.style.mixBlendMode='screen';
+      s.textContent='⚡충돌';track.appendChild(s);
+    });
+    setTimeout(function(){track.style.animation='shake .3s 3';},50);
+    setTimeout(function(){track.style.animation='';},1200);
+  }
+  document.getElementById('cpuSchedule').addEventListener('click',schedule);
+  document.getElementById('cpuChaos').addEventListener('click',chaos);
+  schedule();
+})();
+var st=document.createElement('style');
+st.textContent='@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}';
+document.head.appendChild(st);
+
+/* 3. 시스템 콜 여정 */
+(function(){
+  var defs={
+    log:{api:'WriteConsole / WriteFile',ker:'콘솔 출력 서브시스템 → 글자 렌더',hw:'con',
+         steps:['🎮 게임이 <b>UE_LOG</b> 호출','🚪 엔진이 <b>WriteConsole</b> (Win32) 호출 → 커널 진입','⚙️ 커널이 콘솔 드라이버에 전달','🖥️ 콘솔에 "Hello" 출력 ✓']},
+    time:{api:'QueryPerformanceCounter',ker:'고해상도 타이머 카운터 읽기',hw:'timer',
+         steps:['🎮 게임이 <b>FPlatformTime::Seconds</b> 호출','🚪 <b>QueryPerformanceCounter</b> (Win32) 호출','⚙️ 커널이 하드웨어 타이머 접근','⏱️ 현재 카운터 값 반환 ✓']},
+    file:{api:'ReadFile',ker:'파일 시스템 → 디스크 드라이버 → DMA',hw:'disk',
+         steps:['🎮 게임이 <b>LoadFileToString</b> 호출','🚪 <b>ReadFile</b> (Win32) 호출 → 커널 진입','⚙️ 파일 시스템이 SSD 드라이버에 명령','💽 SSD에서 바이트 읽어 반환 ✓']},
+    thread:{api:'CreateThread',ker:'스케줄러에 새 실행 흐름 등록',hw:'cpu',
+         steps:['🎮 게임이 <b>FRunnableThread::Create</b> 호출','🚪 <b>CreateThread</b> (Win32) 호출','⚙️ 커널 스케줄러가 TCB 생성·등록','🧠 CPU가 새 스레드를 스케줄 ✓']}
+  };
+  var layers={app:document.querySelector('.layer[data-l=app]'),sys:document.querySelector('.layer[data-l=sys]'),
+    ker:document.querySelector('.layer[data-l=ker]'),hw:document.querySelector('.layer[data-l=hw]')};
+  var apiSys=document.getElementById('apiSys'),apiKer=document.getElementById('apiKer');
+  var jLog=document.getElementById('jLog'),btns=document.querySelectorAll('#funcBtns button');
+  var hws=document.querySelectorAll('.hw');
+  var busy=false;
+
+  function clearAll(){
+    Object.values(layers).forEach(function(l){l.classList.remove('lit');});
+    hws.forEach(function(h){h.classList.remove('lit');});
+    apiSys.textContent='';apiKer.textContent='';
+  }
+  function run(f){
+    if(busy)return;busy=true;
+    btns.forEach(function(b){b.disabled=true;});
+    clearAll();jLog.innerHTML='';
+    var d=defs[f], order=['app','sys','ker','hw'];
+    apiSys.textContent='→ '+d.api;
+    apiKer.textContent='→ '+d.ker;
+    var i=0;
+    function lightStep(){
+      if(i<order.length){
+        var key=order[i];
+        layers[key].classList.add('lit');
+        if(key==='hw'){var hw=document.querySelector('.hw[data-h='+d.hw+']');if(hw)hw.classList.add('lit');}
+        var s=document.createElement('div');s.className='step';s.innerHTML=d.steps[i];jLog.appendChild(s);
+        requestAnimationFrame(function(){s.classList.add('show');});
+        i++;setTimeout(lightStep,620);
+      }else{
+        // 데이터 리턴 (위로 잠깐 반짝)
+        setTimeout(function(){
+          var s=document.createElement('div');s.className='step';
+          s.innerHTML='↩ 결과가 다시 게임으로 — <b>우리 코드는 가상 주소·OS만 보고, 하드웨어는 영원히 모른다</b>';
+          jLog.appendChild(s);requestAnimationFrame(function(){s.classList.add('show');});
+          busy=false;btns.forEach(function(b){b.disabled=false;});
+        },500);
+      }
+    }
+    lightStep();
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){run(b.dataset.f);});});
+  // 레이어 클릭 설명
+  var info={app:'우리 게임이 도는 곳. 유저 모드라 하드웨어를 직접 못 만진다.',
+    sys:'유저 모드 → 커널 모드로 넘어가는 유일한 통로. 언리얼 함수가 실제로 부르는 OS API.',
+    ker:'OS의 본체. 스케줄러·메모리 관리자·파일 시스템·드라이버가 여기 산다.',
+    hw:'CPU·RAM·SSD 등 실제 장치. 커널과 드라이버만 직접 제어한다.'};
+  document.querySelectorAll('.layer').forEach(function(l){
+    l.addEventListener('click',function(){if(busy)return;
+      var k=l.dataset.l;jLog.innerHTML='<div class="step show">ℹ️ <b>'+l.querySelector('.tt').textContent.trim()+'</b> — '+info[k]+'</div>';});
+  });
+})();
+
+/* 5. 오해 */
+(function(){
+  var data=[
+    {q:'"OS = 바탕화면·작업표시줄"',a:'바탕화면·시작 메뉴는 OS의 <b class="truth">일부일 뿐</b>이고 본체가 아니다. 진짜 OS는 보이지 않는 곳에서 도는 <b class="truth">커널</b>. 리눅스 서버는 GUI 없이도 OS로 잘 돈다.'},
+    {q:'"OS 없으면 그냥 더 빠르겠지?"',a:'자원 관리 오버헤드는 있지만, OS가 없으면 <b class="truth">하드웨어를 직접 다 다뤄야</b> 하고 다른 프로그램과 충돌 처리도 직접 해야 한다. 게임 하나 만들려고 운영체제부터 새로 짜는 셈.'},
+    {q:'"게임 개발자는 OS 몰라도 된다"',a:'언리얼이 많이 가려주지만 — Race Condition·Deadlock, 페이지 폴트로 인한 끊김, 비동기 로딩 설계, 캐시 친화적 코드는 <b class="truth">OS를 모르면 못 잡고 못 짠다</b>. 이번 시리즈가 다룰 내용.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 6. 면접 */
+(function(){
+  var qa=[
+    {q:'운영체제가 하는 일을 설명해보세요.',a:'크게 두 가지입니다. <b>자원 관리</b> — CPU·메모리·디스크·I/O를 여러 프로세스가 나눠 쓰게 분배합니다. <b>하드웨어 추상화</b> — 응용 프로그램이 하드웨어 세부사항을 몰라도 동작하도록 시스템 콜이라는 공통 인터페이스를 제공합니다.'},
+    {q:'운영체제가 없으면 어떤 문제가 생길까요?',a:'각 프로그램이 직접 하드웨어를 다뤄야 하므로 <b>하드웨어 모델마다 코드를 다시</b> 짜야 하고, 여러 프로그램을 동시에 돌릴 수 없습니다 — 누가 CPU·메모리를 쓸지 조율할 주체가 없으니까요.'},
+    {q:'커널(Kernel)이 뭔가요?',a:'OS의 <b>핵심 부분</b>으로 자원 관리와 하드웨어 제어를 담당하는 코드입니다. 평소 보는 바탕화면·작업표시줄은 커널 위에서 도는 별도 프로그램이고, 진짜 OS는 그 아래에서 보이지 않게 돕니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 7. 체크 */
+(function(){
+  var items=['운영체제의 두 가지 큰 역할을 한 문장씩 말할 수 있다','언리얼 함수가 결국 OS 기능을 부르고 있다는 걸 이해했다','"OS = 바탕화면"이 아니라 본체는 커널이라는 걸 안다','게임 개발자가 OS를 알아야 하는 이유를 3가지 이상 댈 수 있다'];
+  var KEY='os01-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

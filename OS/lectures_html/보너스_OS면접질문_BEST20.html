@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보너스 · 클라 개발자 OS 면접 BEST 20 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--ind))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em;flex-shrink:0}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav button.chip{font-family:inherit;font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent;background:transparent;cursor:pointer}
+nav button.chip:hover{color:var(--txt);background:var(--card)}
+nav button.chip.on{color:#2a0a3a;background:var(--pur);border-color:var(--pur);font-weight:700}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--ind2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--pur);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.pur{background:var(--pur);color:#fff}.btn.pur:hover{background:#c084fc}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.sm{padding:8px 13px;font-size:12.5px;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+code.mono, .mono{font-family:ui-monospace,monospace}
+
+/* 상단 진행률 */
+.topprog{margin-top:22px}
+.topprog .pbar{height:12px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.topprog .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pur),var(--cyan));transition:.4s}
+.topprog .row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px;color:var(--dim)}
+.topprog .stats{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.topprog .stat{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--bg2);border:1px solid var(--line)}
+.topprog .stat.know{color:var(--grn)}.topprog .stat.unsure{color:var(--amber)}.topprog .stat.unknown{color:var(--red)}
+
+/* 카테고리 필터(문항 리스트용, nav와 별개로 상단 재확인용) */
+.catrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.catrow button{font-family:inherit;font-size:13px;color:var(--dim);background:var(--card2);border:1px solid var(--line);padding:7px 14px;border-radius:20px;cursor:pointer;transition:.15s}
+.catrow button:hover{color:var(--txt);border-color:var(--pur)}
+.catrow button.on{background:var(--pur);color:#fff;border-color:var(--pur);font-weight:700}
+
+/* 문항 카드 */
+.qlist{margin-top:20px}
+.qcard{background:var(--card);border:1px solid var(--line);border-radius:15px;margin-top:12px;overflow:hidden;transition:border-color .2s}
+.qcard.st-know{border-color:rgba(52,211,153,.5)}
+.qcard.st-unsure{border-color:rgba(251,191,36,.5)}
+.qcard.st-unknown{border-color:rgba(248,113,113,.5)}
+.qcard summary{padding:18px 20px;cursor:pointer;list-style:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.qcard summary::-webkit-details-marker{display:none}
+.qcard .qn{font-family:ui-monospace,monospace;font-weight:800;color:var(--pur);flex-shrink:0}
+.qcard .star{font-size:11px;font-weight:700;color:#2a0a3a;background:var(--amber);padding:2px 8px;border-radius:10px;flex-shrink:0;align-self:center}
+.qcard .qtext{font-weight:700;font-size:15.5px;flex:1;min-width:180px}
+.qcard .catbadge{font-size:11px;color:var(--faint);border:1px solid var(--line);padding:3px 9px;border-radius:10px;flex-shrink:0;align-self:center}
+.qcard .statedot{width:10px;height:10px;border-radius:50%;flex-shrink:0;align-self:center;background:var(--bg2);border:2px solid var(--faint)}
+.qcard.st-know .statedot{background:var(--grn);border-color:var(--grn)}
+.qcard.st-unsure .statedot{background:var(--amber);border-color:var(--amber)}
+.qcard.st-unknown .statedot{background:var(--red);border-color:var(--red)}
+.qcard .arr{margin-left:auto;color:var(--faint);transition:.25s;align-self:center}
+.qcard[open] summary .arr{transform:rotate(180deg)}
+.qcard .body{padding:0 20px 22px;color:var(--dim);font-size:14.5px}
+.qcard .ans{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;line-height:1.7}
+.qcard .ans b{color:var(--pur)}
+.qcard code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.kwrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.kw{font-family:ui-monospace,monospace;font-size:12px;padding:5px 10px;border-radius:8px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.35);color:#d8b4fe}
+.tailbox{margin-top:14px;font-size:13.5px;padding:12px 14px;border-radius:10px;background:rgba(34,211,238,.06);border:1px dashed rgba(34,211,238,.3)}
+.tailbox b{color:var(--cyan)}
+.ratebtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.ratebtns button{font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:9px;padding:8px 13px;border:1px solid var(--line);background:var(--card2);color:var(--dim);transition:.15s}
+.ratebtns button:hover{transform:translateY(-1px)}
+.ratebtns button[data-r="know"]:hover,.ratebtns button[data-r="know"].active{background:var(--grn);color:#04221a;border-color:var(--grn)}
+.ratebtns button[data-r="unsure"]:hover,.ratebtns button[data-r="unsure"].active{background:var(--amber);color:#2a1a00;border-color:var(--amber)}
+.ratebtns button[data-r="unknown"]:hover,.ratebtns button[data-r="unknown"].active{background:var(--red);color:#2a0a0a;border-color:var(--red)}
+.opentag{font-size:11px;color:var(--pur);font-weight:700;background:rgba(168,85,247,.12);padding:3px 9px;border-radius:10px}
+
+/* 시뮬레이터 */
+.sim-idle{text-align:center;padding:20px 0}
+.sim-idle p{color:var(--dim);font-size:14.5px;max-width:520px;margin:0 auto}
+.simpanel{display:none}
+.simpanel.on{display:block}
+.simhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.simhead .prog{font-family:ui-monospace,monospace;font-size:13px;color:var(--faint)}
+.simhead .catbadge{font-size:11px;color:var(--faint);border:1px solid var(--line);padding:3px 9px;border-radius:10px}
+.simtimerbar{height:10px;background:var(--bg2);border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:14px}
+.simtimerbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--pur),var(--cyan));transition:width .1s linear}
+.simtimerbar.warn i{background:linear-gradient(90deg,var(--orange),var(--red))}
+.simsec{text-align:right;font-family:ui-monospace,monospace;font-size:13px;color:var(--faint);margin-top:4px}
+.simq{font-size:19px;font-weight:800;margin-top:20px;line-height:1.5}
+.simans{display:none;margin-top:18px}
+.simans.on{display:block}
+.simans .ans{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;line-height:1.7;font-size:14.5px;color:var(--dim)}
+.simans .ans b{color:var(--pur)}
+.simresult{display:none}
+.simresult.on{display:block}
+.simresult h3{font-size:20px;font-weight:800}
+.simresult .tallies{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.simresult .tallies .t{flex:1;min-width:110px;text-align:center;padding:16px 10px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.simresult .tallies .t b{display:block;font-size:26px;font-family:ui-monospace,monospace}
+.simresult .tallies .know b{color:var(--grn)}.simresult .tallies .unsure b{color:var(--amber)}.simresult .tallies .unknown b{color:var(--red)}
+.simresult .weak{margin-top:16px;font-size:14.5px;color:var(--dim);padding:14px 16px;background:rgba(251,191,36,.06);border:1px dashed rgba(251,191,36,.3);border-radius:10px}
+.simresult .weak b{color:var(--amber)}
+
+/* 30초 체크 표 */
+table.kwtable{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+table.kwtable th,table.kwtable td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.kwtable th{color:var(--pur);font-size:12.5px;letter-spacing:.03em}
+table.kwtable td:first-child{color:var(--txt);font-weight:700;white-space:nowrap}
+table.kwtable td:last-child{color:var(--dim);font-family:ui-monospace,monospace;font-size:13px}
+
+/* 마무리 리스트/표 */
+.tiplist{margin-top:16px;padding-left:0;list-style:none}
+.tiplist li{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--dim)}
+.tiplist li:last-child{border-bottom:none}
+.tiplist li b{color:var(--txt);flex-shrink:0}
+table.donetable{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+table.donetable th,table.donetable td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.donetable th{color:var(--pur);font-size:12.5px}
+table.donetable td:last-child{color:var(--grn);font-weight:700}
+
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.qcard summary{gap:8px}table.kwtable{font-size:12.5px}table.kwtable th,table.kwtable td{padding:8px 8px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>BONUS</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips" id="navChips">
+    <button class="chip on" data-cat="all">전체</button>
+    <button class="chip" data-cat="proc">프로세스·스레드</button>
+    <button class="chip" data-cat="sched">스케줄링</button>
+    <button class="chip" data-cat="concur">동시성</button>
+    <button class="chip" data-cat="mem">메모리</button>
+    <button class="chip" data-cat="io">I/O</button>
+    <button class="chip" data-cat="synth">종합</button>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">BONUS · 면접 문제집 · 1~15강 총정리</span>
+  <h1>클라 개발자가 받는 <span class="g">OS 면접 BEST 20</span></h1>
+  <p class="sub">1~15강에서 배운 걸 실제 면접 답변으로 묶었다. 답변을 통째로 외우지 말고 <b class="tagline">키워드</b>를 기억한 다음 자기 말로 재구성해라. 면접은 암송이 아니라 대화다.</p>
+  <div class="meta">
+    <div class="m">📋 문항 <b>20개</b></div>
+    <div class="m">🧩 선수지식 <b>1~15강 전체</b></div>
+    <div class="m">⏱️ 약 30분 + 시뮬레이터</div>
+  </div>
+
+  <div class="card topprog">
+    <div class="eyebrow" style="margin-bottom:2px">내 진행률</div>
+    <div class="pbar"><i id="topBar"></i></div>
+    <div class="row"><span id="topPct">0 / 20 문항 체크함</span><span id="topPctNum">0%</span></div>
+    <div class="stats">
+      <div class="stat know" id="statKnow">✅ 알았음 0</div>
+      <div class="stat unsure" id="statUnsure">🤔 애매함 0</div>
+      <div class="stat unknown" id="statUnknown">❌ 모르겠음 0</div>
+    </div>
+  </div>
+</div></header>
+
+<!-- 사용 가이드 -->
+<section id="guide"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 쓰는 법</div>
+  <h2 class="sec"><span class="n">1</span>이 문제집을 쓰는 법</h2>
+  <div class="card">
+    <p class="lead" style="margin-top:0">각 문항은 <b>Q(질문) → A(모범 답변) → 🔑(30초 키워드) → 꼬리(다음 질문)</b> 순으로 구성했다. 카드를 클릭해서 펼치기 전에 먼저 스스로 답을 떠올려보고, 펼친 뒤 맞았는지 확인해라.</p>
+    <p class="hint">답변을 다 확인했으면 카드 아래 <b style="color:var(--txt)">알았음 / 애매함 / 모르겠음</b> 버튼으로 자기 상태를 기록한다. 이 기록은 브라우저에 저장되고, 아래 "면접 시뮬레이터"에서도 똑같이 쌓인다.</p>
+  </div>
+</div></section>
+
+<!-- 문항 리스트 -->
+<section id="list"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 20문항</div>
+  <h2 class="sec"><span class="n">2</span>카테고리별로 풀어보기</h2>
+  <p class="lead">위 nav 칩 또는 아래 버튼으로 카테고리를 필터링할 수 있다. 질문만 보고 스스로 답해본 다음 카드를 열어라.</p>
+  <div class="catrow" id="catRow">
+    <button class="on" data-cat="all">전체 20</button>
+    <button data-cat="proc">기초 3</button>
+    <button data-cat="sched">스케줄링 3</button>
+    <button data-cat="concur">동시성 5</button>
+    <button data-cat="mem">메모리 5</button>
+    <button data-cat="io">I/O 3</button>
+    <button data-cat="synth">종합 1</button>
+  </div>
+  <div class="qlist" id="qList"></div>
+</div></section>
+
+<!-- 면접 시뮬레이터 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 킬러 · 면접 시뮬레이터</div>
+  <h2 class="sec"><span class="n">3</span>실전처럼 — 면접 시뮬레이터</h2>
+  <p class="lead">20문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
+  <div class="card">
+    <div class="sim-idle" id="simIdle">
+      <p>준비되면 시작해라. 순서는 매번 랜덤으로 섞인다.</p>
+      <div class="btnrow" style="justify-content:center">
+        <button class="btn pur" id="simStart">🎤 면접 시뮬레이터 시작</button>
+      </div>
+    </div>
+
+    <div class="simpanel" id="simPanel">
+      <div class="simhead">
+        <span class="prog" id="simProg">1 / 20</span>
+        <span class="catbadge" id="simCatBadge">-</span>
+      </div>
+      <div class="simtimerbar" id="simTimerBar"><i id="simTimerFill"></i></div>
+      <div class="simsec" id="simSecText">30.0초</div>
+      <div class="simq" id="simQText"></div>
+      <div class="btnrow" style="justify-content:center" id="simRevealRow">
+        <button class="btn cyan" id="simReveal" style="background:var(--cyan);color:#04243a">💡 답변 확인</button>
+      </div>
+      <div class="simans" id="simAns">
+        <div class="ans" id="simAnsText"></div>
+        <div class="kwrow" id="simKwRow"></div>
+        <div class="tailbox" id="simTailBox"></div>
+        <div class="ratebtns" id="simRateBtns">
+          <button data-r="know">✅ 알았음</button>
+          <button data-r="unsure">🤔 애매함</button>
+          <button data-r="unknown">❌ 모르겠음</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="simresult" id="simResult">
+      <h3>🏁 시뮬레이터 결과</h3>
+      <div class="tallies">
+        <div class="t know"><b id="rKnow">0</b>알았음</div>
+        <div class="t unsure"><b id="rUnsure">0</b>애매함</div>
+        <div class="t unknown"><b id="rUnknown">0</b>모르겠음</div>
+      </div>
+      <div class="weak" id="rWeak"></div>
+      <div class="btnrow" style="justify-content:center">
+        <button class="btn pur" id="simRestart">↺ 다시 시뮬레이션</button>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 30초 체크 -->
+<section id="cheat"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 면접 직전</div>
+  <h2 class="sec"><span class="n">4</span>면접 직전 30초 체크 — 키워드만</h2>
+  <div class="card">
+    <table class="kwtable">
+      <tr><th>주제</th><th>한 단어로</th></tr>
+      <tr><td>프로세스 vs 스레드</td><td>주소 공간 독립 / Stack만 독립</td></tr>
+      <tr><td>시스템 콜</td><td>모드 스위치</td></tr>
+      <tr><td>컨텍스트 스위칭</td><td>캐시·TLB 식음</td></tr>
+      <tr><td>Race Condition</td><td>공유 + 쓰기, ++는 3명령</td></tr>
+      <tr><td>Mutex vs Semaphore</td><td>소유권 / N명</td></tr>
+      <tr><td>FScopeLock</td><td>RAII</td></tr>
+      <tr><td>atomic</td><td>CPU 원자 명령, 단일 변수</td></tr>
+      <tr><td>Deadlock</td><td>4조건, 락 순서 고정</td></tr>
+      <tr><td>가상 메모리</td><td>가상→물리, MMU</td></tr>
+      <tr><td>페이지 폴트</td><td>Major = 디스크 = hitch</td></tr>
+      <tr><td>TLB</td><td>변환 캐시</td></tr>
+      <tr><td>배열 vs 링크드</td><td>공간 지역성, 캐시 라인 64B</td></tr>
+      <tr><td>비동기 I/O</td><td>대기를 Game Thread 밖으로</td></tr>
+      <tr><td>파일 열기</td><td>핸들 생성, inode</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<!-- 마무리 -->
+<section id="final"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 마무리</div>
+  <h2 class="sec"><span class="n">5</span>마지막 조언</h2>
+  <div class="card">
+    <ul class="tiplist">
+      <li><b>1.</b> 암송하지 마라. 키워드를 기억하고 자기 말로. 외운 티 나면 감점.</li>
+      <li><b>2.</b> 모르면 "모릅니다"가 낫다. 아는 척하다 꼬리질문에서 무너지는 게 최악.</li>
+      <li><b>3.</b> 게임 경험과 엮어라. "언리얼에서 ~할 때 이게 문제였다"는 답이 신입한테 가장 강력하다.</li>
+      <li><b>4.</b> 이 강의 1~15강을 다시 한 번. 각 강의 "면접에서 나오면" 섹션만 모아 읽어도 좋다.</li>
+    </ul>
+    <p class="lead" style="margin-top:20px;text-align:center">수고했다. 이직 잘 되길.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--pur)">강의 시리즈 완료</div>
+    <table class="donetable">
+      <tr><th>Part</th><th>강의</th><th>상태</th></tr>
+      <tr><td>1. OS 기초</td><td>1~3강</td><td>완료</td></tr>
+      <tr><td>2. 프로세스/스레드</td><td>4~6강</td><td>완료</td></tr>
+      <tr><td>3. 동시성</td><td>7~10강</td><td>완료</td></tr>
+      <tr><td>4. 메모리 관리</td><td>11~13강</td><td>완료</td></tr>
+      <tr><td>5. I/O와 파일</td><td>14~15강</td><td>완료</td></tr>
+      <tr><td>보너스</td><td>면접 BEST 20</td><td>완료</td></tr>
+    </table>
+    <p class="hint" style="text-align:center;margin-top:16px">운영체제 강의 시리즈 끝.</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">강의 목록</div><div class="t">← 전체 OS 강의 목록으로</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 보너스 · 면접 BEST 20</div>
+</div></footer>
+
+<script>
+/* ===== 데이터 ===== */
+var QUESTIONS = [
+  {id:'q1',cat:'proc',star:true,q:'프로세스와 스레드의 차이를 설명해보세요.',
+   a:'프로세스는 실행 중인 프로그램으로 각자 독립된 가상 주소 공간을 가집니다. 스레드는 한 프로세스 안의 실행 흐름이고, 같은 프로세스 안의 스레드끼리는 Heap·Data·코드 영역을 공유하고 Stack과 레지스터만 따로 가집니다. 그래서 스레드는 데이터 공유가 쉽지만 동기화 문제가 생기고, 프로세스는 격리되어 안전하지만 통신에 IPC가 필요합니다.',
+   kw:['가상 주소 공간','Stack만 독립','Heap 공유','동기화 문제'],
+   tail:'"스레드끼리 뭘 공유하죠?" → 4강 / "그럼 동기화는 어떻게?" → 7~8강'},
+  {id:'q2',cat:'proc',star:false,q:'시스템 콜이 뭔가요? 왜 비싼가요?',
+   a:'유저 모드 프로그램이 커널 기능을 호출하는 통로입니다. <code>syscall</code> 명령으로 커널 모드로 진입하는데, 레지스터를 저장하고 커널 스택으로 전환하고 인자를 검증하는 모드 스위치가 일어나서 일반 함수 호출보다 훨씬 비쌉니다. 그래서 게임 엔진은 시스템 콜 횟수를 줄이려고 I/O를 배치하거나 메모리를 풀로 관리합니다.',
+   kw:['유저/커널 모드','모드 스위치','ring 0/3'],
+   tail:'"유저 모드와 커널 모드 차이는?" → 2강'},
+  {id:'q3',cat:'proc',star:false,q:'프로세스의 메모리 구조를 설명해보세요.',
+   a:'Text, Data, BSS, Heap, Stack 다섯 영역입니다. Text는 코드로 읽기 전용, Data는 초기화된 전역변수, BSS는 초기화 안 된 전역변수로 0으로 채워집니다. Heap은 동적 할당 영역으로 아래에서 위로 자라고, Stack은 함수 호출과 지역변수로 위에서 아래로 자랍니다.',
+   kw:['5영역','Stack/Heap 성장 방향','BSS는 0'],
+   tail:'"new로 만든 객체와 그 포인터 변수는 각각 어디 있죠?" → 3강 (포인터는 Stack, 대상은 Heap)'},
+  {id:'q4',cat:'sched',star:true,q:'컨텍스트 스위칭이 뭐고 왜 비싼가요?',
+   a:'OS가 CPU에서 도는 스레드를 다른 스레드로 바꾸는 동작입니다. 현재 스레드의 레지스터를 TCB에 저장하고 새 스레드 것을 복원합니다. 직접 비용도 있지만 더 큰 건 간접 비용으로, 스위칭 후 캐시와 TLB가 식어서 한동안 캐시 미스가 많이 나 느려집니다. 다른 프로세스로 바꾸면 페이지 테이블과 TLB까지 교체해서 더 비쌉니다.',
+   kw:['레지스터 저장/복원','캐시·TLB 식음(간접 비용)','페이지 테이블 교체'],
+   tail:'"그래서 스레드를 많이 만들면?" → Q5'},
+  {id:'q5',cat:'sched',star:false,q:'스레드를 코어 수보다 훨씬 많이 만들면 어떻게 되나요?',
+   a:'동시에 도는 건 결국 코어 수만큼이고 나머지는 Ready 큐에서 대기합니다. 스레드가 많을수록 컨텍스트 스위칭이 잦아져 오버헤드가 늘고 캐시 효율이 떨어집니다. CPU 바운드 작업은 보통 코어 수만큼만 만드는 게 최적이라 스레드 풀 패턴을 씁니다. 언리얼은 TaskGraph가 이걸 자동으로 해줍니다.',
+   kw:['코어 수 = 최적','스레드 풀','TaskGraph'],
+   tail:'"I/O 바운드면요?" → 약간 더 만들어도 됨 (대기 동안 다른 스레드가 일)'},
+  {id:'q6',cat:'sched',star:false,q:'우선순위 역전(Priority Inversion)이 뭔가요?',
+   a:'낮은 우선순위 스레드가 락을 잡고 있는데 높은 우선순위 스레드가 그 락을 기다리는 사이, 중간 우선순위 스레드가 CPU를 차지해서 낮은 우선순위 스레드가 못 돌고, 결과적으로 높은 우선순위 스레드가 무한정 기다리는 현상입니다. 해결책은 Priority Inheritance로, 락을 잡은 스레드의 우선순위를 일시적으로 올려줍니다.',
+   kw:['H-M-L','Priority Inheritance'],
+   tail:'"실제 사례 아세요?" → 화성 탐사선 Pathfinder (6강)'},
+  {id:'q7',cat:'concur',star:true,q:'Race Condition이 뭔가요?',
+   a:'여러 스레드가 공유 자원에 동시 접근하는데 하나 이상이 쓰기를 할 때, 결과가 실행 순서에 따라 달라지는 현상입니다. 예를 들어 <code>Counter++</code>는 읽기·증가·쓰기 3개 명령으로 컴파일되는데, 두 스레드가 동시에 하면 중간에 컨텍스트 스위칭이 끼어 한 번의 증가가 사라질 수 있습니다.',
+   kw:['공유 + 쓰기','Counter++는 3개 명령','Lost Update'],
+   tail:'"그걸 어떻게 막죠?" → Q8'},
+  {id:'q8',cat:'concur',star:true,q:'Mutex와 Semaphore의 차이는?',
+   a:'Mutex는 동시 진입을 한 명으로 제한하고 락을 잡은 스레드만 풀 수 있는 소유권 개념이 있습니다. 세마포어는 N명까지 허용하는 카운터이고 소유권이 없어 아무 스레드나 Signal로 올릴 수 있습니다. Mutex는 임계영역 보호에, 세마포어는 자원 풀 제한이나 생산자-소비자 패턴에 씁니다.',
+   kw:['소유권','N명','임계영역 vs 자원 풀'],
+   tail:'"Mutex 쓸 때 주의점은?" → Q9'},
+  {id:'q9',cat:'concur',star:false,q:'std::lock_guard(FScopeLock)를 왜 쓰나요?',
+   a:'RAII로 락 수명을 객체 수명에 묶어 자동 해제를 보장합니다. return이든 예외든 어떤 경로로 함수를 빠져나가도 소멸자가 호출되어 자동 Unlock되므로, Lock/Unlock을 직접 부를 때 생기는 락 누수를 막습니다.',
+   kw:['RAII','자동 Unlock','예외 안전'],
+   tail:'"락을 잡고 무거운 작업을 하면?" → 동시성 사라짐, Amdahl\'s Law (8강)'},
+  {id:'q10',cat:'concur',star:false,q:'atomic이 Mutex보다 빠른 이유는?',
+   a:'atomic은 CPU의 LOCK 접두사나 CMPXCHG 같은 원자 명령으로 처리되어 락 획득·해제 비용이 없고, 락을 못 받았을 때 컨텍스트 스위칭이 일어나지 않습니다. 다만 한 변수에 대한 짧은 연산만 가능하고, 여러 변수의 일관성이 필요하면 여전히 Mutex가 필요합니다.',
+   kw:['CPU 원자 명령','컨텍스트 스위칭 없음','단일 변수 한정'],
+   tail:'"Lock-free는 항상 빠른가요?" → 아니다, CAS retry 폭주·캐시 핑퐁 (9강)'},
+  {id:'q11',cat:'concur',star:true,q:'데드락이 뭐고 어떻게 해결하나요?',
+   a:'둘 이상의 스레드가 서로 상대가 가진 자원을 기다리며 영원히 멈추는 상태입니다. 발생 조건은 Mutual Exclusion, Hold and Wait, No Preemption, Circular Wait 네 가지이고 다 만족해야 생깁니다. 해결은 예방·회피·탐지·무시가 있는데, 실무에선 락에 전역 순서를 부여해서 순환 대기를 깨는 방법을 가장 많이 씁니다.',
+   kw:['4조건','순환 대기','락 순서 고정'],
+   tail:'"Deadlock이랑 Livelock 차이는?" → 10강 / "어떻게 디버깅?" → 디버거로 콜스택 (10강)'},
+  {id:'q12',cat:'mem',star:true,q:'가상 메모리가 뭔가요? 왜 쓰나요?',
+   a:'각 프로세스에게 독립된 연속 주소 공간이 있는 것처럼 보여주고, OS와 MMU가 가상 주소를 물리 주소로 변환하는 기법입니다. 프로세스 격리, 메모리 단편화 해결, 실제 RAM보다 큰 메모리 사용, 코드 공유 같은 이점이 있습니다.',
+   kw:['가상→물리 변환','MMU','격리','페이지 테이블'],
+   tail:'"변환을 매번 하면 느리지 않나요?" → TLB (11강)'},
+  {id:'q13',cat:'mem',star:false,q:'페이지 폴트가 뭔가요?',
+   a:'접근한 가상 페이지가 물리 메모리에 없을 때 발생하는 예외입니다. OS가 해당 페이지를 프레임에 올리고 페이지 테이블을 갱신한 뒤 중단된 명령을 재실행합니다. 에러가 아니라 정상 동작입니다. Minor Fault는 데이터가 이미 RAM에 있어 빠르고, Major Fault는 디스크에서 읽어와야 해서 느려 게임 hitch의 주범입니다.',
+   kw:['정상 동작','Minor(μs) vs Major(ms)','디스크 대기'],
+   tail:'"메모리 충분한데 게임이 끊기면?" → Major Fault 의심 (12강)'},
+  {id:'q14',cat:'mem',star:false,q:'TLB가 뭔가요?',
+   a:'가상→물리 주소 변환 결과를 캐싱하는 MMU 안의 고속 캐시입니다. 페이지 테이블은 메모리에 있어 매번 읽으면 느리니까 자주 쓰는 변환을 TLB에 저장합니다. TLB Hit이면 변환이 거의 공짜이고, 컨텍스트 스위칭으로 프로세스가 바뀌면 TLB가 무효화되어 한동안 느려집니다.',
+   kw:['변환 캐시','Hit/Miss','컨텍스트 스위칭 시 무효화'],
+   tail:'Q4(컨텍스트 스위칭)와 연결해서 물어봄'},
+  {id:'q15',cat:'mem',star:true,q:'배열이 링크드 리스트보다 순회가 빠른 이유는?',
+   a:'배열은 메모리에 연속 배치되어 공간 지역성이 좋습니다. 캐시는 64바이트 라인 단위로 가져오기 때문에 한 번 미스 후 옆 원소들은 캐시 히트가 됩니다. 링크드 리스트는 노드가 힙에 흩어져 있어 매 노드 접근이 캐시 미스라, 같은 O(n)이라도 실제로는 몇 배 느립니다. 빅오만으로 성능을 판단하면 안 되는 대표 사례입니다.',
+   kw:['공간 지역성','캐시 라인 64B','빅오 ≠ 실제 성능'],
+   tail:'"캐시 친화적 코드는 어떻게?" → 순차 접근, SoA (13강) / "False Sharing 아세요?" → 13강'},
+  {id:'q16',cat:'mem',star:false,q:'캐시 메모리 계층을 설명해보세요.',
+   a:'레지스터, L1, L2, L3, RAM, 디스크 순으로 위로 갈수록 빠르고 작고 비쌉니다. L1은 4사이클 정도인데 RAM은 200사이클로 약 50배 차이라, 자주 쓰는 데이터를 CPU 가까운 캐시에 둬서 이 격차를 메웁니다. 캐시는 시간 지역성과 공간 지역성을 활용합니다.',
+   kw:['계층 순서','L1 4 vs RAM 200','두 지역성'],
+   tail:'Q15와 연결'},
+  {id:'q17',cat:'io',star:false,q:'블로킹과 논블로킹, 동기와 비동기의 차이는?',
+   a:'블로킹/논블로킹은 “기다리느냐”의 축으로, 블로킹은 결과까지 멈추고 논블로킹은 즉시 반환합니다. 동기/비동기는 “누가 완료를 챙기느냐”의 축으로, 동기는 직접 확인하고 비동기는 콜백이나 이벤트로 통지받습니다. 서로 다른 축이라 조합이 가능합니다.',
+   kw:['두 개의 축','기다림 vs 완료 통지'],
+   tail:'"게임 비동기 로딩은 어느 조합?" → 논블로킹+비동기 (15강)'},
+  {id:'q18',cat:'io',star:false,q:'게임에서 에셋을 비동기 로딩하는 이유는?',
+   a:'디스크 읽기는 수십~수백 ms가 걸리는데 Game Thread에서 동기로 읽으면 그동안 Tick이 멈춰 hitch가 납니다. 비동기 로딩은 그 대기를 워커 스레드나 OS 비동기 I/O로 넘기고 Game Thread는 계속 돌다가 완료 콜백만 받습니다. 디스크가 빨라지는 게 아니라 반응성을 유지하는 겁니다.',
+   kw:['hitch 방지','대기를 Game Thread 밖으로','responsiveness'],
+   tail:'"비동기라도 누가 디스크를 기다리죠?" → 워커 블로킹 or IOCP (15강)'},
+  {id:'q19',cat:'io',star:false,q:'"파일을 연다"는 게 무슨 의미인가요?',
+   a:'데이터를 옮기는 게 아니라, 경로로 파일 메타데이터(inode)를 찾아 권한을 검사하고, 커널에 “열린 파일” 항목을 만들어 그 핸들(파일 디스크립터)을 반환하는 겁니다. 이후 읽기·쓰기는 이 핸들로 합니다. 파일 이름 자체는 inode가 아니라 디렉토리의 “이름→inode” 매핑에 있습니다.',
+   kw:['핸들 생성','inode','이름은 디렉토리에'],
+   tail:'"왜 두 번째 읽기가 빠르죠?" → 페이지 캐시 (14강)'},
+  {id:'q20',cat:'synth',star:false,open:true,q:'멀티스레드 프로그래밍 경험을 말해보세요.',
+   a:'<i style="color:var(--faint)">이건 정답이 없는 경험 질문입니다. 1~15강을 엮어서 스토리로 답하세요. 예시 틀 ↓</i><br><br>언리얼에서 무거운 [경로 탐색/세이브 직렬화 등]을 Game Thread에서 하다가 hitch가 발생한 적이 있습니다. 이걸 <code>AsyncTask</code>로 워커 스레드에 옮겼는데, 결과를 적용할 때 공유 데이터에서 Race Condition이 생겨서 <code>FCriticalSection</code>으로 보호했습니다. 그런데 단순 카운터였던 부분은 <code>FThreadSafeCounter</code>로 바꿔서 락 비용을 줄였고, UObject를 만지는 부분은 반드시 Game Thread로 콜백을 넘겨서 처리했습니다.',
+   kwText:'(한 답변에 여러 개념을 자연스럽게) hitch → 워커 → Race → Mutex → atomic → Game Thread 콜백',
+   tail:'답변에 등장한 키워드 아무거나 깊게 파고듦. 그래서 자기가 진짜 아는 것만 말해야 한다.<br><br><b>팁:</b> 모르는 걸 키워드로 던지면 꼬리질문에서 무너진다. 위 20문항 중 자신 있는 것 위주로 스토리를 짜라.'}
+];
+var CATLABEL = {proc:'프로세스·스레드',sched:'스케줄링',concur:'동시성',mem:'메모리',io:'I/O',synth:'종합'};
+var STORE_KEY = 'osbonus-check';
+
+/* ===== 상태 저장/로드 ===== */
+function loadState(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'{}'); }catch(e){ return {}; } }
+function saveState(st){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(st)); }catch(e){} }
+var state = loadState();
+
+function setRating(id, r){
+  state[id] = r;
+  saveState(state);
+  updateTopProgress();
+  var card = document.querySelector('.qcard[data-id="'+id+'"]');
+  if(card){
+    card.classList.remove('st-know','st-unsure','st-unknown');
+    card.classList.add('st-'+r);
+    var btns = card.querySelectorAll('.ratebtns button');
+    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.r===r); });
+  }
+}
+
+function updateTopProgress(){
+  var total = QUESTIONS.length, done=0, k=0,u=0,x=0;
+  QUESTIONS.forEach(function(q){
+    var r = state[q.id];
+    if(r){ done++; if(r==='know')k++; else if(r==='unsure')u++; else if(r==='unknown')x++; }
+  });
+  document.getElementById('topBar').style.width = (done/total*100)+'%';
+  document.getElementById('topPct').textContent = done+' / '+total+' 문항 체크함';
+  document.getElementById('topPctNum').textContent = Math.round(done/total*100)+'%';
+  document.getElementById('statKnow').textContent = '✅ 알았음 '+k;
+  document.getElementById('statUnsure').textContent = '🤔 애매함 '+u;
+  document.getElementById('statUnknown').textContent = '❌ 모르겠음 '+x;
+}
+
+/* ===== 문항 리스트 렌더 ===== */
+(function(){
+  var list = document.getElementById('qList');
+  QUESTIONS.forEach(function(qd, i){
+    var det = document.createElement('details');
+    det.className = 'qcard';
+    if(state[qd.id]) det.classList.add('st-'+state[qd.id]);
+    det.dataset.id = qd.id;
+    det.dataset.cat = qd.cat;
+
+    var kwHtml = qd.kwText
+      ? '<p style="margin-top:14px;font-size:13px;color:var(--faint)">🔑 '+qd.kwText+'</p>'
+      : '<div class="kwrow">'+qd.kw.map(function(k){return '<span class="kw">🔑 '+k+'</span>';}).join('')+'</div>';
+
+    det.innerHTML =
+      '<summary>'+
+        '<span class="statedot"></span>'+
+        '<span class="qn">Q'+(i+1)+'</span>'+
+        (qd.star?'<span class="star">★최빈출</span>':'')+
+        (qd.open?'<span class="opentag">오픈 질문</span>':'')+
+        '<span class="qtext">'+qd.q+'</span>'+
+        '<span class="catbadge">'+CATLABEL[qd.cat]+'</span>'+
+        '<span class="arr">▾</span>'+
+      '</summary>'+
+      '<div class="body">'+
+        '<div class="ans"><b>A.</b> '+qd.a+'</div>'+
+        kwHtml+
+        '<div class="tailbox"><b>꼬리:</b> '+qd.tail+'</div>'+
+        '<div class="ratebtns">'+
+          '<button data-r="know"'+(state[qd.id]==='know'?' class="active"':'')+'>✅ 알았음</button>'+
+          '<button data-r="unsure"'+(state[qd.id]==='unsure'?' class="active"':'')+'>🤔 애매함</button>'+
+          '<button data-r="unknown"'+(state[qd.id]==='unknown'?' class="active"':'')+'>❌ 모르겠음</button>'+
+        '</div>'+
+      '</div>';
+
+    det.querySelectorAll('.ratebtns button').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        setRating(qd.id, btn.dataset.r);
+      });
+    });
+    list.appendChild(det);
+  });
+  updateTopProgress();
+})();
+
+/* ===== 카테고리 필터 (nav 칩 + 리스트 위 버튼 동기화) ===== */
+(function(){
+  var navChips = [].slice.call(document.querySelectorAll('#navChips .chip'));
+  var catBtns = [].slice.call(document.querySelectorAll('#catRow button'));
+  var cards = [].slice.call(document.querySelectorAll('.qcard'));
+
+  function applyFilter(cat){
+    navChips.forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); });
+    catBtns.forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); });
+    cards.forEach(function(c){
+      c.style.display = (cat==='all' || c.dataset.cat===cat) ? '' : 'none';
+    });
+  }
+  navChips.forEach(function(c){
+    c.addEventListener('click', function(){
+      applyFilter(c.dataset.cat);
+      document.getElementById('list').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+  catBtns.forEach(function(c){
+    c.addEventListener('click', function(){ applyFilter(c.dataset.cat); });
+  });
+})();
+
+/* ===== 면접 시뮬레이터 ===== */
+(function(){
+  var idleBox = document.getElementById('simIdle');
+  var panel = document.getElementById('simPanel');
+  var result = document.getElementById('simResult');
+  var progEl = document.getElementById('simProg');
+  var catBadge = document.getElementById('simCatBadge');
+  var timerBar = document.getElementById('simTimerBar');
+  var timerFill = document.getElementById('simTimerFill');
+  var secText = document.getElementById('simSecText');
+  var qText = document.getElementById('simQText');
+  var revealRow = document.getElementById('simRevealRow');
+  var ansBox = document.getElementById('simAns');
+  var ansText = document.getElementById('simAnsText');
+  var kwRow = document.getElementById('simKwRow');
+  var tailBox = document.getElementById('simTailBox');
+  var rateBtns = [].slice.call(document.querySelectorAll('#simRateBtns button'));
+
+  var DURATION = 30;
+  var queue = [], idx = 0, remain = DURATION, timerId = null, revealed = false;
+  var tally = {know:0, unsure:0, unknown:0};
+  var catTally = {};
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
+    return a;
+  }
+
+  function startSim(){
+    queue = shuffle(QUESTIONS);
+    idx = 0;
+    tally = {know:0, unsure:0, unknown:0};
+    catTally = {};
+    idleBox.style.display = 'none';
+    result.classList.remove('on');
+    panel.classList.add('on');
+    showQuestion();
+  }
+
+  function showQuestion(){
+    revealed = false;
+    var qd = queue[idx];
+    progEl.textContent = (idx+1)+' / '+queue.length;
+    catBadge.textContent = CATLABEL[qd.cat];
+    qText.textContent = qd.q + (qd.star?'  ★최빈출':'');
+    ansBox.classList.remove('on');
+    revealRow.style.display = 'flex';
+    rateBtns.forEach(function(b){ b.classList.remove('active'); });
+    timerBar.classList.remove('warn');
+    remain = DURATION;
+    updateTimerUI();
+    if(timerId) clearInterval(timerId);
+    timerId = setInterval(function(){
+      remain -= 0.1;
+      if(remain <= 0){ remain = 0; updateTimerUI(); clearInterval(timerId); revealAnswer(); return; }
+      updateTimerUI();
+    }, 100);
+  }
+
+  function updateTimerUI(){
+    var pct = Math.max(0, remain/DURATION*100);
+    timerFill.style.width = pct+'%';
+    secText.textContent = remain.toFixed(1)+'초';
+    timerBar.classList.toggle('warn', remain <= 10);
+  }
+
+  function revealAnswer(){
+    if(revealed) return;
+    revealed = true;
+    if(timerId) clearInterval(timerId);
+    var qd = queue[idx];
+    ansText.innerHTML = '<b>A.</b> '+qd.a;
+    if(qd.kwText){
+      kwRow.innerHTML = '<span class="kw" style="width:100%">🔑 '+qd.kwText+'</span>';
+    } else {
+      kwRow.innerHTML = qd.kw.map(function(k){return '<span class="kw">🔑 '+k+'</span>';}).join('');
+    }
+    tailBox.innerHTML = '<b>꼬리:</b> '+qd.tail;
+    revealRow.style.display = 'none';
+    ansBox.classList.add('on');
+  }
+
+  rateBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!revealed) revealAnswer();
+      var qd = queue[idx];
+      var r = btn.dataset.r;
+      rateBtns.forEach(function(b){ b.classList.toggle('active', b===btn); });
+      setRating(qd.id, r);
+      tally[r]++;
+      if(!catTally[qd.cat]) catTally[qd.cat] = {know:0,unsure:0,unknown:0};
+      catTally[qd.cat][r]++;
+      setTimeout(function(){
+        idx++;
+        if(idx >= queue.length){ finishSim(); }
+        else{ showQuestion(); }
+      }, 400);
+    });
+  });
+
+  document.getElementById('simReveal').addEventListener('click', revealAnswer);
+
+  function finishSim(){
+    panel.classList.remove('on');
+    result.classList.add('on');
+    document.getElementById('rKnow').textContent = tally.know;
+    document.getElementById('rUnsure').textContent = tally.unsure;
+    document.getElementById('rUnknown').textContent = tally.unknown;
+
+    var weakCats = Object.keys(catTally).map(function(c){
+      var t = catTally[c];
+      return {cat:c, weak:t.unsure+t.unknown};
+    }).filter(function(x){ return x.weak>0; }).sort(function(a,b){ return b.weak-a.weak; });
+
+    var weakBox = document.getElementById('rWeak');
+    if(weakCats.length===0){
+      weakBox.innerHTML = '🎉 모든 문항을 "알았음"으로 답했다. 약한 카테고리가 없다.';
+    } else {
+      var top = weakCats[0].weak;
+      var names = weakCats.filter(function(x){ return x.weak===top; }).map(function(x){ return CATLABEL[x.cat]; });
+      weakBox.innerHTML = '취약 카테고리: <b>'+names.join(', ')+'</b> — 이 파트를 다시 복습해라.';
+    }
+  }
+
+  document.getElementById('simStart').addEventListener('click', startSim);
+  document.getElementById('simRestart').addEventListener('click', function(){
+    result.classList.remove('on');
+    idleBox.style.display = 'block';
+  });
+})();
+
+/* ===== 스크롤 진행바 ===== */
+(function(){
+  var bar = document.getElementById('bar');
+  function onScroll(){
+    var s = window.scrollY, h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h>0 ? s/h*100 : 0)+'%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>

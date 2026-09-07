@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9강 · Atomic과 Lock-Free — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --tA:#22d3ee;--tB:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--cyan))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--pur);border-color:var(--pur)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--pur);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.pur{background:var(--pur)}.btn.pur:hover{background:#c084fc}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* CAS 시뮬 */
+.mem{display:flex;justify-content:center;margin:6px 0 20px}
+.mem .box{background:var(--bg2);border:2px solid var(--pur);border-radius:14px;padding:14px 30px;text-align:center}
+.mem .box .lb{font-size:12px;color:var(--dim)}
+.mem .box .v{font-family:ui-monospace,monospace;font-size:38px;font-weight:800;color:#c084fc;transition:.2s}
+.mem .box.flash{border-color:var(--grn);box-shadow:0 0 22px rgba(52,211,153,.4)}
+.cas-threads{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ct{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:14px}
+.ct.A{border-top:3px solid var(--tA)}.ct.B{border-top:3px solid var(--tB)}
+.ct h4{font-size:13px}.ct.A h4{color:var(--tA)}.ct.B h4{color:var(--tB)}
+.ct .ln{font-family:ui-monospace,monospace;font-size:12px;padding:6px 9px;border-radius:7px;background:var(--bg2);border:1px solid var(--line);margin-top:7px;color:var(--dim);transition:.2s}
+.ct .ln.cur{border-color:var(--amber);background:rgba(251,191,36,.14);color:var(--txt)}
+.ct .ln.ok{border-color:var(--grn);background:rgba(52,211,153,.14);color:var(--grn)}
+.ct .ln.fail{border-color:var(--red);background:rgba(248,113,113,.14);color:var(--red)}
+.ct .reg{font-family:ui-monospace,monospace;font-size:12px;margin-top:8px;color:var(--faint)}
+.ct .reg b{color:var(--txt)}
+.cas-log{font-family:ui-monospace,monospace;font-size:12.5px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:16px;min-height:60px;color:var(--dim);line-height:1.8}
+.cas-log .ok{color:var(--grn)}.cas-log .fail{color:var(--red)}
+
+/* mutex vs atomic 속도 */
+.speed-bars .row{display:flex;align-items:center;gap:12px;margin-top:12px}
+.speed-bars .row .nm{width:130px;font-size:13px;font-weight:700}
+.speed-bars .row .tr{flex:1;height:30px;background:var(--bg2);border-radius:7px;overflow:hidden;border:1px solid var(--line)}
+.speed-bars .row .tr i{display:block;height:100%;width:0;transition:1.2s cubic-bezier(.2,.8,.2,1);border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding-right:10px;font-family:ui-monospace,monospace;font-size:12px;font-weight:700;color:#04102a}
+.speed-bars .mutex i{background:linear-gradient(90deg,#fb7185,var(--red))}
+.speed-bars .atomic i{background:linear-gradient(90deg,var(--grn),var(--cyan))}
+.speed-bars .lockfree i{background:linear-gradient(90deg,var(--cyan),var(--ind2))}
+.speed-note{text-align:center;margin-top:16px;font-size:14px;color:var(--dim);min-height:22px}
+
+/* 선택 가이드 */
+.guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:22px}
+.gd{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px;border-top:3px solid var(--accent)}
+.gd h4{font-size:15px;margin-top:4px}.gd .tg{font-size:11px;font-weight:700;color:var(--accent)}
+.gd p{font-size:13px;color:var(--dim);margin-top:8px}
+.gd code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 5px;border-radius:4px;color:var(--cyan);font-size:.86em}
+
+/* 오해/면접/체크 공통 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:225px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--pur);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1d1530,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){.cas-threads{grid-template-columns:1fr}header.hero{padding:96px 0 36px}.flip{height:245px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>9강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#cas">CAS</a>
+    <a class="chip" href="#speed">속도 비교</a>
+    <a class="chip" href="#guide">선택 가이드</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 동시성</span>
+  <h1>Atomic과 <span class="g">Lock-Free</span></h1>
+  <p class="sub">락 없이 멀티스레드 안전이 가능할까? CAS(Compare-And-Swap)가 경쟁 속에서 어떻게 동작하는지 직접 돌려보고, Mutex와 속도를 비교한다.</p>
+  <div class="meta">
+    <div class="m">⚛️ CPU 원자 명령</div>
+    <div class="m">🧩 선수지식 <b>7~8강</b></div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 동기</div>
+  <h2 class="sec"><span class="n">1</span>락은 비싸다</h2>
+  <p class="lead">8강에서 카운터를 Mutex로 지켰다. 정확하지만 느리다 — 매 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">++</code>마다 락/언락 비용 + 두 스레드가 직렬로 돈다.</p>
+  <div class="card">
+    <pre><span class="c">// 8강: 안전하지만 느림</span>
+<span class="k">for</span> (...) { <span class="t">FScopeLock</span> G(&Lock); g_Shared++; }
+
+<span class="c">// 9강: 락 없이, 더 빠르게</span>
+<span class="t">std</span>::atomic&lt;<span class="t">int32</span>&gt; g_Shared{<span class="s">0</span>};
+<span class="k">for</span> (...) g_Shared.fetch_add(<span class="s">1</span>);   <span class="c">// CPU 원자 명령 하나로 끝</span></pre>
+    <p style="text-align:center;margin-top:16px">`++` 한 줄을 위해 자물쇠를 채우는 게 과하다. CPU가 직접 보장하는 <b class="tagline">원자 명령</b>이 있다. 그 핵심이 CAS. ↓</p>
+  </div>
+</div></section>
+
+<!-- 2. CAS 시뮬 -->
+<section id="cas"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 시뮬레이터</div>
+  <h2 class="sec"><span class="n">2</span>CAS는 "비교해서 같으면 바꾼다"</h2>
+  <p class="lead"><code style="font-family:ui-monospace,monospace;color:var(--cyan)">CAS(주소, 예상값, 새값)</code> — 현재 값이 예상값과 <b>같으면</b> 새 값으로 바꾸고 성공, <b>다르면</b> 실패하고 재시도. 두 스레드가 같은 카운터를 +1 하는 경쟁을 단계별로 보자.</p>
+  <div class="card">
+    <div class="mem"><div class="box" id="casMem"><div class="lb">atomic counter</div><div class="v" id="casVal">0</div></div></div>
+    <div class="cas-threads">
+      <div class="ct A">
+        <h4>● 스레드 A</h4>
+        <div class="ln" data-s="A0">① old = load()</div>
+        <div class="ln" data-s="A1">② new = old + 1</div>
+        <div class="ln" data-s="A2">③ CAS(old, new)</div>
+        <div class="reg" id="regA">expected=– new=–</div>
+      </div>
+      <div class="ct B">
+        <h4>● 스레드 B</h4>
+        <div class="ln" data-s="B0">① old = load()</div>
+        <div class="ln" data-s="B1">② new = old + 1</div>
+        <div class="ln" data-s="B2">③ CAS(old, new)</div>
+        <div class="reg" id="regB">expected=– new=–</div>
+      </div>
+    </div>
+    <div class="cas-log" id="casLog">시나리오를 골라 ▶ 재생을 누르세요.</div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn pur" id="casRace">▶ 경쟁 시나리오 (retry 발생)</button>
+      <button class="btn ghost" id="casReset">↺ 초기화</button>
+    </div>
+    <p class="hint">B가 먼저 CAS에 성공하면, A의 예상값(old=0)이 현재값(1)과 달라져 <b style="color:var(--red)">CAS 실패</b>. A는 새 값을 다시 읽어 재시도한다. <b>실패해도 데이터는 안 깨진다</b> — 단지 다시 시도할 뿐. 이게 lock-free의 핵심.</p>
+  </div>
+</div></section>
+
+<!-- 3. 속도 비교 -->
+<section id="speed"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 벤치마크</div>
+  <h2 class="sec"><span class="n">3</span>Mutex vs Atomic vs Lock-Free</h2>
+  <p class="lead">같은 카운터를 1천만 번 증가시킬 때 상대 소요 시간. "벤치마크" 버튼을 눌러보자. (대표적 경향치)</p>
+  <div class="card">
+    <div class="speed-bars" id="speedBars">
+      <div class="row mutex"><div class="nm">🔒 Mutex</div><div class="tr"><i></i></div></div>
+      <div class="row atomic"><div class="nm">⚛️ Atomic</div><div class="tr"><i></i></div></div>
+      <div class="row lockfree"><div class="nm">🔀 Lock-Free queue</div><div class="tr"><i></i></div></div>
+    </div>
+    <div class="speed-note" id="speedNote"></div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn grn" id="benchBtn">▶ 벤치마크 실행</button>
+    </div>
+    <p class="hint">단순 카운터는 atomic이 mutex보다 보통 <b>10~50배</b> 빠르다. 다만 <b style="color:var(--amber)">경쟁이 심하면</b> CAS 재시도가 폭주하고 캐시 라인 핑퐁이 생겨 오히려 느려질 수 있다 — lock-free가 항상 빠른 건 아니다.</p>
+  </div>
+</div></section>
+
+<!-- 4. 선택 가이드 -->
+<section id="guide"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 실무 판단</div>
+  <h2 class="sec"><span class="n">4</span>언제 무엇을 쓸까</h2>
+  <p class="lead">원칙: <b>가장 간단한 도구부터.</b> mutex → atomic → lock-free 순으로, 측정해보고 진짜 필요할 때만 위로.</p>
+  <div class="guide">
+    <div class="gd" style="--accent:var(--grn)"><div class="tg">ATOMIC</div><h4>단일 변수</h4><p>카운터 <code>FThreadSafeCounter</code>, 플래그 <code>FThreadSafeBool</code>, 포인터 하나 교체. 짧은 연산엔 atomic이 정답.</p></div>
+    <div class="gd" style="--accent:var(--ind)"><div class="tg">MUTEX</div><h4>여러 변수·컬렉션</h4><p><code>TArray</code>·<code>TMap</code> 수정, 여러 변수가 일관되게 바뀌어야 할 때, 임계영역이 좀 길 때.</p></div>
+    <div class="gd" style="--accent:var(--cyan)"><div class="tg">LOCK-FREE</div><h4>검증된 자료구조</h4><p>생산자-소비자가 진짜 병목일 때. 직접 짜지 말고 <code>TLockFreePointerList</code> 같은 검증된 걸 쓴다.</p></div>
+  </div>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--pur)">메모리 배리어 한 줄 정리</div>
+    <p style="margin-top:6px">컴파일러·CPU는 단일 스레드 결과가 같으면 명령 순서를 재배치한다. 다른 스레드가 그걸 보면 "데이터 준비 → 플래그" 순서가 뒤집혀 보일 수 있다. <b class="tagline">acquire/release</b> 배리어가 이 재배치를 막는다. (면접에선 이 정도면 충분)</p>
+    <pre>Data.store(42, memory_order_relaxed);
+bReady.store(<span class="k">true</span>, memory_order_release);  <span class="c">// 이 앞의 쓰기가 다 보이게</span>
+<span class="c">// 읽는 쪽</span>
+<span class="k">if</span> (bReady.load(memory_order_acquire)) Use(Data);  <span class="c">// 안전하게 42</span></pre>
+  </div>
+</div></section>
+
+<!-- 5. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 함정</div>
+  <h2 class="sec"><span class="n">5</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 6. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 면접 대비</div>
+  <h2 class="sec"><span class="n">6</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 7. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 마무리</div>
+  <h2 class="sec"><span class="n">7</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="10강_Deadlock.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">10강 — 데드락 (Deadlock) →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 9강</div>
+</div></footer>
+
+<script>
+/* 2. CAS 시뮬 */
+(function(){
+  var casVal=document.getElementById('casVal'),casMem=document.getElementById('casMem');
+  var regA=document.getElementById('regA'),regB=document.getElementById('regB'),log=document.getElementById('casLog');
+  var running=false,timer=null;
+  function reset(){
+    if(timer){clearInterval(timer);timer=null;}running=false;
+    casVal.textContent='0';regA.textContent='expected=– new=–';regB.textContent='expected=– new=–';
+    document.querySelectorAll('.ct .ln').forEach(function(e){e.classList.remove('cur','ok','fail');});
+    log.textContent='시나리오를 골라 ▶ 재생을 누르세요.';
+  }
+  function mark(s,cls){document.querySelectorAll('.ct .ln').forEach(function(e){e.classList.remove('cur');});var e=document.querySelector('.ln[data-s='+s+']');if(e){e.classList.remove('ok','fail');e.classList.add(cls);}}
+  function logAdd(html){log.innerHTML+=(log.innerHTML&&log.textContent.indexOf('시나리오')<0?'<br>':(log.innerHTML='')||'')+html;}
+  function setLog(html){log.innerHTML=html;}
+  function race(){
+    if(running)return;reset();running=true;
+    var state={c:0,aOld:null,aNew:null,bOld:null,bNew:null};
+    var seq=[
+      function(){state.aOld=state.c;regA.innerHTML='expected=<b>'+state.aOld+'</b> new=–';mark('A0','cur');setLog('A: old = load() → <b>'+state.aOld+'</b>');},
+      function(){state.aNew=state.aOld+1;regA.innerHTML='expected=<b>'+state.aOld+'</b> new=<b>'+state.aNew+'</b>';mark('A1','cur');log.innerHTML+='<br>A: new = '+state.aNew;},
+      function(){state.bOld=state.c;regB.innerHTML='expected=<b>'+state.bOld+'</b> new=–';mark('B0','cur');log.innerHTML+='<br>B: old = load() → <b>'+state.bOld+'</b> (A보다 먼저 끼어듦)';},
+      function(){state.bNew=state.bOld+1;regB.innerHTML='expected=<b>'+state.bOld+'</b> new=<b>'+state.bNew+'</b>';mark('B1','cur');log.innerHTML+='<br>B: new = '+state.bNew;},
+      function(){ // B CAS 성공 (현재 0 == expected 0)
+        state.c=state.bNew;casVal.textContent=state.c;casMem.classList.add('flash');setTimeout(function(){casMem.classList.remove('flash');},250);
+        document.querySelector('.ln[data-s=B2]').classList.add('ok');document.querySelectorAll('.ln[data-s=B0],.ln[data-s=B1]').forEach(function(e){});
+        log.innerHTML+='<br><span class="ok">B: CAS(0→1) 성공 ✓ — 현재값 0 == 예상 0</span>';},
+      function(){ // A CAS 실패 (현재 1 != expected 0)
+        document.querySelector('.ln[data-s=A2]').classList.add('fail');
+        log.innerHTML+='<br><span class="fail">A: CAS(expected 0 → 1) 실패 ✗ — 현재값은 이미 1!</span>';},
+      function(){ // A 재시도
+        state.aOld=state.c;state.aNew=state.aOld+1;regA.innerHTML='expected=<b>'+state.aOld+'</b> new=<b>'+state.aNew+'</b>';
+        document.querySelector('.ln[data-s=A2]').classList.remove('fail');mark('A0','cur');
+        log.innerHTML+='<br>A: 🔁 재시도 — old = load() → <b>'+state.aOld+'</b>, new = '+state.aNew;},
+      function(){ // A CAS 성공
+        state.c=state.aNew;casVal.textContent=state.c;casMem.classList.add('flash');setTimeout(function(){casMem.classList.remove('flash');},250);
+        document.querySelector('.ln[data-s=A2]').classList.add('ok');
+        log.innerHTML+='<br><span class="ok">A: CAS(1→2) 성공 ✓</span> — 최종 <b>2</b>, 둘 다 정확히 반영. retry 한 번으로 해결!';running=false;}
+    ];
+    var i=0;timer=setInterval(function(){if(i>=seq.length){clearInterval(timer);timer=null;return;}seq[i]();i++;},850);
+  }
+  document.getElementById('casRace').addEventListener('click',race);
+  document.getElementById('casReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 3. 속도 비교 */
+(function(){
+  var box=document.getElementById('speedBars'),note=document.getElementById('speedNote');
+  document.getElementById('benchBtn').addEventListener('click',function(){
+    // 상대 시간(낮을수록 빠름) — 막대는 시간 비례. mutex 기준 1.0
+    var mutex=100, atomic=4, lockfree=9;
+    var max=mutex;
+    var rows=box.querySelectorAll('.row i');
+    rows[0].style.width='100%';rows[0].textContent='100 (기준)';
+    rows[1].style.width=(atomic/max*100)+'%';rows[1].textContent='≈4';
+    rows[2].style.width=(lockfree/max*100)+'%';rows[2].textContent='≈9';
+    note.innerHTML='Atomic이 Mutex보다 약 <b style="color:var(--grn)">25배</b> 빠름 (막대가 짧을수록 빠름). 단일 카운터엔 atomic이 압도적.';
+  });
+})();
+
+/* 5. 오해 */
+(function(){
+  var data=[
+    {q:'"volatile 쓰면 atomic이다"',a:'아니다. C++ <code>volatile</code>은 <b class="truth">컴파일러 최적화 방지</b>용일 뿐 멀티스레드 안전성을 보장하지 않는다. <code>std::atomic</code>이나 <code>TAtomic</code>을 써야 한다.'},
+    {q:'"atomic 변수 두 개면 둘 사이도 안전"',a:'각 변수의 <b class="truth">원자성만</b> 보장된다. 두 atomic의 관계·순서는 별개라, 다른 스레드가 "B=1, A=0" 같은 중간 상태를 볼 수 있다.'},
+    {q:'"lock-free면 wait-free 같은 거잖아"',a:'다르다. <b class="truth">Lock-Free</b>는 어떤 스레드는 항상 진척(나머지는 retry 가능), <b class="truth">Wait-Free</b>는 모든 스레드가 유한 단계에 끝남(더 강함). CAS 루프는 lock-free지만 wait-free는 아니다.'},
+    {q:'"FString 같은 큰 타입도 atomic으로 감싸면 빨라짐"',a:'큰 타입은 내부적으로 락 fallback이 들어가 오히려 느릴 수 있다. <code>std::atomic</code>은 보통 <b class="truth">포인터 크기 이하</b>일 때 진짜 원자 명령으로 처리된다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 6. 면접 */
+(function(){
+  var qa=[
+    {q:'atomic 연산이 뭔가요?',a:'중간에 다른 스레드 개입 없이 원자적으로 실행되는 연산입니다. CPU의 <b>LOCK 접두사·CMPXCHG</b> 같은 명령으로 보장하며, C++ <code style="font-family:monospace">std::atomic</code>, 언리얼 <code style="font-family:monospace">FThreadSafeCounter</code>로 씁니다.'},
+    {q:'Mutex 대신 atomic을 쓰면 좋은 점은?',a:'락 획득/해제 비용이 없고, 락을 못 받았을 때 컨텍스트 스위칭이 없습니다. OS 호출도 거의 없어 수십 배 빠릅니다. 다만 <b>한 변수의 짧은 연산</b>만 가능합니다.'},
+    {q:'CAS가 뭔가요?',a:'지정 주소의 값이 예상값과 같으면 새 값으로 바꾸고, 다르면 실패를 반환하는 원자 연산입니다. 이 비교-교환 전체가 끊김 없이 일어나며, <b>대부분의 lock-free 자료구조의 빌딩 블록</b>입니다.'},
+    {q:'Lock-Free가 항상 빠른가요?',a:'아닙니다. 경쟁이 낮으면 mutex와 별 차이 없고, 경쟁이 심하면 <b>CAS 재시도 폭주</b>와 캐시 라인 핑퐁으로 오히려 느려질 수 있습니다. 구현도 어려워 버그 가능성이 높습니다.'},
+    {q:'메모리 배리어가 왜 필요한가요?',a:'컴파일러·CPU가 단일 스레드 결과가 같은 한 명령 순서를 재배치하는데, 다른 스레드가 보면 순서가 뒤집혀 동기화가 깨집니다. <b>acquire/release</b> 배리어가 이 재배치를 막습니다.'},
+    {q:'FThreadSafeCounter와 FCriticalSection 중 뭘?',a:'보호 대상이 <b>단일 정수 카운터</b>면 FThreadSafeCounter — 락 비용 없이 같은 안전성을 더 빠르게. 카운터 외 다른 변수도 함께 일관되게 갱신해야 하면 FCriticalSection이 필요합니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 7. 체크 */
+(function(){
+  var items=['atomic이 CPU 원자 명령(LOCK·CMPXCHG)에 기반한다는 걸 안다','atomic과 mutex의 속도 차이 이유를 말할 수 있다','CAS의 동작과 retry 루프를 설명할 수 있다','메모리 배리어가 왜 필요한지 한 문단으로 설명할 수 있다','Lock-Free가 항상 빠른 게 아니라는 걸 안다','단일 카운터엔 atomic, 컬렉션엔 mutex라는 원칙을 안다'];
+  var KEY='os09-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

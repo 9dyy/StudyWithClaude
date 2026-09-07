@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>05강 · 언리얼의 스레드 구조 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--ind),var(--pur))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--ind2)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--ind);border-color:var(--ind)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--ind2);background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--ind2),var(--pur));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--ind2);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--ind2);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.pur{background:var(--pur);color:#fff}.btn.pur:hover{background:#c084fc}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 스레드 카테고리 카드 */
+.tgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:18px}
+.tcat{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.tcat .ic{font-size:22px}
+.tcat h4{font-size:14.5px;margin-top:8px}
+.tcat p{font-size:12.5px;color:var(--dim);margin-top:6px}
+.tcat .n{font-family:ui-monospace,monospace;font-size:11px;color:var(--ind2);font-weight:700}
+
+/* 스레드 역할 카드 */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:22px}
+.dcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px}
+.dcard h4{font-size:15px}.dcard .ic{font-size:22px}.dcard p{font-size:13px;color:var(--dim);margin-top:8px}
+.dcard code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 5px;border-radius:4px;color:var(--cyan);font-size:.86em}
+
+/* 파이프라인 시뮬레이터 (킬러 인터랙션) */
+.pl-wrap{display:flex;gap:12px;margin-top:8px}
+.pl-labels{width:64px;flex-shrink:0;display:flex;flex-direction:column;justify-content:space-around}
+.pl-name{font-size:12.5px;font-weight:700;color:var(--dim)}
+.pl-stage{position:relative;flex:1}
+.pl-track{position:relative;height:34px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;margin:6px 0;overflow:hidden}
+.pl-block{position:absolute;top:2px;bottom:2px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:#04102a;white-space:nowrap;overflow:hidden;transition:left .2s,width .2s}
+.pl-head{position:absolute;top:0;bottom:0;left:0;width:2px;background:var(--amber);box-shadow:0 0 8px var(--amber);pointer-events:none;z-index:5}
+.pl-scale{text-align:right;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);margin-top:4px}
+.pl-sliders{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.pl-srow{display:grid;grid-template-columns:100px 1fr 48px;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--dim)}
+.pl-srow input[type=range]{accent-color:var(--ind);width:100%}
+.pl-srow b{font-family:ui-monospace,monospace;color:var(--ind2);text-align:right;font-size:13px}
+.pl-readout{margin-top:18px;padding:14px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);font-size:14px;color:var(--dim);min-height:52px}
+.pl-readout b{color:var(--txt)}
+.pl-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.pl-presets button{font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:7px 13px;border-radius:9px;background:var(--bg2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.pl-presets button:hover{border-color:var(--ind);color:var(--txt)}
+
+/* Worker 유스케이스 */
+.usecases{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.usecases span{font-size:12.5px;background:var(--bg2);border:1px solid var(--line);color:var(--dim);padding:6px 12px;border-radius:20px}
+
+/* 매핑 표 */
+.maptable{width:100%;border-collapse:collapse;margin-top:6px;font-size:13.5px}
+.maptable th,.maptable td{border:1px solid var(--line);padding:10px;text-align:left}
+.maptable th{background:var(--card2);color:var(--dim);font-size:12px}
+.maptable td code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.88em}
+
+/* 오해/면접/체크 공통 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:220px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--ind2);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1e1533,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ind),var(--pur));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--ind);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--ind2)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){.duo{grid-template-columns:1fr}header.hero{padding:96px 0 36px}.flip{height:250px}.pl-labels{width:44px}.pl-name{font-size:11px}.pl-srow{grid-template-columns:76px 1fr 42px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>05강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#threads">스레드 구조</a>
+    <a class="chip" href="#pipeline">파이프라인</a>
+    <a class="chip" href="#worker">워커 풀</a>
+    <a class="chip" href="#real">실전</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 프로세스와 스레드 · 언리얼 응용편</span>
+  <h1>언리얼의 <span class="g">스레드 구조</span></h1>
+  <p class="sub">디버거로 언리얼 게임에 붙여보면 스레드가 30~50개 떠 있다. Game·Render·RHI·Worker가 어떻게 나뉘어 한 프레임을 만드는지, 파이프라인을 직접 돌려보고 병목이 어디서 생기는지 손으로 만져본다.</p>
+  <div class="meta">
+    <div class="m">🧵 Game · Render · RHI · Worker</div>
+    <div class="m">🧩 선수지식 <b>4강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>한 게임에 스레드가 몇 개나 도는가</h2>
+  <p class="lead">언리얼로 만든 게임을 Visual Studio 디버거에 붙여 스레드 창을 열어보면 <b>30~50개</b>가 떠 있다. 우리가 직접 만든 적도 없는데 왜 이렇게 많을까?</p>
+  <div class="card">
+    <p style="text-align:center">답: 언리얼이 내부적으로 굴리는 주요 스레드들이 다 떠 있어서다. 큰 그림으로 보면 <b class="tagline">4개 카테고리</b>로 나뉜다.</p>
+    <div class="tgrid">
+      <div class="tcat"><div class="ic">🎮</div><h4>Game Thread</h4><div class="n">1개</div><p>게임 로직 — Tick, Blueprint, AI, Physics</p></div>
+      <div class="tcat"><div class="ic">🖼️</div><h4>Render Thread</h4><div class="n">1개</div><p>렌더링 명령 만들기 — 컬링, 정렬</p></div>
+      <div class="tcat"><div class="ic">⚡</div><h4>RHI Thread</h4><div class="n">1개</div><p>GPU에 명령 보내기 — DX12/Vulkan 호출</p></div>
+      <div class="tcat"><div class="ic">👷</div><h4>Worker Pool</h4><div class="n">코어 수만큼</div><p>잡일 처리 — TaskGraph, 비동기 로딩</p></div>
+    </div>
+    <p class="hint">여기에 Audio Thread, Loading Thread, IO Thread 등이 추가로 더 붙는다. 이번 강의는 이 중 <b>Game / Render / RHI / Worker</b> 네 가지에 집중한다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 스레드 구조 -->
+<section id="threads"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 구조</div>
+  <h2 class="sec"><span class="n">2</span>Game → Render → RHI, 왜 셋으로 쪼갰나</h2>
+  <p class="lead">셋 다 그냥 스레드를 나눈 게 아니라, <b>한 스레드가 다음 프레임을 준비하는 동안 다른 스레드가 이전 프레임을 그리게</b> 하려고 나눈 것 — 파이프라이닝이다.</p>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">Game Thread — "게임의 메인"</div>
+    <p style="color:var(--dim);font-size:14px;margin-top:6px">우리가 짠 코드 대부분이 도는 곳. 액터·컴포넌트·UObject는 거의 다 여기서만 만지는 게 원칙이고, Blueprint 실행도 여기서 돈다. <b>단 1개</b>뿐이며, 60FPS면 한 프레임 = 16.6ms 안에 끝나야 다음 프레임이 안 밀린다.</p>
+    <pre><span class="c">// AMyActor.cpp</span>
+<span class="k">void</span> AMyActor::Tick(<span class="t">float</span> DeltaTime)        <span class="c">// ← Game Thread</span>
+{
+    SetActorLocation(...);                   <span class="c">// ← Game Thread</span>
+    PlayAnimation();                         <span class="c">// ← Game Thread</span>
+}
+
+<span class="k">void</span> AMyActor::BeginPlay()                   <span class="c">// ← Game Thread</span>
+{
+    UE_LOG(LogTemp, Log, TEXT(<span class="s">"Begin"</span>));
+}</pre>
+    <p class="hint">Game Thread에서 무거운 작업(파일 로딩, 복잡한 알고리즘)을 하면 즉시 끊김(hitch)이 난다. → Worker Thread로 빼야 한다.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">Render Thread — "렌더링 명령을 만들어라"</div>
+    <p style="color:var(--dim);font-size:14px;margin-top:6px">Game Thread는 "캐릭터 위치는 (1,2,3), 이 메시 그려" 같은 <b>명령</b>만 만들고, 실제 렌더링은 Render Thread가 한다. 그래서 <b class="tagline">Render Thread는 항상 Game Thread보다 1프레임 늦게 본다.</b></p>
+    <pre><span class="c">// Game Thread에서 실행</span>
+ENQUEUE_RENDER_COMMAND(MyCommand)(
+    [Data = LocalData](FRHICommandListImmediate& RHICmdList)
+    {
+        <span class="c">// 이 람다는 나중에 Render Thread에서 실행됨</span>
+        <span class="c">// Data는 복사돼서 안전 — 포인터를 그대로 넘기면</span>
+        <span class="c">// Game Thread가 그 사이 값을 바꿔 Race Condition</span>
+    }
+);</pre>
+    <p class="hint"><code style="font-family:ui-monospace,monospace;background:var(--bg2);color:var(--cyan);padding:1px 6px;border-radius:5px">ENQUEUE_RENDER_COMMAND</code> = "이 작업을 Render Thread 큐에 넣어줘." 람다 캡처는 복사가 원칙.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">RHI Thread — "GPU랑 진짜 대화"</div>
+    <p style="color:var(--dim);font-size:14px;margin-top:6px">RHI(Rendering Hardware Interface)는 DirectX/Vulkan/Metal을 추상화한 층. Render Thread가 "메시 그려" 같은 추상 명령을 만들면, RHI Thread가 그걸 실제 API 호출로 번역해 GPU에 보낸다. DX/Vulkan 호출 자체가 무거울 수 있어 한 번 더 분리했다.</p>
+    <pre>Game Thread:    [로직]
+                  ↓ (커맨드 큐)
+Render Thread:  [렌더 명령 만들기]
+                  ↓ (RHI 명령 큐)
+RHI Thread:     [DX12/Vulkan 호출 → GPU]
+                  ↓
+GPU:            [실제 픽셀 그리기]</pre>
+    <p class="hint">총 <b>3프레임 정도</b>의 파이프라인이 형성된다 — 마우스 클릭이 화면에 반영되기까지 약간의 입력 지연이 생기는 이유. 모바일·저사양에서는 RHI Thread 없이 Render Thread가 직접 그리는 모드도 있다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 파이프라인 시뮬레이터 (킬러) -->
+<section id="pipeline"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 킬러 · 인터랙션</div>
+  <h2 class="sec"><span class="n">3</span>프레임 파이프라인 시뮬레이터 — 병목은 어디서 생기나</h2>
+  <p class="lead">프레임 N의 Game 작업은 곧 Render로, 그다음 RHI로 흘러간다. 각 스레드가 프레임 하나를 처리하는 데 걸리는 시간을 슬라이더로 바꿔보면서 <b>병목이 어디서 생기고 어디까지 퍼지는지</b> 확인해보자.</p>
+  <div class="card">
+    <div class="pl-wrap">
+      <div class="pl-labels">
+        <div class="pl-name">Game</div>
+        <div class="pl-name">Render</div>
+        <div class="pl-name">RHI</div>
+      </div>
+      <div class="pl-stage">
+        <div class="pl-track" id="plGame"></div>
+        <div class="pl-track" id="plRender"></div>
+        <div class="pl-track" id="plRhi"></div>
+        <div class="pl-head" id="plHead"></div>
+      </div>
+    </div>
+    <div class="pl-scale" id="plScale">0ms ~ 0ms</div>
+
+    <div class="pl-readout" id="plReadout">재생을 눌러 타임라인을 따라가보자.</div>
+
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn pur" id="plPlay">▶ 재생</button>
+      <button class="btn ghost" id="plStep">⏭ 한 스텝</button>
+      <button class="btn ghost" id="plReset">↺ 처음으로</button>
+    </div>
+
+    <div class="pl-sliders">
+      <div class="pl-srow"><span>Game Thread</span><input type="range" id="plGameMs" min="4" max="30" value="16"><b id="plGameLab">16ms</b></div>
+      <div class="pl-srow"><span>Render Thread</span><input type="range" id="plRenderMs" min="4" max="30" value="16"><b id="plRenderLab">16ms</b></div>
+      <div class="pl-srow"><span>RHI Thread</span><input type="range" id="plRhiMs" min="4" max="30" value="16"><b id="plRhiLab">16ms</b></div>
+    </div>
+    <div class="pl-presets">
+      <button data-p="16,16,16">균형 (16/16/16)</button>
+      <button data-p="10,28,10">Render 병목</button>
+      <button data-p="10,10,28">RHI 병목</button>
+      <button data-p="28,10,10">Game 병목</button>
+    </div>
+    <p class="hint">각 프레임은 Game이 끝나야 Render가 시작하고, Render가 끝나야 RHI가 시작한다. 뒷 단계가 느리면 앞 단계도 <b style="color:var(--amber)">3프레임 이상 앞서가지 못하게</b> 대기(백프레셔)한다 — 실제 언리얼도 파이프라인 깊이를 제한한다. 트랙에 빈 칸(버블)이 보이면 그 스레드가 다음 프레임을 기다리는 중.</p>
+  </div>
+</div></section>
+
+<!-- 4. Worker Pool -->
+<section id="worker"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 워커</div>
+  <h2 class="sec"><span class="n">4</span>Worker Thread Pool — 잡일 처리반</h2>
+  <p class="lead">언리얼은 <b>TaskGraph</b>와 <b>FRunnable</b> 두 가지 방식으로 워커 스레드를 굴린다.</p>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">TaskGraph — 대부분 이걸 쓴다</div>
+    <p style="color:var(--dim);font-size:14px;margin-top:6px">병렬화 가능한 작은 작업을 큐에 넣으면 워커 스레드들이 알아서 가져가 처리한다.</p>
+    <pre>AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, []()
+{
+    <span class="c">// 워커 스레드에서 실행됨</span>
+    HeavyComputation();
+
+    <span class="c">// 결과를 다시 Game Thread로 넘기고 싶으면:</span>
+    AsyncTask(ENamedThreads::GameThread, []()
+    {
+        UpdateUI();   <span class="c">// 이건 Game Thread에서 실행돼야 안전</span>
+    });
+});</pre>
+    <div class="usecases"><span>경로 탐색(A*) 백그라운드 처리</span><span>절차적 생성(지형·던전)</span><span>JSON/Save 파일 파싱</span></div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">FRunnable — 평생 도는 워커가 필요할 때</div>
+    <pre><span class="k">class</span> FMyWorker : <span class="k">public</span> FRunnable
+{
+<span class="k">public</span>:
+    <span class="k">virtual</span> uint32 Run() <span class="k">override</span>
+    {
+        <span class="k">while</span> (!bStop)
+        {
+            DoWork();
+            FPlatformProcess::Sleep(0.016f);
+        }
+        <span class="k">return</span> 0;
+    }
+    <span class="k">virtual</span> <span class="t">void</span> Stop() <span class="k">override</span> { bStop = <span class="k">true</span>; }
+<span class="k">private</span>:
+    FThreadSafeBool bStop = <span class="k">false</span>;
+};
+
+<span class="c">// 사용</span>
+FMyWorker* W = <span class="k">new</span> FMyWorker();
+FRunnableThread* T = FRunnableThread::Create(W, TEXT(<span class="s">"MyWorker"</span>));</pre>
+    <div class="usecases"><span>네트워크 수신 루프</span><span>백그라운드 파일 와처</span><span>음성 채팅 인코딩</span></div>
+  </div>
+</div></section>
+
+<!-- 5. 실전: 금지 행동 + OS 개념 연결 -->
+<section id="real"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 실전</div>
+  <h2 class="sec"><span class="n">5</span>Game Thread에서 하면 안 되는 일</h2>
+  <p class="lead">원칙: UObject, Actor, Component, Slate UI는 <b>거의 다 Game Thread 전용</b>. 워커는 순수 데이터 계산만.</p>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--red)">❌ 나쁜 예 1 — 큰 파일 동기 로딩</div>
+    <pre><span class="k">void</span> AMyActor::BeginPlay()
+{
+    FString Huge;
+    FFileHelper::LoadFileToString(Huge, TEXT(<span class="s">"HugeFile.txt"</span>));
+    <span class="c">// 100ms 걸리면 60FPS 기준 게임이 6프레임 통째로 멈춘다</span>
+}</pre>
+    <div class="eyebrow" style="color:var(--grn);margin-top:18px">✅ 좋은 예 — 비동기로 빼기</div>
+    <pre><span class="k">void</span> AMyActor::BeginPlay()
+{
+    AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, [<span class="k">this</span>]()
+    {
+        FString Huge;
+        FFileHelper::LoadFileToString(Huge, TEXT(<span class="s">"HugeFile.txt"</span>));
+
+        AsyncTask(ENamedThreads::GameThread, [<span class="k">this</span>, Huge]()
+        {
+            ApplyContent(Huge);   <span class="c">// 결과 사용은 다시 Game Thread에서</span>
+        });
+    });
+}</pre>
+    <div class="eyebrow" style="color:var(--red);margin-top:18px">❌ 나쁜 예 2 — 워커 스레드에서 UObject 생성</div>
+    <pre>AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, []()
+{
+    AMyActor* Actor = NewObject&lt;AMyActor&gt;();  <span class="c">// 크래시 가능! GC와 충돌</span>
+});</pre>
+    <div class="eyebrow" style="color:var(--red);margin-top:18px">❌ 나쁜 예 3 — 워커 스레드에서 UI 업데이트</div>
+    <pre>AsyncTask(ENamedThreads::AnyBackgroundThreadNormalTask, []()
+{
+    MyWidget->SetText(TEXT(<span class="s">"Done"</span>));  <span class="c">// Slate는 Game Thread 전용</span>
+});</pre>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">OS 개념과 연결지어보기</div>
+    <table class="maptable">
+      <thead><tr><th>언리얼 개념</th><th>OS 개념</th></tr></thead>
+      <tbody>
+        <tr><td>Game / Render / RHI Thread 분리</td><td>멀티스레드 (4강)</td></tr>
+        <tr><td>Worker Thread Pool</td><td>스레드 풀 패턴, 컨텍스트 스위칭 비용 절감 (6강)</td></tr>
+        <tr><td><code>FCriticalSection</code>, <code>FScopeLock</code></td><td>Mutex (8강)</td></tr>
+        <tr><td><code>FThreadSafeBool</code>, <code>TAtomic</code></td><td>Atomic (9강)</td></tr>
+        <tr><td><code>ENQUEUE_RENDER_COMMAND</code></td><td>스레드 간 안전한 데이터 전달 — 메시지 큐 패턴</td></tr>
+        <tr><td><code>FStreamableManager</code> 비동기 로딩</td><td>비동기 I/O (15강)</td></tr>
+      </tbody>
+    </table>
+    <p class="hint">이번 강의는 "언리얼에서 OS 개념이 이렇게 쓰이는구나"를 깔아두는 강의다. 다음 강의들에서 이 개념들을 하나씩 깊게 판다.</p>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="06강_CPU_스케줄링.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">6강 — CPU 스케줄링과 컨텍스트 스위칭 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 5강</div>
+</div></footer>
+
+<script>
+/* 3. 프레임 파이프라인 시뮬레이터 */
+(function(){
+  var FRAMES=6, MAX_INFLIGHT=3;
+  var COLORS=['var(--ind)','var(--cyan)','var(--pur)','var(--grn)','var(--amber)','var(--orange)'];
+  var gameR=document.getElementById('plGame'), renderR=document.getElementById('plRender'), rhiR=document.getElementById('plRhi');
+  var gSlider=document.getElementById('plGameMs'), rSlider=document.getElementById('plRenderMs'), hSlider=document.getElementById('plRhiMs');
+  var gLab=document.getElementById('plGameLab'), rLab=document.getElementById('plRenderLab'), hLab=document.getElementById('plRhiLab');
+  var playBtn=document.getElementById('plPlay'), stepBtn=document.getElementById('plStep'), resetBtn=document.getElementById('plReset');
+  var headEl=document.getElementById('plHead'), readout=document.getElementById('plReadout'), scaleEl=document.getElementById('plScale');
+  var sched=null, totalTime=0, t=0, timer=null, playing=false;
+
+  function compute(){
+    var gd=+gSlider.value, rd=+rSlider.value, hd=+hSlider.value;
+    gLab.textContent=gd+'ms'; rLab.textContent=rd+'ms'; hLab.textContent=hd+'ms';
+    var gS=[],gE=[],rS=[],rE=[],hS=[],hE=[];
+    for(var f=0; f<FRAMES; f++){
+      var gPrev = f>0?gE[f-1]:0;
+      var back = f>=MAX_INFLIGHT ? hE[f-MAX_INFLIGHT] : 0;
+      var gs=Math.max(gPrev,back), ge=gs+gd;
+      var rPrev = f>0?rE[f-1]:0;
+      var rs=Math.max(rPrev,ge), re=rs+rd;
+      var hPrev = f>0?hE[f-1]:0;
+      var hs=Math.max(hPrev,re), he=hs+hd;
+      gS.push(gs);gE.push(ge);rS.push(rs);rE.push(re);hS.push(hs);hE.push(he);
+    }
+    sched={gS:gS,gE:gE,rS:rS,rE:rE,hS:hS,hE:hE};
+    totalTime=hE[FRAMES-1];
+    render();
+  }
+  function buildLane(el,starts,ends){
+    el.innerHTML='';
+    for(var f=0;f<FRAMES;f++){
+      var b=document.createElement('div');b.className='pl-block';
+      b.style.left=(totalTime>0?(starts[f]/totalTime*100):0)+'%';
+      b.style.width=Math.max(1,(totalTime>0?((ends[f]-starts[f])/totalTime*100):0))+'%';
+      b.style.background=COLORS[f%COLORS.length];
+      b.textContent='F'+f;
+      el.appendChild(b);
+    }
+  }
+  function render(){
+    buildLane(gameR,sched.gS,sched.gE);
+    buildLane(renderR,sched.rS,sched.rE);
+    buildLane(rhiR,sched.hS,sched.hE);
+    scaleEl.textContent='0ms ~ '+Math.round(totalTime)+'ms';
+    updateHead();
+  }
+  function stageAt(starts,ends,time){
+    for(var f=0;f<FRAMES;f++){ if(time>=starts[f]&&time<ends[f]) return f; }
+    return -1;
+  }
+  function updateHead(){
+    var pct = totalTime>0 ? (t/totalTime*100) : 0;
+    headEl.style.left=Math.min(100,pct)+'%';
+    var gf=stageAt(sched.gS,sched.gE,t), rf=stageAt(sched.rS,sched.rE,t), hf=stageAt(sched.hS,sched.hE,t);
+    var onscreen=-1;
+    for(var f=0;f<FRAMES;f++){ if(sched.hE[f]<=t) onscreen=f; }
+    var msg='<b>'+Math.round(t)+'ms</b> 시점<br>';
+    msg+='Game: '+(gf>=0?('<b>Frame '+gf+'</b> 계산 중'):'<span style="color:var(--amber)">대기(버블)</span>')+' · ';
+    msg+='Render: '+(rf>=0?('<b>Frame '+rf+'</b> 렌더 중'):'<span style="color:var(--amber)">대기(버블)</span>')+' · ';
+    msg+='RHI: '+(hf>=0?('<b>Frame '+hf+'</b> GPU 송신 중'):'<span style="color:var(--amber)">대기(버블)</span>');
+    msg+='<br>화면에 보이는 건 <b style="color:var(--cyan)">'+(onscreen>=0?('Frame '+onscreen):'아직 없음')+'</b>';
+    readout.innerHTML=msg;
+  }
+  function step(){
+    t=Math.min(totalTime, t+(totalTime/40 || 1));
+    updateHead();
+    if(t>=totalTime){ pause(); }
+  }
+  function play(){
+    if(playing) return;
+    if(t>=totalTime) t=0;
+    playing=true; playBtn.textContent='⏸ 일시정지';
+    timer=setInterval(function(){ step(); },80);
+  }
+  function pause(){ playing=false; playBtn.textContent='▶ 재생'; if(timer){clearInterval(timer);timer=null;} }
+  playBtn.addEventListener('click',function(){ playing?pause():play(); });
+  stepBtn.addEventListener('click',function(){ pause(); step(); });
+  resetBtn.addEventListener('click',function(){ pause(); t=0; updateHead(); });
+  [gSlider,rSlider,hSlider].forEach(function(s){
+    s.addEventListener('input',function(){ pause(); t=0; compute(); });
+  });
+  document.querySelectorAll('.pl-presets button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var v=b.dataset.p.split(',');
+      gSlider.value=v[0]; rSlider.value=v[1]; hSlider.value=v[2];
+      pause(); t=0; compute();
+    });
+  });
+  compute();
+})();
+
+/* 6. 오해 */
+(function(){
+  var data=[
+    {q:'"Tick은 매 프레임 정확히 16.6ms마다 호출된다"',a:'아니다. Tick은 <b class="truth">이전 프레임이 끝났을 때</b> 호출된다. 무거우면 그만큼 늦게 다음 Tick이 돈다. <code>DeltaTime</code>이 가변인 이유.'},
+    {q:'"Render Thread도 내가 코드를 짤 수 있다"',a:'직접은 거의 안 짠다. <b class="truth"><code>ENQUEUE_RENDER_COMMAND</code> 안의 람다</b>가 Render Thread에서 도는 정도. 머터리얼·셰이더 작업이 아니면 게임 개발자는 신경 안 써도 된다.'},
+    {q:'"워커 스레드를 많이 만들수록 좋다"',a:'NO. 코어 수보다 많이 만들면 <b class="truth">컨텍스트 스위칭 오버헤드</b>만 생긴다. 언리얼이 자동으로 코어 수에 맞춰 워커 풀 크기를 정한다.'},
+    {q:'"멀티스레드면 동시에 같은 메모리를 만져도 된다"',a:'이 오해 때문에 게임이 죽는다. <b class="truth">공유 데이터는 반드시 동기화</b>가 필요하다. 7~10강(Race Condition, Mutex, Atomic, Deadlock)에서 자세히 다룬다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'언리얼은 어떤 스레드 구조로 동작하나요?',a:'크게 Game Thread, Render Thread, RHI Thread, Worker Thread Pool이 있습니다. Game Thread는 게임 로직, Render Thread는 렌더 명령 생성, RHI Thread는 DirectX/Vulkan 호출 송신, Worker Pool은 TaskGraph로 들어온 백그라운드 작업을 처리합니다.'},
+    {q:'Game Thread와 Render Thread는 왜 분리되어 있나요?',a:'<b>파이프라이닝</b>으로 처리량을 올리기 위해서입니다. Render Thread가 N 프레임을 그리는 동안 Game Thread는 N+1 프레임의 로직을 미리 계산합니다. 그래서 Render Thread는 Game Thread보다 1프레임 정도 뒤를 봅니다.'},
+    {q:'Worker Thread에서 UObject를 만들면 어떻게 되나요?',a:'위험합니다. UObject 생성/소멸은 Game Thread와 가비지 컬렉터가 관리하기 때문에, 워커 스레드에서 <code>NewObject</code>를 하면 GC와 충돌해 크래시가 날 수 있습니다. 워커에서는 순수 데이터 계산만 하고 결과를 Game Thread로 다시 던져야 합니다.'},
+    {q:'무거운 파일 로딩을 Game Thread에서 직접 하면 어떤 문제가 생기나요?',a:'Game Thread가 블로킹되어 그 시간 동안 Tick이 멈춥니다. 100ms 걸리면 60FPS 기준 6프레임이 통째로 끊겨 <b>hitching</b>이 발생합니다. 비동기 워커로 빼고 결과만 Game Thread에서 받아야 합니다.'},
+    {q:'ENQUEUE_RENDER_COMMAND가 왜 필요한가요?',a:'Game Thread와 Render Thread는 다른 스레드라서 직접 접근하면 Race Condition이 납니다. <code>ENQUEUE_RENDER_COMMAND</code>는 Game Thread에서 만든 데이터를 큐에 넣어두고 Render Thread가 안전하게 꺼내 처리하게 하는 <b>메시지 패턴</b>입니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['Game/Render/RHI Thread의 역할을 각각 한 문장씩 말할 수 있다','Render Thread가 Game Thread보다 늦게 본다는 게 무슨 뜻인지 안다','Game Thread에서 하면 안 되는 일을 두 가지 이상 말할 수 있다','워커 스레드에서 UObject를 만들면 안 되는 이유를 안다','ENQUEUE_RENDER_COMMAND가 왜 필요한지 설명할 수 있다'];
+  var KEY='os05-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

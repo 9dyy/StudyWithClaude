@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04강 · 프로세스 vs 스레드 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --tA:#818cf8;--tB:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--ind),var(--pur))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--ind2)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--ind);border-color:var(--ind)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(99,102,241,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--ind2);background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--ind2),var(--pur));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--ind2);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--ind2);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.cyan{background:var(--cyan);color:#04243a}.btn.cyan:hover{background:#67e8f9}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.pur{background:var(--pur)}.btn.pur:hover{background:#c084fc}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+/* 기능 목록 */
+.flist{margin-top:16px;display:flex;flex-direction:column;gap:10px}
+.frow{display:flex;gap:12px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.frow .ic{font-size:18px;flex-shrink:0;margin-top:1px}
+.frow p{font-size:14px;color:var(--dim)}
+.frow p b{color:var(--txt)}
+
+/* 비교 다이어그램 카드 */
+.diagrow{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.diagcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px}
+.diagcard h4{font-size:13.5px;color:var(--ind2)}
+.diagcard pre{margin-top:10px;font-size:11.5px;padding:12px}
+
+/* 메모리 공유 비교기 — 킬러 인터랙션 */
+.modebar{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.modebar button{font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;padding:10px 16px;border-radius:11px;background:var(--card2);border:1px solid var(--line);color:var(--dim);transition:.15s}
+.modebar button.on{background:var(--ind);color:#fff;border-color:var(--ind)}
+.modebar button:hover{border-color:var(--ind);color:var(--txt)}
+.mstage{margin-top:22px}
+.mshared{background:rgba(99,102,241,.08);border:2px dashed var(--ind);border-radius:14px;padding:16px;text-align:center;margin-bottom:14px;transition:box-shadow .3s}
+.mshared.flash{box-shadow:0 0 26px rgba(99,102,241,.55)}
+.mshared .lb{font-size:12px;color:var(--ind2);font-weight:700;letter-spacing:.02em}
+.mshared .val{font-family:ui-monospace,monospace;font-size:28px;font-weight:800;margin-top:6px;color:var(--txt)}
+.mworkers{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mworker{background:var(--card2);border:2px solid var(--line);border-radius:14px;padding:16px;text-align:center;transition:box-shadow .3s,border-color .3s}
+.mworker.w1{border-color:var(--tA)}.mworker.w2{border-color:var(--tB)}
+.mworker.flash{box-shadow:0 0 20px rgba(255,255,255,.15)}
+.mworker .nm{font-size:13.5px;font-weight:700}
+.mworker.w1 .nm{color:var(--tA)}.mworker.w2 .nm{color:var(--tB)}
+.mworker .stackbox{margin-top:10px;font-size:11px;color:var(--faint);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px}
+.mworker .seeval{margin-top:12px;font-size:12.5px;color:var(--dim)}
+.mworker .seeval b{font-family:ui-monospace,monospace;font-size:22px;color:var(--txt);display:block;margin-top:4px}
+.mreadout{text-align:center;margin-top:16px;font-size:14.5px;min-height:24px;color:var(--dim)}
+.mreadout b{color:var(--txt)}
+
+/* 표 */
+.tblwrap{overflow-x:auto;margin-top:18px}
+table.cmp{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+table.cmp th,table.cmp td{padding:12px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.cmp th{color:var(--ind2);font-size:12px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+table.cmp td{color:var(--dim)}
+table.cmp td:first-child{color:var(--txt);font-weight:700;white-space:nowrap}
+table.cmp tr:hover td{background:var(--bg2)}
+
+/* 정보 박스 */
+.tipbox{margin-top:16px;padding:14px 16px;background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.3);border-radius:12px;font-size:14px;color:var(--dim)}
+.tipbox b{color:var(--ind2)}
+
+/* 공통 오해/면접/체크 */
+.misc{margin-top:14px}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:220px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--ind2);font-weight:700}
+.flip .front .q{font-size:16px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1c1a35,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13.5px;color:var(--txt);line-height:1.65}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ind),var(--pur));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--ind)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}pre .r{color:var(--red)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--ind);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--ind2)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){.diagrow{grid-template-columns:1fr}.mworkers{grid-template-columns:1fr}header.hero{padding:96px 0 36px}.flip{height:260px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">OS · <b>04강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#process">프로세스</a>
+    <a class="chip" href="#thread">스레드</a>
+    <a class="chip" href="#compare">그림 비교</a>
+    <a class="chip" href="#lab">공유 실험</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#table">비교표</a>
+    <a class="chip" href="#usage">언제 뭘</a>
+    <a class="chip" href="#pcb">PCB/TCB</a>
+    <a class="chip" href="#myth">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 프로세스와 스레드 · 면접 최빈출</span>
+  <h1>프로세스 vs <span class="g">스레드</span></h1>
+  <p class="sub">언리얼 게임이 멀티스레드로 돈다는 건 다들 안다. 근데 <b>왜 멀티프로세스가 아니라 멀티스레드인가?</b> 전역 변수 하나 공유해보면 답이 바로 보인다.</p>
+  <div class="meta">
+    <div class="m">🧠 공유냐 독립이냐</div>
+    <div class="m">🧩 선수지식 <b>3강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>게임은 왜 멀티스레드인가?</h2>
+  <p class="lead">언리얼 게임 하나가 매 프레임 처리하는 일을 나열해보자 — 입력, 물리, AI, 애니메이션, 렌더링, 네트워크, 에셋 로딩, 사운드. 이걸 <b>한 줄로 순서대로</b> 다 처리한다고 해보자.</p>
+  <div class="card">
+    <pre><span class="k">while</span> (<span class="k">true</span>)  <span class="c">// 메인 루프</span>
+{
+    UpdateInput();      <span class="c">// 1ms</span>
+    UpdatePhysics();    <span class="c">// 5ms</span>
+    UpdateAI();         <span class="c">// 3ms</span>
+    UpdateAnimation();  <span class="c">// 4ms</span>
+    Render();           <span class="c">// 10ms   ← GPU 기다리는 동안 CPU 놀음</span>
+    SendNetwork();      <span class="c">// 2ms</span>
+    LoadAssets();       <span class="c">// 100ms  ← 디스크 기다리는 동안 다 멈춤</span>
+    <span class="c">// 합: 125ms → 8 FPS. 게임 끝.</span>
+}</pre>
+    <div class="flist">
+      <div class="frow"><span class="ic">🐢</span><p><b>문제 1.</b> 한 작업이 느리면 모든 게 멈춘다. 에셋 로딩 중엔 캐릭터도 못 움직인다.</p></div>
+      <div class="frow"><span class="ic">🧊</span><p><b>문제 2.</b> CPU 코어가 16개여도 1개밖에 못 쓴다.</p></div>
+    </div>
+    <p style="text-align:center;margin-top:18px;font-size:17px">해결: <b class="tagline">여러 일을 동시에.</b> 그게 멀티스레드다.</p>
+    <p class="hint" style="text-align:center">그런데 "동시에 여러 일"이 필요하면 프로세스를 여러 개 띄워도 되는 거 아닌가? 그 차이부터 보자. ↓</p>
+  </div>
+</div></section>
+
+<!-- 2. 프로세스 -->
+<section id="process"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 개념</div>
+  <h2 class="sec"><span class="n">2</span>프로세스 — 실행 중인 프로그램 하나</h2>
+  <p class="lead">3강에서 이미 본 그거다. <b>실행 중인 프로그램 하나</b>가 프로세스다.</p>
+  <div class="card">
+    <pre>프로세스 A (MyGame.exe)
+├─ 자기만의 가상 주소 공간 (Text/Data/BSS/Heap/Stack)
+├─ 열어둔 파일 핸들
+├─ 환경 변수
+├─ 현재 디렉토리
+└─ 보안 컨텍스트 (어느 유저가 실행했나)</pre>
+    <div class="flist">
+      <div class="frow"><span class="ic">🔒</span><p><b>메모리 공간이 독립적이다.</b> A의 변수를 B가 못 본다.</p></div>
+      <div class="frow"><span class="ic">🛡️</span><p>그래서 <b>안전하다.</b> 한 프로세스가 죽어도 다른 프로세스는 멀쩡하다.</p></div>
+      <div class="frow"><span class="ic">📮</span><p>그래서 <b>통신이 어렵다.</b> IPC(Inter-Process Communication: 파이프, 공유 메모리, 소켓 등)가 필요하다.</p></div>
+      <div class="frow"><span class="ic">💸</span><p>만들고 없애는 비용이 <b>비싸다.</b> 메모리 공간을 통째로 잡아야 한다.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 3. 스레드 -->
+<section id="thread"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 개념</div>
+  <h2 class="sec"><span class="n">3</span>스레드 — 프로세스 안에서 도는 실행 흐름</h2>
+  <p class="lead"><b>같은 프로세스 안에서 도는 실행 흐름.</b> 한 프로세스에 여러 개 있을 수 있다.</p>
+  <div class="card">
+    <pre>프로세스 (MyGame.exe)
+├─ Text/Data/BSS/Heap   ← 스레드들이 공유
+├─ 파일 핸들 등         ← 스레드들이 공유
+│
+├─ 스레드 1 (Game Thread)
+│   └─ 자기만의 Stack, 레지스터, PC(Program Counter)
+├─ 스레드 2 (Render Thread)
+│   └─ 자기만의 Stack, 레지스터, PC
+├─ 스레드 3 (Audio Thread)
+│   └─ 자기만의 Stack, 레지스터, PC
+└─ 스레드 4 (Worker)
+    └─ 자기만의 Stack, 레지스터, PC</pre>
+    <div class="flist">
+      <div class="frow"><span class="ic">🔗</span><p><b>Heap, Data, BSS, 코드를 공유한다.</b> 전역 변수 하나 바꾸면 다른 스레드도 영향을 받는다.</p></div>
+      <div class="frow"><span class="ic">🗂️</span><p><b>Stack과 레지스터(실행 상태)만 따로</b> 가진다.</p></div>
+      <div class="frow"><span class="ic">⚡</span><p>만들고 없애는 비용이 <b>싸다.</b> 프로세스 만들기보단 훨씬 가볍다.</p></div>
+      <div class="frow"><span class="ic">🤝</span><p>통신이 <b>쉽다.</b> 그냥 전역 변수, 힙 객체로 데이터를 주고받는다.</p></div>
+      <div class="frow"><span class="ic">⚠️</span><p>그래서 <b>위험하다.</b> 동기화 문제가 생긴다 (7강 Race Condition의 원인).</p></div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 4. 그림으로 비교 -->
+<section id="compare"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 시각화</div>
+  <h2 class="sec"><span class="n">4</span>그림으로 비교</h2>
+  <p class="lead">세 가지 구조를 나란히 놓고 보면 감이 온다.</p>
+  <div class="diagrow">
+    <div class="diagcard"><h4>단일 프로세스 · 단일 스레드</h4>
+      <pre>프로세스
+└─ 스레드 1
+    ── PC ─→
+    코드 한 줄씩
+    실행</pre>
+    </div>
+    <div class="diagcard"><h4>단일 프로세스 · 멀티 스레드 <span style="color:var(--ind2)">← 언리얼 게임</span></h4>
+      <pre>프로세스 (공유 메모리)
+├─ 스레드 1 ─PC→ 게임 로직
+├─ 스레드 2 ─PC→ 렌더 명령
+└─ 스레드 3 ─PC→ 에셋 디코딩</pre>
+    </div>
+    <div class="diagcard"><h4>멀티 프로세스 <span style="color:var(--ind2)">← 크롬 브라우저</span></h4>
+      <pre>프로세스A  프로세스B  프로세스C
+(탭1)      (탭2)      (확장)
+메모리      메모리      메모리
+독립        독립        독립</pre>
+    </div>
+  </div>
+</div></section>
+
+<!-- 5. 킬러 인터랙션 -->
+<section id="lab"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 킬러 · 직접 실험</div>
+  <h2 class="sec"><span class="n">5</span>메모리 공유 비교기 — 정말로 공유되는가?</h2>
+  <p class="lead">모드를 골라서 <b>Worker 1</b>이 전역 변수 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">g_Shared</code>를 증가시켰을 때, <b>Worker 2</b>가 그 변화를 보는지 직접 확인해보자.</p>
+  <div class="card">
+    <div class="modebar">
+      <button data-mode="thread" class="on" id="btnThreadMode">🧵 스레드 모드 (같은 프로세스)</button>
+      <button data-mode="process" id="btnProcessMode">📦 프로세스 모드 (별개 프로세스)</button>
+    </div>
+    <div class="mstage" id="mStage"></div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn" id="incW1" style="background:var(--tA)">Worker 1: g_Shared++</button>
+      <button class="btn" id="incW2" style="background:var(--tB)">Worker 2: g_Shared++</button>
+      <button class="btn ghost" id="memReset">↺ 초기화</button>
+    </div>
+    <div class="mreadout" id="mReadout">Worker 1을 눌러 g_Shared를 증가시켜보자.</div>
+    <p class="hint">스레드 모드에서는 Heap/Data/BSS가 <b>같은 메모리</b>라 상대방이 즉시 새 값을 본다. 프로세스 모드에서는 각자 <b>독립된 가상 주소 공간</b>이라, 한쪽이 값을 바꿔도 다른 쪽은 전혀 모른다 — 값을 주고받으려면 IPC가 필요하다.</p>
+  </div>
+</div></section>
+
+<!-- 6. 코드로 -->
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 코드로 체감</div>
+  <h2 class="sec"><span class="n">6</span>같은 프로세스의 두 스레드는 메모리를 진짜로 공유한다</h2>
+  <p class="lead">방금 실험한 걸 실제 언리얼 코드로 보면 이렇다.</p>
+  <div class="card">
+    <pre><span class="c">#include "HAL/Runnable.h"</span>
+<span class="c">#include "HAL/RunnableThread.h"</span>
+
+<span class="t">int32</span> g_Shared = <span class="s">0</span>;   <span class="c">// 전역 변수 — 모든 스레드가 공유 (BSS/Data)</span>
+
+<span class="k">class</span> FWorker : <span class="k">public</span> FRunnable
+{
+<span class="k">public</span>:
+    <span class="k">virtual</span> <span class="t">uint32</span> Run() <span class="k">override</span>
+    {
+        <span class="k">for</span> (<span class="t">int</span> i = <span class="s">0</span>; i &lt; <span class="s">1000000</span>; ++i)
+        {
+            g_Shared++;   <span class="c">// 같은 메모리 주소를 여러 스레드가 같이 건드림</span>
+        }
+        <span class="k">return</span> <span class="s">0</span>;
+    }
+};
+
+<span class="k">void</span> Test()
+{
+    FWorker* W1 = <span class="k">new</span> FWorker();
+    FWorker* W2 = <span class="k">new</span> FWorker();
+
+    FRunnableThread* T1 = FRunnableThread::Create(W1, TEXT(<span class="s">"W1"</span>));
+    FRunnableThread* T2 = FRunnableThread::Create(W2, TEXT(<span class="s">"W2"</span>));
+
+    T1->WaitForCompletion();
+    T2->WaitForCompletion();
+
+    UE_LOG(LogTemp, Warning, TEXT(<span class="s">"Result = %d"</span>), g_Shared);
+    <span class="c">// 기대값: 2,000,000</span>
+    <span class="c">// 실제값: 매번 다름. 1,200,000 정도 나올 수 있음. ← Race Condition!</span>
+}</pre>
+    <p style="margin-top:16px">이게 7강에서 자세히 다룰 <b class="tagline">Race Condition</b>의 정체다. <code style="font-family:ui-monospace,monospace;color:var(--cyan)">g_Shared++</code>는 "읽고, 1 더하고, 쓰고"인데 두 스레드가 동시에 하면 서로 덮어쓴다.</p>
+    <div class="tipbox">만약 이걸 <b>별개 프로세스 두 개</b>로 했다면? 각자 자기 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">g_Shared</code>를 가지니까 충돌이 없다. 둘 다 1,000,000으로 끝난다. 그런데 둘을 합산해서 결과를 보려면 별도 통신(IPC)이 필요하다.</div>
+  </div>
+</div></section>
+
+<!-- 7. 비교표 -->
+<section id="table"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 정리</div>
+  <h2 class="sec"><span class="n">7</span>비교 표</h2>
+  <div class="card">
+    <div class="tblwrap">
+      <table class="cmp">
+        <tr><th>항목</th><th>프로세스</th><th>스레드</th></tr>
+        <tr><td>메모리 공간</td><td>독립</td><td>Heap/Data 공유, Stack만 독립</td></tr>
+        <tr><td>생성 비용</td><td>비쌈 (수십 ms)</td><td>쌈 (수 ms 이하)</td></tr>
+        <tr><td>컨텍스트 스위칭 비용</td><td>비쌈 (TLB 무효화 등)</td><td>상대적으로 쌈</td></tr>
+        <tr><td>통신</td><td>IPC 필요 (파이프, 소켓, 공유 메모리...)</td><td>그냥 메모리 공유</td></tr>
+        <tr><td>안전성</td><td>하나 죽어도 다른 건 OK</td><td>하나 죽으면 프로세스 전체 죽음</td></tr>
+        <tr><td>동기화 문제</td><td>거의 없음</td><td>매우 중요 (Mutex, Atomic 등)</td></tr>
+      </table>
+    </div>
+  </div>
+</div></section>
+
+<!-- 8. 언제 뭘 -->
+<section id="usage"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 실전 판단</div>
+  <h2 class="sec"><span class="n">8</span>언제 프로세스, 언제 스레드?</h2>
+  <div class="card">
+    <div class="eyebrow" style="color:var(--ind2)">스레드를 쓰는 경우</div>
+    <div class="flist">
+      <div class="frow"><span class="ic">🤝</span><p><b>같은 데이터를 여러 작업이 빠르게 공유해야 할 때</b></p></div>
+      <div class="frow"><span class="ic">🎮</span><p>게임처럼 한 화면을 위해 여러 일이 협력해야 할 때</p></div>
+      <div class="frow"><span class="ic">✅</span><p>대부분의 게임 클라이언트, 게임 서버는 멀티스레드다.</p></div>
+    </div>
+    <div class="eyebrow" style="color:var(--ind2);margin-top:24px">프로세스를 쓰는 경우</div>
+    <div class="flist">
+      <div class="frow"><span class="ic">🧱</span><p><b>격리(Isolation)</b>가 중요할 때 — 크롬은 탭 하나가 죽어도 다른 탭이 안 죽게 탭마다 프로세스를 쓴다.</p></div>
+      <div class="frow"><span class="ic">🚀</span><p>게임 런처가 게임 본체와 분리되어 있는 것 (런처가 죽어도 게임은 OK)</p></div>
+      <div class="frow"><span class="ic">🔑</span><p><b>다른 권한</b>이 필요할 때, <b>장애 격리</b>가 중요할 때</p></div>
+    </div>
+    <div class="tipbox"><b>게임 개발자의 현실:</b> 게임 클라이언트는 <b>한 프로세스 + 많은 스레드</b> 구조가 거의 표준이다. 언리얼도 그렇다. 프로세스는 보통 런처 ↔ 게임, 게임 ↔ 안티치트(예: BattlEye)처럼 <b>격리</b>가 필요할 때만 나눈다.</div>
+  </div>
+</div></section>
+
+<!-- 9. PCB/TCB -->
+<section id="pcb"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · OS 내부</div>
+  <h2 class="sec"><span class="n">9</span>PCB와 TCB — OS가 기억하는 것들</h2>
+  <p class="lead">OS는 모든 프로세스와 스레드를 추적하기 위해 자료구조를 들고 있다.</p>
+  <div class="card">
+    <div class="flist">
+      <div class="frow"><span class="ic">📋</span><p><b>PCB (Process Control Block)</b> — 프로세스 하나당 1개. PID, 가상 주소 공간 정보, 파일 핸들 목록, 보안 컨텍스트 등을 담는다.</p></div>
+      <div class="frow"><span class="ic">🧾</span><p><b>TCB (Thread Control Block)</b> — 스레드 하나당 1개. 스레드 ID, <b>레지스터 상태</b>, <b>스택 포인터</b>, 우선순위 등을 담는다.</p></div>
+    </div>
+    <p style="margin-top:14px">CPU가 스레드를 바꿔 돌릴 때(컨텍스트 스위칭, 6강), TCB에서 레지스터 값을 꺼내거나 저장한다.</p>
+    <div class="tipbox">면접 팁: "PCB/TCB가 뭐냐?" 물어보면 "<b>OS가 프로세스/스레드를 관리하기 위한 자료구조</b>이고, 컨텍스트 스위칭 시 여기 저장된 레지스터 상태를 꺼내 씁니다" 정도면 충분하다.</div>
+  </div>
+</div></section>
+
+<!-- 10. 오해 -->
+<section id="myth"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 함정</div>
+  <h2 class="sec"><span class="n">10</span>흔한 오해 — 클릭해서 펼치기</h2>
+  <div class="misc" id="mythBox"></div>
+</div></section>
+
+<!-- 11. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 11 · 면접 대비</div>
+  <h2 class="sec"><span class="n">11</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 12. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 12 · 마무리</div>
+  <h2 class="sec"><span class="n">12</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="05강_언리얼의_스레드_구조.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">5강 — 언리얼의 스레드 구조 →</div></div></a>
+  <div class="cap">운영체제 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 4강</div>
+</div></footer>
+
+<script>
+/* 5. 메모리 공유 비교기 — 킬러 위젯 */
+(function(){
+  var stage=document.getElementById('mStage'),readout=document.getElementById('mReadout');
+  var btnThread=document.getElementById('btnThreadMode'),btnProcess=document.getElementById('btnProcessMode');
+  var mode='thread', shared=0, procA=0, procB=0, flash={shared:false,w1:false,w2:false};
+
+  function render(){
+    if(mode==='thread'){
+      stage.innerHTML=
+        '<div class="mshared'+(flash.shared?' flash':'')+'"><div class="lb">공유 영역 · Text / Data / BSS / Heap</div><div class="val">g_Shared = '+shared+'</div></div>'+
+        '<div class="mworkers">'+
+          '<div class="mworker w1'+(flash.w1?' flash':'')+'"><div class="nm">● 스레드 1 (Game Thread)</div><div class="stackbox">Stack + 레지스터 (독립)</div><div class="seeval">이 스레드가 보는 값<b>'+shared+'</b></div></div>'+
+          '<div class="mworker w2'+(flash.w2?' flash':'')+'"><div class="nm">● 스레드 2 (Worker)</div><div class="stackbox">Stack + 레지스터 (독립)</div><div class="seeval">이 스레드가 보는 값<b>'+shared+'</b></div></div>'+
+        '</div>';
+    }else{
+      stage.innerHTML=
+        '<div class="mworkers">'+
+          '<div class="mworker w1'+(flash.w1?' flash':'')+'"><div class="nm">📦 프로세스 A</div><div class="stackbox">Text/Data/BSS/Heap (A 전용) + Stack</div><div class="seeval">g_Shared (A만의 것)<b>'+procA+'</b></div></div>'+
+          '<div class="mworker w2'+(flash.w2?' flash':'')+'"><div class="nm">📦 프로세스 B</div><div class="stackbox">Text/Data/BSS/Heap (B 전용) + Stack</div><div class="seeval">g_Shared (B만의 것)<b>'+procB+'</b></div></div>'+
+        '</div>';
+    }
+  }
+  function clearFlash(){flash={shared:false,w1:false,w2:false};render();}
+
+  function incFrom(who){
+    if(mode==='thread'){
+      shared++;
+      flash={shared:true,w1:true,w2:true};
+      render();
+      readout.innerHTML=(who===1?'스레드 1':'스레드 2')+'이 <b>g_Shared++</b>를 실행 → 값이 <b>'+shared+'</b>가 됐다. 다른 스레드도 <b style="color:var(--ind2)">즉시 같은 값</b>을 본다 — 같은 힙/데이터 영역을 공유하니까.';
+    }else{
+      if(who===1){procA++;flash={shared:false,w1:true,w2:false};}
+      else{procB++;flash={shared:false,w1:false,w2:true};}
+      render();
+      var mover=who===1?'프로세스 A':'프로세스 B', other=who===1?'B':'A', otherVal=who===1?procB:procA;
+      readout.innerHTML=mover+'가 <b>g_Shared++</b>를 실행 → 자기 메모리 안의 값만 바뀌었다. 프로세스 '+other+'는 여전히 <b>'+otherVal+'</b> — 독립된 주소 공간이라 전혀 안 보인다. 값을 맞추려면 IPC가 필요하다.';
+    }
+    setTimeout(clearFlash,350);
+  }
+  function reset(){
+    shared=0;procA=0;procB=0;flash={shared:false,w1:false,w2:false};render();
+    readout.textContent='Worker 1을 눌러 g_Shared를 증가시켜보자.';
+  }
+  document.getElementById('incW1').addEventListener('click',function(){incFrom(1);});
+  document.getElementById('incW2').addEventListener('click',function(){incFrom(2);});
+  document.getElementById('memReset').addEventListener('click',reset);
+  btnThread.addEventListener('click',function(){mode='thread';btnThread.classList.add('on');btnProcess.classList.remove('on');reset();});
+  btnProcess.addEventListener('click',function(){mode='process';btnProcess.classList.add('on');btnThread.classList.remove('on');reset();});
+  render();
+})();
+
+/* 10. 오해 */
+(function(){
+  var data=[
+    {q:'"스레드를 많이 만들수록 빠르다"',a:'전혀 아니다. 코어가 16개인데 스레드 100개를 만들면 OS가 미친 듯이 컨텍스트 스위칭만 한다. <b class="truth">오히려 느려진다.</b> 게임은 보통 코어 수 + α 만큼만 스레드를 만든다. 언리얼의 Task Graph도 이걸 자동 관리한다.'},
+    {q:'"전역 변수만 공유되고 지역 변수는 안 공유된다"',a:'지역 변수는 <b class="truth">각 스레드의 Stack에 따로 잡힌다.</b> 한 함수 안에서 만든 지역 변수는 그 스레드만의 것이다. 다만 그 지역 변수의 <b class="truth">주소를 다른 스레드에 넘기면</b> 공유된다 — 그 주소를 읽을 수 있으니까. <code>int Local=42; AnotherThreadAccess(&Local);</code> 는 Foo가 끝나면 Local이 사라지는데 다른 스레드가 그 주소를 읽으면 위험하다.'},
+    {q:'"프로세스가 스레드보다 항상 안전하다"',a:'격리 측면에선 맞지만, <b class="truth">두 프로세스가 공유 메모리(IPC의 한 형태)를 쓰면</b> 똑같이 동기화 문제가 생긴다. 안전한 건 "메모리 공간이 분리되어 있을 때까지"의 얘기다.'},
+    {q:'"main 함수도 스레드다"',a:'<b class="truth">맞다.</b> main()이 도는 스레드를 메인 스레드라고 부른다. 모든 프로세스에는 최소 1개의 스레드가 있다 — 추가 스레드를 만들지 않아도 이미 1개다.'}
+  ];
+  var box=document.getElementById('mythBox');
+  data.forEach(function(d){var det=document.createElement('details');det.className='mis';
+    det.innerHTML='<summary><span class="x">✕</span><span>'+d.q+'</span><span class="arr">▾</span></summary><div class="body">'+d.a+'</div>';box.appendChild(det);});
+})();
+
+/* 11. 면접 */
+(function(){
+  var qa=[
+    {q:'프로세스와 스레드의 차이를 설명해보세요.',a:'프로세스는 실행 중인 프로그램으로 각자 독립된 가상 주소 공간을 가집니다. 스레드는 한 프로세스 안에서 도는 실행 흐름으로, 같은 프로세스 안의 스레드끼리는 <b>Heap, Data, 코드 영역을 공유</b>하고 <b>Stack과 레지스터만 따로</b> 가집니다. 그래서 스레드는 통신이 쉽지만 동기화 문제가 생기고, 프로세스는 격리되어 안전하지만 통신에 IPC가 필요합니다.'},
+    {q:'멀티스레딩의 장단점은?',a:'장점은 같은 데이터를 공유하면서 동시에 여러 작업을 할 수 있어 CPU를 잘 활용할 수 있고, 한 작업이 블로킹돼도 다른 작업이 계속 도는 점입니다. 단점은 공유 자원에 대한 <b>Race Condition, Deadlock</b> 같은 동기화 문제가 생기고, 디버깅이 어렵고, 한 스레드가 죽으면 프로세스 전체가 죽는다는 점입니다.'},
+    {q:'프로세스를 새로 만드는 게 스레드보다 비싼 이유는?',a:'프로세스 생성은 새로운 가상 주소 공간을 만들고, <b>페이지 테이블</b>을 세팅하고, 부모 프로세스의 자원을 복사하거나 새 exe를 로드해야 합니다. 스레드는 이미 있는 프로세스에 스택과 TCB만 추가하면 되므로 훨씬 가볍습니다.'},
+    {q:'컨텍스트 스위칭 비용이 프로세스 간 vs 스레드 간 어떻게 다른가요?',a:'같은 프로세스 안의 스레드끼리 전환할 때는 가상 주소 공간이 같으므로 <b>TLB(주소 변환 캐시)</b>를 유지할 수 있습니다. 다른 프로세스로 전환하면 가상 주소 공간이 달라지므로 TLB를 무효화해야 하고, 캐시 적중률도 떨어집니다. 그래서 프로세스 간 스위칭이 더 비쌉니다.'},
+    {q:'언리얼 같은 게임 엔진이 멀티프로세스가 아니라 멀티스레드를 쓰는 이유는?',a:'게임 로직, 렌더링, 물리, 사운드, 에셋 로딩 같은 작업이 같은 게임 상태(예: 액터 위치, 트랜스폼)를 빠르게 공유해야 합니다. 프로세스로 나누면 <b>IPC 비용</b>이 너무 커서 60FPS를 못 맞춥니다. 격리가 필요한 부분(런처, 안티치트)에만 별도 프로세스를 씁니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 12. 체크 */
+(function(){
+  var items=['프로세스와 스레드가 메모리를 공유하는지 여부를 말할 수 있다','스레드끼리 공유되는 영역과 따로 갖는 영역을 구분할 수 있다','멀티스레드의 장단점을 각각 두 개 이상 댈 수 있다','같은 프로세스 안 스레드끼리의 컨텍스트 스위칭이 왜 더 싼지 안다','게임이 멀티프로세스 대신 멀티스레드를 쓰는 이유를 설명할 수 있다'];
+  var KEY='os04-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>
