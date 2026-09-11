@@ -179,7 +179,31 @@ void Push(Node* NewNode)
 
 ---
 
-## 7. "Lock-Free = 무조건 빠름" 은 거짓이다
+## 7. 참조 카운트는 atomic인데 왜 shared_ptr가 완전히 스레드 안전하진 않은가
+
+면접 단골 함정이다. `std::shared_ptr`, 언리얼의 `TSharedPtr<T, ESPMode::ThreadSafe>` 모두 **참조 카운트 증감 자체는 atomic 연산**이다. 그래서 여러 스레드가 동시에 같은 스마트 포인터를 복사하거나 소멸시켜도 카운트가 꼬여서 이중 delete가 나거나 하진 않는다. 여기까지만 보면 "그럼 스레드 안전한 거 아냐?" 싶은데, **틀렸다.**
+
+**atomic한 건 카운트뿐이다. 가리키는 객체(pointee)는 별개다.**
+
+```cpp
+TSharedPtr<FInventory, ESPMode::ThreadSafe> Inventory = MakeShareable(new FInventory());
+
+// 스레드 A
+Inventory->Items.Add(NewItem);      // TArray 내부 포인터/크기 조작
+
+// 스레드 B (동시에)
+Inventory->Items.RemoveAt(0);       // 같은 TArray를 동시에 건드림
+```
+
+두 스레드 다 `Inventory`라는 **포인터 자체를 안전하게 공유**하고 있다(참조 카운트 덕분에 한쪽이 소멸시켜도 다른 쪽 참조가 살아있는 동안은 객체가 안 사라짐). 하지만 그 안의 `Items`(`TArray`)를 동시에 `Add`/`RemoveAt` 하는 건 그냥 **7강에서 본 Race Condition** 그 자체다. `ThreadSafe`라는 이름이 붙어 있어도 객체 내부까지 잠가주지 않는다.
+
+> **언리얼 특이점:** `ESPMode::ThreadSafe`는 "참조 카운트 증감에 atomic 명령을 쓴다"는 뜻이지, "이 객체를 가리키는 모든 접근이 스레드 안전하다"는 뜻이 아니다. `NotThreadSafe`보다 느린 대신 카운트 레이스만 막아줄 뿐, 객체 자체의 동시 접근 보호는 여전히 개발자 몫(mutex, atomic 등)이다.
+
+결론: **shared_ptr류는 "포인터가 가리키는 대상이 언제 사라질지"에 대한 문제(수명 관리)를 스레드 안전하게 풀어주는 도구지, "그 대상을 동시에 건드려도 안전한가"에 대한 문제(데이터 접근)와는 무관하다.** 후자는 여전히 8강(Mutex)이나 이 강의의 atomic으로 직접 해결해야 한다.
+
+---
+
+## 8. "Lock-Free = 무조건 빠름" 은 거짓이다
 
 흔한 환상: "lock-free라니까 lock보다 빠르겠지."
 
@@ -210,7 +234,7 @@ lock-free 자료구조는 **버그 만들기 정말 쉽다.** ABA 문제, 메모
 
 ---
 
-## 8. ABA 문제 (들어만 두면 됨)
+## 9. ABA 문제 (들어만 두면 됨)
 
 CAS의 함정.
 
@@ -223,7 +247,7 @@ CAS의 함정.
 
 ---
 
-## 9. 실전 — 언제 락, 언제 atomic?
+## 10. 실전 — 언제 락, 언제 atomic?
 
 ### Atomic 적당한 경우
 
@@ -246,7 +270,7 @@ CAS의 함정.
 
 ---
 
-## 10. 코드로 — 같은 카운터, 3가지 방법
+## 11. 코드로 — 같은 카운터, 3가지 방법
 
 ```cpp
 // (1) Mutex
@@ -278,7 +302,7 @@ void Inc3()
 
 ---
 
-## 11. 흔한 오해
+## 12. 흔한 오해
 
 ### 오해 1: "`volatile` 쓰면 atomic이다"
 
@@ -308,9 +332,13 @@ CAS 루프는 lock-free이지만 wait-free는 아님(특정 스레드가 retry�
 
 큰 타입은 lock을 내부적으로 쓰는 fallback이 들어가서 오히려 느릴 수 있다. `std::atomic`은 보통 **포인터 크기(8바이트)나 그 미만**일 때 진짜 원자 명령으로 처리됨.
 
+### 오해 5: "shared_ptr / TSharedPtr면 멀티스레드에서 안전하다"
+
+절반만 맞다. **참조 카운트**는 atomic이라 포인터를 여러 스레드가 복사·소멸시켜도 안전하다. 하지만 **그 포인터가 가리키는 객체 내부**는 별도로 보호되지 않는다. 두 스레드가 같은 `TSharedPtr`로 같은 객체의 멤버를 동시에 읽고 쓰면 그냥 Race Condition이다. "스레드 안전한 포인터"이지 "스레드 안전한 객체"가 아니다.
+
 ---
 
-## 12. 면접에서 나오면
+## 13. 면접에서 나오면
 
 **Q1. atomic 연산이 뭔가요?**
 → "중간에 다른 스레드의 개입 없이 원자적으로 실행되는 연산입니다. CPU의 LOCK 접두사나 CMPXCHG 같은 특수 명령으로 보장하며, C++에서는 `std::atomic`, 언리얼에서는 `TAtomic`이나 `FThreadSafeCounter`로 사용합니다."
@@ -330,9 +358,14 @@ CAS 루프는 lock-free이지만 wait-free는 아님(특정 스레드가 retry�
 **Q6. `FThreadSafeCounter`와 `FCriticalSection`을 둘 다 쓸 수 있을 때 뭘 고르겠어요?**
 → "보호 대상이 단일 정수 카운터라면 `FThreadSafeCounter`를 고릅니다. 락 비용 없이 같은 안전성을 제공하면서 훨씬 빠릅니다. 만약 카운터 외에 다른 변수도 함께 일관되게 갱신해야 한다면 `FCriticalSection`이 필요합니다."
 
+**Q7. 멀티스레드에서 shared_ptr를 쓸 때 어떤 문제가 발생할 수 있나요?**
+→ "shared_ptr의 참조 카운트 증감 자체는 atomic이라 여러 스레드가 동시에 복사하거나 소멸시켜도 카운트는 안전합니다. 하지만 그게 가리키는 객체 내부까지 보호해주는 건 아닙니다. 두 스레드가 같은 shared_ptr로 같은 객체의 멤버 변수나 컨테이너를 동시에 읽고 쓰면 그냥 Race Condition이 발생합니다. 언리얼의 TSharedPtr도 ThreadSafe 모드는 참조 카운트만 atomic 연산으로 처리해줄 뿐, 객체 자체의 동시 접근은 여전히 mutex나 atomic으로 따로 막아야 합니다."
+
+면접관이 그 다음에 던지기 좋은 질문: *"락을 여러 개 잡아야 하는 상황이면 어떤 위험이 생기나요?"* → 10강(데드락)에서 다룬다.
+
 ---
 
-## 13. 셀프 체크
+## 14. 셀프 체크
 
 - [ ] atomic이 CPU의 원자 명령(LOCK, CMPXCHG)에 기반한다는 걸 안다.
 - [ ] atomic과 mutex의 속도 차이가 나는 이유를 말할 수 있다.
@@ -340,6 +373,7 @@ CAS 루프는 lock-free이지만 wait-free는 아님(특정 스레드가 retry�
 - [ ] 메모리 배리어가 왜 필요한지 한 문단으로 설명할 수 있다.
 - [ ] Lock-Free가 항상 빠른 게 아니라는 걸 안다.
 - [ ] 단일 카운터/플래그엔 atomic, 컬렉션엔 mutex라는 원칙을 안다.
+- [ ] shared_ptr의 참조 카운트 안전성과 가리키는 객체의 안전성은 별개라는 걸 설명할 수 있다.
 
 ---
 
