@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14강 · 언리얼 네트워크 모델 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--amber),var(--red))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--amber)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#341603;background:var(--amber);border-color:var(--amber)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(251,191,36,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--amber);background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--amber),var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--amber);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--amber);color:#341603;transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:#fcd34d;transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--amber);background:var(--card)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+table.tb{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+table.tb th,table.tb td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tb th{color:var(--faint);font-weight:700;font-size:12.5px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}
+
+/* 킬러: 공격 흐름 애니메이션 */
+.flowsvg{background:var(--bg2);border:1px solid var(--line);border-radius:14px;width:100%;display:block}
+.flowbox{transition:.3s}
+.flowbox.active rect{stroke:var(--amber);stroke-width:3}
+.flowbox.active text.lbl{fill:var(--amber)}
+.steplog{margin-top:16px;min-height:50px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13.5px;text-align:center}
+.steplog b{color:var(--amber)}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:230px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--amber);font-weight:700}
+.flip .front .q{font-size:15.5px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#3a2412,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--red));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--amber)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--amber);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--amber)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:260px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>14강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#auth">서버 권한</a>
+    <a class="chip" href="#repl">Replication</a>
+    <a class="chip" href="#rpc">RPC</a>
+    <a class="chip" href="#flow">공격 흐름</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 5 · 게임 네트워킹 · 시리즈의 정점</span>
+  <h1>언리얼 <span class="g">네트워크 모델</span></h1>
+  <p class="sub">1~13강에서 배운 게 전부 여기서 만난다. 공격 한 번의 흐름을 직접 재생해보며 서버 권한·Replication·RPC가 어떻게 손을 잡는지 확인한다.</p>
+  <div class="meta">
+    <div class="m">🖥️ 서버가 진실, 클라는 화면</div>
+    <div class="m">🧩 선수지식 <b>1~13강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 종합</div>
+  <h2 class="sec"><span class="n">1</span>지금까지 배운 게 다 여기서 만난다</h2>
+  <div class="card">
+    <p>TCP/UDP 선택? → 엔진이 UDP 기반 + 신뢰성 선택(6강)으로 해결. 패킷 직렬화·경계? → 엔진이 자동 처리(10강). 클라 믿지 마라? → 서버 권한 구조로 강제(13강).</p>
+    <p style="margin-top:12px">언리얼은 이 저수준을 다 가려주고, 우리는 <b style="color:var(--amber)">세 가지 도구</b>만 쓴다: <b>서버 권한, Replication, RPC.</b></p>
+  </div>
+</div></section>
+
+<!-- 2. 서버 권한 -->
+<section id="auth"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 철학</div>
+  <h2 class="sec"><span class="n">2</span>서버 권한 — "서버가 진실, 클라는 화면"</h2>
+  <p class="lead">적 HP, 내 위치, 아이템 개수 — 진짜 값은 전부 <b>서버</b>에 있다. 클라는 그 복사본을 보여준다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">if</span> (HasAuthority())   <span class="cm">// 이 액터에 대한 권한이 있나 = 서버인가</span>
+{
+    <span class="cm">// 서버에서만 도는 코드 (실제 게임 로직, 판정)</span>
+}
+<span class="kw">else</span>
+{
+    <span class="cm">// 클라에서 도는 코드 (표현, 예측)</span>
+}</pre>
+    <p class="hint">중요한 판정(데미지, 재화, 사망)은 전부 <code style="font-family:ui-monospace,monospace;color:var(--amber)">HasAuthority()</code> 안, 즉 <b>서버에서</b> 해야 한다.</p>
+  </div>
+</div></section>
+
+<!-- 3. Replication -->
+<section id="repl"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 상태 동기화</div>
+  <h2 class="sec"><span class="n">3</span>Replication — 서버 상태를 클라로 자동 복제</h2>
+  <div class="card">
+    <pre class="code">UPROPERTY(ReplicatedUsing = OnRep_Health)
+<span class="fn">float</span> Health = 100.f;
+
+<span class="kw">void</span> AMyCharacter::OnRep_Health()
+{
+    UpdateHealthBar(Health);   <span class="cm">// 클라에서 값이 바뀌면 자동 호출 → 화면 갱신</span>
+}</pre>
+    <p class="hint"><b style="color:var(--amber)">단방향: 서버 → 클라.</b> 클라가 복제 변수를 바꿔도 서버엔 안 간다(보안). HP·위치처럼 <b>지속 상태</b> 동기화에 적합하고, 6강의 신뢰성 UDP로 도착이 보장된다.</p>
+  </div>
+</div></section>
+
+<!-- 4. RPC -->
+<section id="rpc"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 이벤트성 동작</div>
+  <h2 class="sec"><span class="n">4</span>RPC — 한쪽에서 다른 쪽 함수를 실행</h2>
+  <table class="tb">
+    <tr><th>RPC 종류</th><th>호출하는 곳</th><th>실행되는 곳</th></tr>
+    <tr><td style="color:var(--cyan)">Server</td><td>클라</td><td>서버</td></tr>
+    <tr><td style="color:var(--pur)">Client</td><td>서버</td><td>그 클라 한 명</td></tr>
+    <tr><td style="color:var(--amber)">Multicast</td><td>서버</td><td>모든 클라 (+서버)</td></tr>
+  </table>
+  <div class="card">
+    <pre class="code">UFUNCTION(Server, Reliable)
+<span class="fn">void</span> Server_RequestAttack(int32 TargetId);      <span class="cm">// 클라 → 서버: "이거 해줘"</span>
+
+UFUNCTION(Client, Reliable)
+<span class="fn">void</span> Client_OnLevelUp(int32 NewLevel);        <span class="cm">// 서버 → 특정 클라: "너한테만"</span>
+
+UFUNCTION(NetMulticast, Unreliable)
+<span class="fn">void</span> Multicast_PlayExplosion(FVector Location); <span class="cm">// 서버 → 모두: "다같이 봐"</span></pre>
+    <p class="hint">신뢰성도 6강 그대로 적용된다. <b style="color:var(--grn)">Reliable</b>: 공격 요청·레벨업처럼 놓치면 안 되는 것. <b style="color:var(--red)">Unreliable</b>: 이펙트·사운드처럼 유실 OK인 것.</p>
+  </div>
+</div></section>
+
+<!-- 5. 킬러: 공격 흐름 -->
+<section id="flow"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 핵심 · 직접 재생해보기</div>
+  <h2 class="sec"><span class="n">5</span>공격 한 번의 전체 흐름</h2>
+  <p class="lead">서버 권한, Replication, 세 가지 RPC가 한 번의 공격 안에 어떻게 다 들어있는지 순서대로 재생해보자.</p>
+  <div class="card">
+    <svg class="flowsvg" viewBox="0 0 300 190" id="flowSvg">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--amber)"></path>
+        </marker>
+      </defs>
+      <g id="arrowsLayer"></g>
+      <g class="flowbox" id="boxA"><rect x="10" y="130" width="80" height="46" rx="10" fill="var(--card2)" stroke="var(--line)" stroke-width="2"></rect><text class="lbl" x="50" y="149" fill="var(--dim)" font-size="11" text-anchor="middle">클라이언트</text><text class="lbl" x="50" y="164" fill="var(--dim)" font-size="11" text-anchor="middle">A (공격자)</text></g>
+      <g class="flowbox" id="boxServer"><rect x="110" y="14" width="80" height="46" rx="10" fill="var(--card2)" stroke="var(--line)" stroke-width="2"></rect><text class="lbl" x="150" y="33" fill="var(--dim)" font-size="11" text-anchor="middle">서버</text><text class="lbl" x="150" y="48" fill="var(--dim)" font-size="11" text-anchor="middle">(진짜 상태)</text></g>
+      <g class="flowbox" id="boxB"><rect x="210" y="130" width="80" height="46" rx="10" fill="var(--card2)" stroke="var(--line)" stroke-width="2"></rect><text class="lbl" x="250" y="149" fill="var(--dim)" font-size="11" text-anchor="middle">클라이언트</text><text class="lbl" x="250" y="164" fill="var(--dim)" font-size="11" text-anchor="middle">B (구경꾼)</text></g>
+    </svg>
+    <div class="steplog" id="stepLog">버튼을 눌러 공격 흐름을 재생해보자.</div>
+    <div class="btnrow"><button class="btn" id="playFlow">▶ 공격 흐름 재생</button><button class="btn ghost" id="resetFlow">↺ 초기화</button></div>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"서버에서 판정하면 핑만큼 늦을 텐데, 그럼 내 캐릭터도 핑만큼 늦게 움직이나요?"</i> → 15강(레이턴시와 지연 보상)에서 다룬다.</p>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <div class="cap">네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 14강</div>
+</div></footer>
+
+<script>
+/* 5. 공격 흐름 애니메이션 킬러 위젯 */
+(function(){
+  var svg=document.getElementById('flowSvg'), layer=document.getElementById('arrowsLayer'), log=document.getElementById('stepLog');
+  var boxA=document.getElementById('boxA'), boxServer=document.getElementById('boxServer'), boxB=document.getElementById('boxB');
+  var pA={x:50,y:130}, pS={x:150,y:60}, pB={x:250,y:130};
+  var timer=null, step=0;
+
+  function clearActive(){[boxA,boxServer,boxB].forEach(function(b){b.classList.remove('active');});}
+  function line(from,to,color,dashed){
+    return '<line x1="'+from.x+'" y1="'+from.y+'" x2="'+to.x+'" y2="'+to.y+'" stroke="'+color+'" stroke-width="2.5" marker-end="url(#arrow)"'+(dashed?' stroke-dasharray="5 4"':'')+'></line>';
+  }
+  function reset(){
+    if(timer){clearTimeout(timer);timer=null;}
+    step=0;layer.innerHTML='';clearActive();
+    log.innerHTML='버튼을 눌러 공격 흐름을 재생해보자.';
+  }
+  var steps=[
+    function(){clearActive();boxA.classList.add('active');layer.innerHTML='';
+      log.innerHTML='① 클라 A가 마우스를 클릭한다 (로컬 입력).';},
+    function(){clearActive();boxA.classList.add('active');boxServer.classList.add('active');
+      layer.innerHTML=line(pA,pS,'var(--cyan)',false);
+      log.innerHTML='② <b>Server_RequestAttack(TargetId)</b> — Server RPC, Reliable. 클라 → 서버.';},
+    function(){clearActive();boxServer.classList.add('active');
+      log.innerHTML='③ 서버: 사거리·쿨다운 검증(13강) → <code style="font-family:ui-monospace,monospace;color:var(--amber)">Target-&gt;Health -= Damage</code>';},
+    function(){clearActive();boxServer.classList.add('active');boxA.classList.add('active');boxB.classList.add('active');
+      layer.innerHTML=line(pS,pA,'var(--grn)',false)+line(pS,pB,'var(--grn)',false);
+      log.innerHTML='④ <b>Health가 Replicated</b> → 모든 클라에 자동 복제, HP바 갱신 (서버→클라, 단방향).';},
+    function(){clearActive();boxServer.classList.add('active');boxA.classList.add('active');boxB.classList.add('active');
+      layer.innerHTML=line(pS,pA,'var(--amber)',true)+line(pS,pB,'var(--amber)',true);
+      log.innerHTML='⑤ <b>Multicast_PlayHitEffect(Location)</b> — Multicast RPC, Unreliable. 서버 → 모든 클라.';},
+    function(){clearActive();boxA.classList.add('active');boxB.classList.add('active');
+      layer.innerHTML='';
+      log.innerHTML='⑥ 모든 클라: 타격 이펙트 재생. 서버 권한 + Replication + RPC 3종이 한 흐름에 다 들어있다. 🎉';}
+  ];
+  function run(){
+    if(timer)return;reset();
+    var i=0;
+    function next(){steps[i]();i++;if(i<steps.length){timer=setTimeout(next,1100);}else{timer=null;}}
+    next();
+  }
+  document.getElementById('playFlow').addEventListener('click',run);
+  document.getElementById('resetFlow').addEventListener('click',reset);
+})();
+
+/* 6. 오해 */
+(function(){
+  var items=[
+    {t:'"복제 변수를 클라에서 바꾸면 서버에도 반영된다"',b:'아니다. Replication은 <span class="truth">서버 → 클라 단방향</span>이다. 클라가 바꿔도 로컬에서만 잠깐 바뀌고 다음 복제 때 서버 값으로 덮어쓰인다. 서버 상태를 바꾸려면 Server RPC로 요청해야 한다.'},
+    {t:'"RPC랑 Replication은 같은 거다"',b:'다르다. Replication은 <span class="truth">변수의 상태를 지속적으로 동기화</span>하고(서버→클라), RPC는 <span class="truth">특정 함수를 한 번 원격 실행</span>한다(방향 다양). "지금 HP" = Replication, "방금 폭발" = Multicast RPC.'},
+    {t:'"모든 RPC를 Reliable로 하면 안전하다"',b:'Reliable은 재전송·순서 보장 비용이 든다. 이펙트·사운드처럼 초당 여러 번 일어나는 걸 다 Reliable로 하면 <span class="truth">트래픽이 폭증하고 오히려 중요한 패킷을 밀어낸다</span>(6강).'},
+    {t:'"Multicast는 서버에서 호출하든 클라에서 호출하든 된다"',b:'Multicast RPC는 <span class="truth">서버에서 호출해야</span> 모든 클라로 퍼진다. 클라에서 호출하면 그 클라 로컬에서만 실행되고 전파되지 않는다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'언리얼의 네트워크 모델을 설명해보세요.',a:'<b>서버 권한 모델</b>입니다. 서버가 게임의 진짜 상태를 가지고, 클라이언트는 그걸 복제받아 보여줍니다. 상태 동기화는 Replication, 이벤트성 동작은 RPC로 처리하고, 중요한 판정은 모두 서버에서 검증합니다.'},
+    {q:'Replication이 뭔가요?',a:'서버가 가진 변수의 값을 클라이언트들에게 <b>자동으로 동기화</b>해주는 기능입니다. UPROPERTY(Replicated)를 붙이고 등록하면, 서버에서 값이 바뀔 때 엔진이 관련 클라이언트에 전송합니다. <b>서버→클라 단방향</b>입니다.'},
+    {q:'RPC 세 종류를 설명해보세요.',a:'<b>Server RPC</b>는 클라가 서버에서 함수를 실행시키는 요청, <b>Client RPC</b>는 서버가 특정 클라 한 명에게, <b>Multicast RPC</b>는 서버가 모든 클라에게 실행시키는 것입니다.'},
+    {q:'Replication과 RPC의 차이는?',a:'Replication은 <b>변수 상태를 지속적으로 동기화</b>하고, RPC는 <b>특정 함수를 한 번 원격 실행</b>합니다. "현재 HP"는 Replication, "방금 폭발"은 Multicast RPC입니다.'},
+    {q:'RPC의 Reliable과 Unreliable은 어떻게 선택하나요?',a:'놓치면 안 되는 건 <b>Reliable</b>(공격 요청, 레벨업), 유실돼도 되는 건 <b>Unreliable</b>(이펙트, 사운드)로 합니다. 전부 Reliable로 하면 트래픽 폭증으로 오히려 안 좋습니다.'},
+    {q:'클라이언트가 서버의 상태를 바꾸려면 어떻게 하나요?',a:'Replication은 서버→클라 단방향이라 클라가 직접 바꿔도 반영되지 않습니다. <b>Server RPC로 요청</b>을 보내고, 서버가 검증한 뒤 직접 값을 바꿔야 합니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['"서버가 진실, 클라는 화면" 모델을 HasAuthority()와 함께 설명할 수 있다','Replication이 서버→클라 단방향 상태 동기화라는 걸 안다','RPC 세 종류의 호출 위치와 실행 위치를 표로 말할 수 있다','Replication과 RPC를 언제 각각 쓰는지 구분할 수 있다','Reliable/Unreliable 선택 기준을 안다','공격 한 번의 전체 흐름(Server RPC→검증→Replication→Multicast)을 말할 수 있다'];
+  var KEY='net14-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

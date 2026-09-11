@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6강 · Look-At, 회전값 구하기 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--cyan),var(--ind))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--cyan)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#042733;background:var(--cyan);border-color:var(--cyan)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(34,211,238,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--cyan),var(--ind2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}
+
+/* 킬러: atan2 시뮬레이터 */
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--cyan);color:#042733;border-color:var(--cyan)}
+.simgrid{display:grid;grid-template-columns:260px 1fr;gap:24px;align-items:center}
+@media(max-width:640px){.simgrid{grid-template-columns:1fr}}
+.simsvg{background:var(--bg2);border:1px solid var(--line);border-radius:14px}
+.slider-row{margin-top:14px}
+.slider-row .lbl{font-size:13px;font-weight:700;display:flex;justify-content:space-between}
+.slider-row .lbl b{color:var(--cyan);font-family:ui-monospace,monospace}
+.slider-row input[type=range]{width:100%;margin-top:6px;accent-color:var(--cyan)}
+.readout{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;margin-top:16px}
+.readout .row{display:flex;justify-content:space-between;padding:3px 0}
+.readout .row b{font-family:ui-monospace,monospace}
+.verdict-badge{margin-top:10px;text-align:center;font-weight:800;font-size:13px;padding:8px;border-radius:10px}
+.verdict-badge.ok{background:rgba(52,211,153,.15);color:var(--grn)}
+.verdict-badge.bad{background:rgba(248,113,113,.15);color:var(--red)}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:235px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--cyan);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#0f2e38,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--ind2)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--ind2));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--cyan)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--cyan);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--cyan)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:265px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>6강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#rep">회전 표현</a>
+    <a class="chip" href="#sim">atan2 시뮬</a>
+    <a class="chip" href="#lookat">FindLookAt</a>
+    <a class="chip" href="#practice">실전 코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 좌표계와 회전</span>
+  <h1>Look-At, <span class="g">회전값 구하기</span></h1>
+  <p class="sub">터렛이 플레이어를 바라보게 하려면 방향 벡터를 회전값으로 바꿔야 한다. 타겟을 슬라이더로 움직여 atan2가 왜 atan보다 안전한지 직접 확인한다.</p>
+  <div class="meta">
+    <div class="m">🎯 atan2가 핵심</div>
+    <div class="m">🧩 선수지식 <b>1~5강</b></div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 질문</div>
+  <h2 class="sec"><span class="n">1</span>터렛이 플레이어를 바라보게 하고 싶다</h2>
+  <p class="lead">방향 벡터는 쉽게 구했다 — <code style="font-family:ui-monospace,monospace">PlayerLocation - TurretLocation</code>. 그런데 이걸 그대로 회전(FRotator)에 넣을 수는 없다.</p>
+  <div class="card">
+    <pre class="code">FVector Direction = (PlayerLocation - TurretLocation).GetSafeNormal();
+<span class="cm">// Turret->SetActorRotation(???);  ← FVector를 어떻게 회전으로?</span>
+
+FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(TurretLocation, PlayerLocation);
+Turret->SetActorRotation(LookAtRotation);</pre>
+    <p style="margin-top:16px">이 강의는 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">FindLookAtRotation</code>이 내부적으로 뭘 계산하는지, 왜 방향 벡터 하나로 회전값이 결정되는지를 파본다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 회전 표현 -->
+<section id="rep"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 개념</div>
+  <h2 class="sec"><span class="n">2</span>Rotator vs Quaternion, 그리고 Yaw/Pitch 공식</h2>
+  <div class="card">
+    <p><b style="color:var(--cyan)">FRotator</b>: Pitch(상하)·Yaw(좌우)·Roll(기울임) 세 각도. 사람이 이해하기 쉬움.</p>
+    <p style="margin-top:8px"><b style="color:var(--ind2)">FQuat</b>: 4개 숫자(X,Y,Z,W)로 표현. 보간·합성에 안정적이고 짐벌락 없음.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">핵심: 방향 벡터를 알면, "그 방향을 바라보는 회전"은 유일하게 하나로 정해진다 (Roll=0 전제).</p>
+    <pre class="code">Yaw   = atan2(Direction.Y, Direction.X)
+Pitch = atan2(Direction.Z, sqrt(Direction.X² + Direction.Y²))
+Roll  = 0  <span class="cm">// 방향만으로는 결정 안 됨, 보통 고정</span></pre>
+    <p class="hint"><code style="font-family:ui-monospace,monospace;color:var(--amber)">atan2</code>는 두 값의 부호를 같이 받아서 <b>사분면 전체(-180°~180°)</b>를 올바르게 구분한다. 단순 <code style="font-family:ui-monospace,monospace">Y/X</code> 비율(<code style="font-family:ui-monospace,monospace">atan</code>)만으로는 사분면을 구분 못 한다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 킬러: atan2 시뮬레이터 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>터렛 조준 시뮬레이터 — atan vs atan2</h2>
+  <p class="lead">타겟을 슬라이더로 움직여보자. 점선은 실제 방향, 화살표는 계산된 회전. <b>atan(Y/X)</b> 모드로 바꿔서 왼쪽으로 타겟을 옮기면 무슨 일이 생기는지 확인해보자.</p>
+  <div class="card">
+    <div class="modetoggle">
+      <button class="on" data-m="atan2">atan2 (정답)</button>
+      <button data-m="atan">atan(Y/X) (틀림)</button>
+    </div>
+    <div class="simgrid">
+      <svg class="simsvg" viewBox="0 0 260 220" id="turretSvg">
+        <line id="trueLine" stroke="var(--faint)" stroke-width="1.5" stroke-dasharray="4 3"></line>
+        <line id="calcLine" stroke-width="4"></line>
+        <circle cx="130" cy="110" r="8" fill="var(--txt)"></circle>
+        <circle id="targetDot" r="6" fill="var(--amber)"></circle>
+        <text x="130" y="128" fill="var(--dim)" font-size="11" text-anchor="middle">Turret</text>
+      </svg>
+      <div>
+        <div class="slider-row">
+          <div class="lbl">타겟 X (dx) <b id="dxVal">80</b></div>
+          <input type="range" id="dxSlider" min="-100" max="100" value="80">
+        </div>
+        <div class="slider-row">
+          <div class="lbl">타겟 Y (dy) <b id="dyVal">-40</b></div>
+          <input type="range" id="dySlider" min="-100" max="100" value="-40">
+        </div>
+        <div class="readout" id="readoutBox"></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 4. FindLookAtRotation -->
+<section id="lookat"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 내부 동작</div>
+  <h2 class="sec"><span class="n">4</span>FindLookAtRotation이 하는 일</h2>
+  <div class="card">
+    <pre class="code">FRotator FindLookAtRotation(<span class="kw">const</span> FVector& Start, <span class="kw">const</span> FVector& Target)
+{
+    FVector Direction = (Target - Start).GetSafeNormal();
+    <span class="kw">return</span> Direction.Rotation();   <span class="cm">// 내부적으로 atan2 기반 계산</span>
+}</pre>
+    <p class="hint">딱 두 단계다: (1) 변위 벡터를 구해 정규화 — <b>방향만 남긴다</b>(1강). (2) 그 방향을 atan2 기반으로 회전값으로 변환(이 강의). <b style="color:var(--txt)">새로운 수학이 아니라 지금까지 배운 걸 조합</b>한 것뿐이다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">내적/외적으로 회전 구하기 (Quaternion 기준)</p>
+    <pre class="code">회전각(θ)  = acos(dot(CurrentForward, TargetDirection))   <span class="cm">// 내적으로 각도</span>
+회전축(Axis) = cross(CurrentForward, TargetDirection)      <span class="cm">// 외적으로 축</span></pre>
+    <p class="hint">현재 방향에서 목표까지 <b>얼마나, 어느 축으로</b> 돌아야 하는지 직접 구하는 방식이라 <b>부드러운 회전 보간</b>에 자연스럽게 이어진다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 실전 코드 -->
+<section id="practice"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 실전</div>
+  <h2 class="sec"><span class="n">5</span>지상 캐릭터의 Pitch 고정 · 터렛 시야각+Look-At</h2>
+  <div class="card">
+    <pre class="code">FRotator LookAtRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), TargetLocation);
+LookAtRotation.Pitch = 0.0f;   <span class="cm">// 몸통은 좌우로만 회전</span>
+LookAtRotation.Roll = 0.0f;
+SetActorRotation(LookAtRotation);</pre>
+    <p class="hint">시선 방향을 몸통에 그대로 적용하면 위/아래를 볼 때 몸이 이상하게 숙여진다. 몸통엔 Yaw만, 카메라·머리 본엔 Pitch까지 반영한다.</p>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> ATurret::TrackTarget(AActor* Target, <span class="fn">float</span> DeltaTime)
+{
+    FVector ToTarget = (Target->GetActorLocation() - GetActorLocation()).GetSafeNormal();
+    <span class="fn">float</span> DotResult = FVector::DotProduct(GetActorForwardVector(), ToTarget);   <span class="cm">// 3강: 시야각 체크</span>
+    <span class="kw">if</span> (DotResult &lt; TrackingCosLimit) <span class="kw">return</span>;
+
+    FRotator DesiredRotation = UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), Target->GetActorLocation());
+    DesiredRotation.Pitch = 0.0f;
+    SetActorRotation(FMath::RInterpTo(GetActorRotation(), DesiredRotation, DeltaTime, 5.0f));   <span class="cm">// 부드러운 회전</span>
+}</pre>
+    <p class="hint">벡터(방향)·내적(시야각)·Look-At(회전)이 한 함수 안에서 자연스럽게 합쳐진다.</p>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="07강_충돌_감지_기초.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">7강 — 충돌 감지 기초 →</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 6강</div>
+</div></footer>
+
+<script>
+/* 3. atan2 시뮬레이터 킬러 위젯 */
+(function(){
+  var cx=130, cy=110, len=90;
+  var mode='atan2';
+  var dxSlider=document.getElementById('dxSlider'),dySlider=document.getElementById('dySlider');
+  var dxVal=document.getElementById('dxVal'),dyVal=document.getElementById('dyVal');
+  var trueLine=document.getElementById('trueLine'),calcLine=document.getElementById('calcLine'),targetDot=document.getElementById('targetDot');
+  var readout=document.getElementById('readoutBox');
+
+  document.querySelectorAll('.modetoggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');mode=b.dataset.m;render();
+    });
+  });
+
+  function render(){
+    var dx=parseFloat(dxSlider.value), dy=parseFloat(dySlider.value);
+    dxVal.textContent=dx;dyVal.textContent=dy;
+    var tx=cx+dx, ty=cy+dy;
+    trueLine.setAttribute('x1',cx);trueLine.setAttribute('y1',cy);
+    trueLine.setAttribute('x2',tx);trueLine.setAttribute('y2',ty);
+    targetDot.setAttribute('cx',tx);targetDot.setAttribute('cy',ty);
+
+    var angleAtan2=Math.atan2(dy,dx);
+    var angleAtanNaive=Math.atan(dx===0?(dy>0?1e9:-1e9):dy/dx);
+    var angle = mode==='atan2' ? angleAtan2 : angleAtanNaive;
+    var correct = mode==='atan2' || dx>=0;
+
+    var ex=cx+len*Math.cos(angle), ey=cy+len*Math.sin(angle);
+    calcLine.setAttribute('x1',cx);calcLine.setAttribute('y1',cy);
+    calcLine.setAttribute('x2',ex);calcLine.setAttribute('y2',ey);
+    calcLine.setAttribute('stroke', correct?'var(--grn)':'var(--red)');
+
+    var deg2=(angleAtan2*180/Math.PI).toFixed(1);
+    var degNaive=(angleAtanNaive*180/Math.PI).toFixed(1);
+    readout.innerHTML=
+      '<div class="row"><span>atan2(dy, dx)</span><b style="color:var(--grn)">'+deg2+'°</b></div>'+
+      '<div class="row"><span>atan(dy/dx) — naive</span><b style="'+(dx<0?'color:var(--red)':'')+'">'+degNaive+'°</b></div>'+
+      '<div class="verdict-badge '+(correct?'ok':'bad')+'">'+(correct?'✅ 타겟을 정확히 가리킴':'❌ 반대 방향(180° 오차)을 가리킴!')+'</div>';
+  }
+  dxSlider.addEventListener('input',render);
+  dySlider.addEventListener('input',render);
+  render();
+})();
+
+/* 6. 오해 */
+(function(){
+  var items=[
+    {t:'"FindLookAtRotation은 뭔가 복잡한 특수 계산을 한다"',b:'내부적으로는 방향 벡터를 구해 정규화하고, <span class="truth">atan2 기반으로 각도로 바꾸는 두 단계</span>일 뿐이다. 1강의 정규화와 이 강의의 각도 변환을 조합한 것.'},
+    {t:'"방향 벡터만 있으면 회전이 완전히 하나로 결정된다"',b:'Yaw와 Pitch는 결정되지만 <span class="truth">Roll은 방향 벡터만으로 정해지지 않는다.</span> 정면이 같아도 옆으로 기운 정도는 별개 정보라 보통 0으로 고정한다.'},
+    {t:'"atan(Y/X)로도 충분하다, 굳이 atan2일 필요 없다"',b:'atan(Y/X)는 X가 음수일 때 <span class="truth">사분면을 구분하지 못한다</span>(1사분면과 3사분면을 같은 값으로 취급). atan2는 부호를 각각 참고해 올바른 사분면을 반환한다.'},
+    {t:'"캐릭터 몸통에 Look-At을 그대로 적용해도 된다"',b:'시선 방향을 몸통에 그대로 적용하면 위/아래를 볼 때 몸이 이상하게 숙여진다. <span class="truth">지상 캐릭터 몸통은 보통 Pitch/Roll을 0으로 고정</span>하고 Yaw만 적용한다.'},
+    {t:'"SetActorRotation을 매 프레임 직접 호출하면 회전이 자연스럽다"',b:'목표 회전값으로 순간이동하듯 스냅되어 뚝뚝 끊긴다. <span class="truth">RInterpTo나 FQuat::Slerp 같은 보간 함수</span>로 매 프레임 조금씩 다가가야 부드럽다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'캐릭터나 카메라가 특정 지점을 바라보게 하려면 어떻게 회전값을 구하나요?',a:'목표 지점에서 현재 위치를 빼서 방향 벡터를 구하고 정규화한 다음, 그 방향 벡터를 회전값으로 변환합니다. 언리얼에서는 <b>FindLookAtRotation</b> 함수가 이 과정을 대신해줍니다.'},
+    {q:'FindLookAtRotation은 내부적으로 어떻게 동작하나요?',a:'목표에서 시작 위치를 뺀 방향 벡터를 정규화하고, 그 벡터의 X,Y,Z 성분을 <b>atan2</b> 기반으로 Yaw와 Pitch로 변환합니다.'},
+    {q:'방향 벡터로 Roll까지 결정할 수 있나요?',a:'아니요. <b>Roll은 방향 벡터만으로는 결정되지 않습니다.</b> 정면 방향이 같아도 옆으로 기운 정도는 별개 정보라, 보통 0으로 고정하거나 월드 Up 벡터 등 다른 기준으로 계산합니다.'},
+    {q:'atan 대신 atan2를 쓰는 이유가 뭔가요?',a:'atan은 Y/X 비율만 봐서 부호 정보가 사라져 사분면을 구분하지 못합니다. <b>atan2는 X, Y를 따로 받아</b> 전체 360도 범위에서 올바른 사분면의 각도를 반환합니다.'},
+    {q:'캐릭터가 위/아래를 볼 때 몸통까지 숙여지면 이상한데, 어떻게 처리하나요?',a:'몸통 회전에는 <b>Pitch를 0으로 고정</b>해 Yaw만 적용하고, 실제 시선 방향은 카메라나 머리 본 같은 별도 요소에 반영합니다.'},
+    {q:'Look-At을 매 프레임 바로 적용하는 것과 RInterpTo로 보간하는 것 중 어떤 걸 고르겠어요?',a:'대부분 <b>RInterpTo로 보간</b>하는 쪽을 고릅니다. 바로 스냅하면 부자연스럽습니다. 다만 조준 스코프처럼 즉각 반응이 필요하면 보간 없이 바로 적용할 수도 있습니다.'},
+    {q:'내적/외적으로도 회전을 구할 수 있다고 했는데, 언제 이 방식을 쓰나요?',a:'현재 방향에서 목표 방향으로의 <b>회전각(내적)</b>과 <b>회전축(외적)</b>이 필요할 때 씁니다. 절대 회전값을 새로 계산하기보다 현재 상태에서 상대적으로 얼마나 돌아야 하는지 다룰 때 자연스럽게 이어집니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--ind2)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['방향 벡터로부터 Yaw, Pitch를 구하는 원리(atan2 기반)를 설명할 수 있다','Roll이 방향 벡터만으로 결정되지 않는 이유를 안다','atan과 atan2의 차이(사분면 구분)를 설명할 수 있다','FindLookAtRotation이 내부적으로 어떤 두 단계로 이뤄지는지 안다','지상 캐릭터 몸통 회전에 Pitch를 0으로 고정하는 이유를 설명할 수 있다','즉시 회전(SetActorRotation)과 보간 회전(RInterpTo)의 차이와 사용 시점을 안다'];
+  var KEY='gm06-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

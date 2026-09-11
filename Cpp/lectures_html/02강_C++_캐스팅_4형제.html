@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2강 · C++ 캐스팅 4형제 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--amber))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--pur);border-color:var(--pur)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+h3.sub{font-size:17px;font-weight:700;margin-top:26px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--pur);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:#c084fc;transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--pur);background:var(--card)}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+table.tb{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+table.tb th,table.tb td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tb th{color:var(--faint);font-weight:700;font-size:12.5px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}
+
+/* 킬러: 히트 판정 시뮬레이터 */
+.picker{margin-top:20px}
+.picker .lbl{font-size:12.5px;font-weight:700;color:var(--faint);margin-bottom:8px}
+.optrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.opt{font-family:inherit;font-size:13px;font-weight:700;padding:9px 16px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.opt:hover{border-color:var(--pur)}
+.opt.on{background:var(--pur);color:#fff;border-color:var(--pur)}
+.result{margin-top:18px;border-radius:14px;padding:18px 20px;border:2px solid var(--line);text-align:center;min-height:30px;transition:.2s}
+.result.ok{border-color:var(--grn);background:rgba(52,211,153,.1)}
+.result.bad{border-color:var(--red);background:rgba(248,113,113,.12)}
+.result .big{font-size:16px;font-weight:800}
+.result.ok .big{color:var(--grn)}.result.bad .big{color:var(--red)}
+.result .sub{font-size:12.5px;color:var(--dim);margin-top:6px}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:235px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--pur);font-weight:700}
+.flip .front .q{font-size:15.5px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#23163a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--pur)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:260px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>2강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#four">4형제</a>
+    <a class="chip" href="#staticdynamic">static/dynamic</a>
+    <a class="chip" href="#sim">캐스팅 시뮬</a>
+    <a class="chip" href="#other">reinterpret·const</a>
+    <a class="chip" href="#uecast">Cast&lt;T&gt;</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · C++ 문법 심화 · 면접 단골</span>
+  <h1>C++ 캐스팅 <span class="g">4형제</span></h1>
+  <p class="sub">C-style cast 한 줄이 왜 위험한지, 히트 판정 시나리오를 직접 돌려보며 4가지 캐스팅의 차이를 몸으로 확인한다.</p>
+  <div class="meta">
+    <div class="m">🎯 검사 여부가 핵심</div>
+    <div class="m">🧩 선수지식 <b>1강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 버그</div>
+  <h2 class="sec"><span class="n">1</span>히트 판정에서 터진 캐스팅 버그</h2>
+  <p class="lead">총알이 뭔가에 맞았다. <code style="font-family:ui-monospace,monospace;color:var(--amber)">AWeaponPickup</code>이면 무기를 교체하고 싶다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> ABullet::OnHit(AActor* HitActor)
+{
+    AWeaponPickup* Weapon = <span class="bad">(AWeaponPickup*)HitActor</span>;   <span class="cm">// C-style cast</span>
+    Weapon->EquipTo(OwnerCharacter);                    <span class="bad">// 크래시 혹은 이상한 동작</span>
+}</pre>
+    <p style="margin-top:16px">빌드는 잘 된다. 그런데 총알이 <code style="font-family:ui-monospace,monospace">AWall</code>에 맞으면 게임이 죽는다. <code style="font-family:ui-monospace,monospace">HitActor</code>가 진짜 <code style="font-family:ui-monospace,monospace">AWeaponPickup</code>인지 <b style="color:var(--red)">아무도 확인을 안 했기 때문</b>이다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 4형제 -->
+<section id="four"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 지도</div>
+  <h2 class="sec"><span class="n">2</span>네 형제 소개 — 뭘 검사하고 뭘 안 하나</h2>
+  <table class="tb">
+    <tr><th>캐스팅</th><th>하는 일</th><th>런타임 검사</th><th>실패 시</th></tr>
+    <tr><td><code style="font-family:ui-monospace,monospace;color:var(--pur)">static_cast</code></td><td>컴파일러가 "관련 있다"고 아는 타입끼리 변환</td><td style="color:var(--red)">❌ 안 함</td><td>조용히 틀린 결과(UB)</td></tr>
+    <tr><td><code style="font-family:ui-monospace,monospace;color:var(--cyan)">dynamic_cast</code></td><td>실제 객체 타입을 런타임에 확인하며 변환</td><td style="color:var(--grn)">✅ RTTI로 확인</td><td>포인터는 nullptr, 참조는 예외</td></tr>
+    <tr><td><code style="font-family:ui-monospace,monospace;color:var(--orange)">reinterpret_cast</code></td><td>타입 무시하고 비트를 그대로 재해석</td><td style="color:var(--red)">❌ 안 함</td><td>정의조차 안 됨(대부분 UB)</td></tr>
+    <tr><td><code style="font-family:ui-monospace,monospace;color:var(--amber)">const_cast</code></td><td>const/volatile 속성만 떼거나 붙임</td><td style="color:var(--red)">❌ 안 함</td><td>원본이 진짜 const면 UB</td></tr>
+  </table>
+  <p class="hint">공통 원칙: <b style="color:var(--txt)">컴파일러가 검사해줄 수 있는 건 컴파일 타임에, 실제 객체 타입을 봐야 아는 건 런타임에</b> 검사한다.</p>
+</div></section>
+
+<!-- 3. static/dynamic -->
+<section id="staticdynamic"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 비교</div>
+  <h2 class="sec"><span class="n">3</span>static_cast vs dynamic_cast</h2>
+  <h3 class="sub">static_cast — "관련 있는 건 아는데, 진짜 그 타입인진 안 봐"</h3>
+  <div class="card">
+    <pre class="code">AItemActor* Item = static_cast&lt;AItemActor*&gt;(Weapon);   <span class="good">// 업캐스팅. 항상 안전</span>
+AWeaponPickup* Back = static_cast&lt;AWeaponPickup*&gt;(Item);  <span class="bad">// 다운캐스팅. 컴파일은 됨. 검사 안 함!</span></pre>
+    <p class="hint">업캐스팅은 자식 안에 부모가 통째로 포함된다는 게 타입 시스템으로 보장되니 검사가 필요 없다. 문제는 <b>다운캐스팅</b> — "확실히 알고 있다"는 전제가 있을 때만 써야 한다.</p>
+  </div>
+  <h3 class="sub">dynamic_cast — "진짜 그 타입인지 런타임에 확인하고 변환"</h3>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> ABullet::OnHit(AActor* HitActor)
+{
+    AWeaponPickup* Weapon = dynamic_cast&lt;AWeaponPickup*&gt;(HitActor);
+    <span class="kw">if</span> (Weapon != nullptr)   <span class="good">// 진짜 AWeaponPickup일 때만 nullptr이 아님</span>
+    {
+        Weapon->EquipTo(OwnerCharacter);
+    }
+}</pre>
+    <p class="hint">가상 함수가 있는 클래스는 객체마다 <b>vtable 포인터</b>를 갖고, 그 근처에 <b>RTTI</b>(실제 타입 정보)가 심어져 있다. dynamic_cast는 이걸 뒤져서 확인한 다음에야 포인터를 내준다 — 그래서 static_cast보다 <b style="color:var(--amber)">느리다.</b></p>
+  </div>
+</div></section>
+
+<!-- 4. 킬러 시뮬레이터 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>히트 판정 캐스팅 시뮬레이터</h2>
+  <p class="lead"><code style="font-family:ui-monospace,monospace;color:var(--amber)">HitActor</code>의 실제 타입과 캐스팅 방법을 골라서 "AWeaponPickup*로 변환"을 실행해보자.</p>
+  <div class="card picker">
+    <div class="lbl">HitActor의 실제 타입</div>
+    <div class="optrow" id="actualRow">
+      <button class="opt on" data-v="AWeaponPickup">AWeaponPickup (진짜 무기)</button>
+      <button class="opt" data-v="AWall">AWall (벽)</button>
+      <button class="opt" data-v="AEnemyCharacter">AEnemyCharacter (적)</button>
+    </div>
+    <div class="lbl">캐스팅 방법</div>
+    <div class="optrow" id="methodRow">
+      <button class="opt on" data-v="cstyle">(AWeaponPickup*) C-style</button>
+      <button class="opt" data-v="static">static_cast</button>
+      <button class="opt" data-v="dynamic">dynamic_cast</button>
+      <button class="opt" data-v="uecast">Cast&lt;AWeaponPickup&gt;</button>
+    </div>
+    <div class="btnrow" style="justify-content:center"><button class="btn" id="runSim">▶ AWeaponPickup*로 변환 실행</button></div>
+    <div class="result" id="simResult"><span style="color:var(--faint);font-size:13px">위 옵션을 고르고 실행 버튼을 눌러보자.</span></div>
+  </div>
+</div></section>
+
+<!-- 5. reinterpret/const -->
+<section id="other"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 나머지 형제</div>
+  <h2 class="sec"><span class="n">5</span>reinterpret_cast · const_cast</h2>
+  <h3 class="sub">reinterpret_cast — "타입 신경 안 써, 비트를 그대로 다르게 읽어"</h3>
+  <div class="card">
+    <pre class="code">uint32 RawColor = 0xFF00FF00;
+uint8* Bytes = reinterpret_cast&lt;uint8*&gt;(&RawColor);   <span class="cm">// 바이트 단위로 뜯어보고 싶을 때</span></pre>
+    <p class="hint">네트워크 패킷 버퍼 파싱 같은 저수준 메모리 조작에만. 일반 게임플레이 코드에 보이면 십중팔구 설계가 잘못된 신호.</p>
+  </div>
+  <h3 class="sub">const_cast — "타입은 그대로, const만 떼거나 붙여"</h3>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> PrintMessage(<span class="kw">const char</span>* Msg)
+{
+    LegacyLogFunction(const_cast&lt;char*&gt;(Msg));   <span class="cm">// const를 떼서 넘겨줌</span>
+}</pre>
+    <p class="hint">원본이 <b>진짜 non-const였는데</b> const를 거쳐온 경우에만 안전. 원본 자체가 const로 선언된 객체를 떼고 값을 바꾸면 UB.</p>
+  </div>
+</div></section>
+
+<!-- 6. Cast<T> -->
+<section id="uecast"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 언리얼 실전</div>
+  <h2 class="sec"><span class="n">6</span>언리얼의 Cast&lt;T&gt; — 내부적으로 뭘 쓰나</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// Cast&lt;T&gt;의 개념적 동작</span>
+<span class="kw">template</span>&lt;<span class="kw">typename</span> T&gt;
+T* Cast(UObject* Obj)
+{
+    <span class="kw">if</span> (Obj && Obj->IsA(T::StaticClass()))   <span class="cm">// UClass 기반 타입 확인</span>
+        <span class="kw">return</span> static_cast&lt;T*&gt;(Obj);          <span class="cm">// 확인 끝났으니 이제 안전</span>
+    <span class="kw">return</span> nullptr;
+}</pre>
+    <p class="hint">언리얼은 표준 RTTI를 꺼두고 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">UClass</code>/<code style="font-family:ui-monospace,monospace;color:var(--cyan)">IsA()</code> 기반 자체 타입 시스템으로 대체했다. <b>목적은 dynamic_cast와 같고, 확인 방법만 다르다.</b></p>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> ABullet::OnHit(AActor* HitActor)
+{
+    <span class="kw">if</span> (AEnemyCharacter* Enemy = Cast&lt;AEnemyCharacter&gt;(HitActor)) { Enemy->TakeDamage(...); <span class="kw">return</span>; }
+    <span class="kw">if</span> (AWeaponPickup* Weapon = Cast&lt;AWeaponPickup&gt;(HitActor)) { Weapon->DestroyByImpact(); <span class="kw">return</span>; }
+    <span class="kw">if</span> (AExplosiveBarrel* Barrel = Cast&lt;AExplosiveBarrel&gt;(HitActor)) { Barrel->TriggerExplosion(); <span class="kw">return</span>; }
+    Destroy();   <span class="cm">// 벽, 바닥 등 — 아무 반응 없이 총알만 파괴</span>
+}</pre>
+    <p class="hint">각 Cast&lt;T&gt;는 실패하면 nullptr만 리턴하고 다음 줄로 넘어간다 — 크래시 없음. 단, <b>분기가 5개, 10개로 늘어나면</b> Cast 체인 대신 인터페이스(IDamageable)와 가상 함수로 푸는 게 정석이다.</p>
+  </div>
+</div></section>
+
+<!-- 7. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 6가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 8. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"dynamic_cast가 런타임에 타입을 어떻게 확인하는지, 내부 원리도 설명해볼 수 있나요?"</i> → vtable/RTTI 탐색 — 3번 섹션 참고.</p>
+</div></section>
+
+<!-- 9. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="01강_static의_여러_얼굴.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 1강 — static의 여러 얼굴</div></div></a>
+  <a class="nx" href="04강_배열_vs_LinkedList.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">4강 — 배열 vs LinkedList →</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 2강</div>
+</div></footer>
+
+<script>
+/* 4. 히트 판정 캐스팅 시뮬레이터 */
+(function(){
+  var actual='AWeaponPickup',method='cstyle';
+  var actualRow=document.getElementById('actualRow'),methodRow=document.getElementById('methodRow');
+  var result=document.getElementById('simResult');
+  actualRow.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){
+    actualRow.querySelectorAll('.opt').forEach(function(o){o.classList.remove('on');});b.classList.add('on');actual=b.dataset.v;
+  });});
+  methodRow.querySelectorAll('.opt').forEach(function(b){b.addEventListener('click',function(){
+    methodRow.querySelectorAll('.opt').forEach(function(o){o.classList.remove('on');});b.classList.add('on');method=b.dataset.v;
+  });});
+  var methodName={cstyle:'(AWeaponPickup*) C-style cast',static:'static_cast<AWeaponPickup*>',dynamic:'dynamic_cast<AWeaponPickup*>',uecast:'Cast<AWeaponPickup>'};
+  var checks={cstyle:false,static:false,dynamic:true,uecast:true};
+  document.getElementById('runSim').addEventListener('click',function(){
+    var isCorrectType=(actual==='AWeaponPickup');
+    var doesCheck=checks[method];
+    var ok, msg, sub;
+    if(isCorrectType){
+      ok=true;msg='✅ 성공 — Weapon->EquipTo() 호출됨';
+      sub='실제로 AWeaponPickup이 맞아서 '+(doesCheck?'검사를 통과했고,':'검사 없이도 우연히 맞았고,')+' 정상 동작한다.';
+    }else if(doesCheck){
+      ok=true;msg='✅ 안전하게 스킵 — nullptr 반환, EquipTo 호출 안 됨';
+      sub=methodName[method]+'는 런타임에 실제 타입을 확인해서, '+actual+'이면 nullptr을 돌려주고 넘어간다.';
+    }else{
+      ok=false;msg='💥 크래시 위험 (정의되지 않은 동작)';
+      sub=methodName[method]+'는 실제 타입을 검사하지 않는다. '+actual+'의 메모리를 AWeaponPickup 레이아웃으로 잘못 읽어서 EquipTo() 호출이 사고로 이어진다.';
+    }
+    result.className='result '+(ok?'ok':'bad');
+    result.innerHTML='<div class="big">'+msg+'</div><div class="sub">'+sub+'</div>';
+  });
+})();
+
+/* 7. 오해 */
+(function(){
+  var items=[
+    {t:'"C-style cast가 제일 간단하니까 그냥 쓰면 된다"',b:'아니다. 짧아서 편해 보이지만, <span class="truth">어떤 변환이 실제로 일어나는지 코드에서 안 드러나고</span> 컴파일러가 검사도 안 해준다. 다운캐스팅에 특히 위험하다.'},
+    {t:'"static_cast로 다운캐스팅하면 dynamic_cast보다 안전하다"',b:'정반대다. static_cast 다운캐스팅은 <span class="truth">아무 검사도 안 한다.</span> "빠르다"는 장점만 있지, 확신이 없으면 dynamic_cast/Cast&lt;T&gt;를 써야 한다.'},
+    {t:'"dynamic_cast는 항상 느리니까 게임에서는 쓰면 안 된다"',b:'이벤트성으로 가끔 일어나는 곳(히트 판정 등)에서는 문제없다. 그리고 언리얼은 <span class="truth">RTTI가 느려서가 아니라 아예 꺼뒀기 때문에</span> Cast&lt;T&gt;로 대체한 것이다.'},
+    {t:'"언리얼은 RTTI를 꺼놨으니 타입 정보 자체가 아예 없다"',b:'아니다. 표준 C++ RTTI만 꺼놓은 거고, 그 자리를 <span class="truth">UCLASS() 리플렉션 기반의 자체 타입 시스템(UClass, IsA())</span>이 대신한다.'},
+    {t:'"const_cast로 const를 떼면 그 다음부턴 값을 바꿔도 항상 안전하다"',b:'아니다. <span class="truth">원본 객체가 진짜로 const로 선언됐던 경우</span>엔 값을 바꾸면 미정의 동작이다. 안전한 건 원본이 애초에 non-const였던 경우뿐.'},
+    {t:'"dynamic_cast가 느린 건 그냥 함수 호출 오버헤드 때문이다"',b:'아니다. 진짜 이유는 <span class="truth">런타임에 상속 계층을 실제로 탐색</span>하기 때문이다. vtable에서 함수 포인터 하나 꺼내오는 일반 가상 함수 호출보다 훨씬 무겁다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 8. 면접 */
+(function(){
+  var qa=[
+    {q:'C++ 캐스팅 종류에 대해 설명해주세요.',a:'static_cast, dynamic_cast, reinterpret_cast, const_cast 네 가지입니다. static_cast는 컴파일 타임에 관련이 확인된 타입 간 변환, dynamic_cast는 다형성 타입의 실제 객체 타입을 런타임에 RTTI로 확인하며 변환, reinterpret_cast는 비트를 그대로 재해석, const_cast는 const/volatile 속성만 제어합니다.'},
+    {q:'static_cast와 dynamic_cast의 차이는?',a:'가장 큰 차이는 <b>런타임 검사 여부</b>입니다. static_cast는 다운캐스팅해도 실제 타입을 검사 안 해서 미정의 동작이 날 수 있지만, dynamic_cast는 RTTI로 확인 후 nullptr/예외로 안전하게 실패합니다. 대신 dynamic_cast가 더 느립니다.'},
+    {q:'언리얼의 Cast<T>는 내부적으로 뭘 쓰나요?',a:'표준 RTTI를 꺼두고, UCLASS 리플렉션 기반 자체 타입 시스템을 씁니다. <b>IsA()</b>로 UClass 정보를 확인해 실제 타입이 맞는지 검사한 다음, 맞으면 static_cast로 변환해 리턴합니다.'},
+    {q:'C-style cast를 쓰면 안 좋은 이유는?',a:'상황에 따라 static_cast, const_cast, reinterpret_cast 중 하나를 컴파일러가 알아서 골라 적용하는데, <b>코드만 봐서는 어떤 변환이 일어나는지 알 수 없습니다.</b> 다운캐스팅 실수도 전혀 경고 없이 통과됩니다.'},
+    {q:'reinterpret_cast는 언제 쓰나요?',a:'네트워크 패킷 버퍼 파싱, 포인터↔정수 변환처럼 <b>타입 계층과 무관하게 메모리를 비트 그대로 재해석</b>해야 하는 저수준 상황에서만 씁니다.'},
+    {q:'히트 판정에서 서브클래스인지 확인해야 한다면 static_cast와 dynamic_cast 중 뭘 쓰시겠어요?',a:'<b>dynamic_cast나 Cast</b>를 쓰겠습니다. 실제 타입을 확신할 수 없는 상황이라 검사 없는 static_cast는 크래시로 이어질 수 있습니다. 이벤트성 처리라 성능 비용 부담도 적습니다.'},
+    {q:'const 매개변수를 const_cast로 떼서 값을 바꾸는 게 항상 안전한가요?',a:'아닙니다. <b>원본이 애초에 non-const였는데 const 참조를 거쳐온 경우에만</b> 안전합니다. 원본 자체가 const 객체면 미정의 동작입니다.'},
+    {q:'dynamic_cast가 static_cast보다 느린 이유를 더 자세히 설명해줄 수 있나요?',a:'static_cast는 컴파일 타임에 타입 관계가 이미 확인돼 런타임 비용이 거의 없습니다. dynamic_cast는 <b>vtable을 따라가 RTTI를 확인하고, 상속 계층을 탐색</b>하는 과정을 거쳐서 단순 포인터 연산보다 훨씬 무겁습니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 9. 체크 */
+(function(){
+  var items=['4가지 캐스팅이 각각 뭘 검사하고 뭘 안 하는지 표로 구분해서 말할 수 있다','static_cast로 다운캐스팅했을 때 왜 위험할 수 있는지 예시로 설명할 수 있다','dynamic_cast가 실제 타입을 확인하는 원리(vtable, RTTI)를 안다','C-style cast가 명시적 캐스팅보다 위험한 이유(어떤 변환이 적용됐는지 알 수 없음)를 안다','언리얼 Cast<T>가 표준 dynamic_cast와 어떻게 다른 방식으로 같은 목적을 이루는지 설명할 수 있다','dynamic_cast가 느린 이유를 "런타임에 상속 계층을 탐색한다"는 수준까지 설명할 수 있다'];
+  var KEY='cpp02-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

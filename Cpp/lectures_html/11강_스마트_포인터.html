@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11강 · 스마트 포인터 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--red))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--pur);border-color:var(--pur)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--red));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--pur);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:#c084fc;transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--pur);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}
+
+/* 킬러: 순환참조 시뮬레이터 */
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--pur);color:#fff;border-color:var(--pur)}
+.objgrid{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.objbox{width:180px;background:var(--card2);border:2px solid var(--line);border-radius:14px;padding:16px;text-align:center;transition:.3s}
+.objbox.dead{opacity:.35;border-color:var(--faint)}
+.objbox .nm{font-weight:700;font-size:14px}
+.objbox .cnt{font-family:ui-monospace,monospace;font-size:28px;font-weight:800;margin-top:8px;color:var(--pur)}
+.objbox.dead .cnt{color:var(--faint)}
+.objbox .st{font-size:12px;margin-top:6px;color:var(--dim)}
+.objbox.dead .st{color:var(--red)}
+.leak-banner{margin-top:18px;text-align:center;font-weight:800;font-size:14px;padding:10px;border-radius:10px;min-height:20px}
+.leak-banner.leak{background:rgba(248,113,113,.15);color:var(--red)}
+.leak-banner.ok{background:rgba(52,211,153,.15);color:var(--grn)}
+.simlog{margin-top:14px;font-size:13px;color:var(--dim);text-align:center;min-height:20px}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:240px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--pur);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#23163a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--pur)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:280px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>11강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#unique">unique_ptr</a>
+    <a class="chip" href="#shared">shared_ptr</a>
+    <a class="chip" href="#sim">순환참조 시뮬</a>
+    <a class="chip" href="#weak">weak_ptr</a>
+    <a class="chip" href="#move">move·Rule3/5</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 실전 보강 · 면접 단골</span>
+  <h1>스마트 <span class="g">포인터</span></h1>
+  <p class="sub">shared_ptr로 돌렸는데 메모리가 안 줄어든다? 순환 참조를 직접 만들어보고 weak_ptr로 끊어보며 왜 그런지 확인한다.</p>
+  <div class="meta">
+    <div class="m">🔗 순환 참조가 핵심</div>
+    <div class="m">🧩 선수지식 <b>3강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 버그</div>
+  <h2 class="sec"><span class="n">1</span>shared_ptr로 돌렸더니 메모리가 안 줄어든다</h2>
+  <p class="lead">아이템을 인벤토리(소유자)와 퀵슬롯 UI(참조자)가 같이 들고 있어야 해서, 둘 다 <code style="font-family:ui-monospace,monospace">TSharedPtr</code>로 짰다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FInventoryItem { <span class="kw">public</span>: TSharedPtr&lt;FQuickSlot&gt; AssignedSlot; };
+<span class="kw">class</span> FQuickSlot     { <span class="kw">public</span>: TSharedPtr&lt;FInventoryItem&gt; Item; };</pre>
+    <p style="margin-top:16px">퀵슬롯에서 아이템을 빼고 인벤토리 창을 닫아도 둘 다 소멸자가 안 불린다. <b style="color:var(--red)">서로가 서로를 붙잡고 있어서</b> 참조 카운트가 0이 될 방법이 없다.</p>
+  </div>
+</div></section>
+
+<!-- 2. unique_ptr -->
+<section id="unique"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 단독 소유</div>
+  <h2 class="sec"><span class="n">2</span>unique_ptr — 소유권은 하나, 복사는 없다</h2>
+  <div class="card">
+    <pre class="code">TUniquePtr&lt;FWeaponData&gt; A = MakeUnique&lt;FWeaponData&gt;();
+TUniquePtr&lt;FWeaponData&gt; B = A;              <span class="bad">// 컴파일 에러! 복사 생성자 삭제됨</span>
+TUniquePtr&lt;FWeaponData&gt; C = MoveTemp(A);    <span class="good">// OK — 소유권이 A에서 C로 이동</span></pre>
+    <p class="hint">복사를 허용하면 두 포인터가 같은 메모리를 <b>이중 해제(double free)</b>하는 사고로 직행한다. 그래서 복사는 컴파일 타임에 막고, <b>이동만</b> 허용한다.</p>
+  </div>
+</div></section>
+
+<!-- 3. shared_ptr -->
+<section id="shared"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 공동 소유</div>
+  <h2 class="sec"><span class="n">3</span>shared_ptr — 참조 카운트로 여러 명이 같이 소유</h2>
+  <div class="card">
+    <pre class="code">TSharedPtr&lt;FInventoryItem&gt; Item = MakeShared&lt;FInventoryItem&gt;();
+TSharedPtr&lt;FInventoryItem&gt; SlotRef = Item;      <span class="cm">// 복사 OK — 카운트 2</span>
+TSharedPtr&lt;FInventoryItem&gt; TooltipRef = Item;   <span class="cm">// 카운트 3</span>
+<span class="cm">// 카운트가 0이 되는 순간에만 delete</span></pre>
+    <p class="hint">"아무도 안 쓰면 자동으로 사라진다"는 편리함 때문에 여러 시스템이 동시에 참조하는 대상에 자주 쓴다. 하지만 이 편리함엔 함정이 있다 — 다음 섹션에서 직접 확인한다.</p>
+  </div>
+</div></section>
+
+<!-- 4. 킬러: 순환참조 시뮬레이터 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 만들어보기</div>
+  <h2 class="sec"><span class="n">4</span>순환 참조 시뮬레이터</h2>
+  <p class="lead">QuickSlot이 Item을 가리키는 방식을 shared_ptr / weak_ptr로 바꿔가며, 아이템 장착 → 인벤토리 창 닫기를 눌러보자.</p>
+  <div class="card">
+    <div class="modetoggle">
+      <button class="on" data-m="shared">QuickSlot.Item = shared_ptr (버그)</button>
+      <button data-m="weak">QuickSlot.Item = weak_ptr (해결)</button>
+    </div>
+    <div class="objgrid">
+      <div class="objbox" id="boxItem"><div class="nm">FInventoryItem</div><div class="cnt" id="itemCnt">1</div><div class="st" id="itemSt">살아있음</div></div>
+      <div class="objbox" id="boxSlot"><div class="nm">FQuickSlot</div><div class="cnt" id="slotCnt">1</div><div class="st" id="slotSt">살아있음</div></div>
+    </div>
+    <div class="leak-banner" id="leakBanner"></div>
+    <div class="simlog" id="simLog">아직 외부(인벤토리, UI)가 각각 하나씩 들고 있는 초기 상태다.</div>
+    <div class="btnrow">
+      <button class="btn" id="stepAssign">① 슬롯에 아이템 장착</button>
+      <button class="btn" id="stepClose">② 인벤토리 창 닫기</button>
+      <button class="btn ghost" id="stepReset">↺ 초기화</button>
+    </div>
+  </div>
+</div></section>
+
+<!-- 5. weak_ptr -->
+<section id="weak"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 해결책</div>
+  <h2 class="sec"><span class="n">5</span>weak_ptr — 소유권 없이 지켜보기만</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> FQuickSlot::UseItem()
+{
+    TSharedPtr&lt;FInventoryItem&gt; Pinned = Item.Pin();   <span class="cm">// 살아있으면 shared_ptr, 죽었으면 nullptr</span>
+    <span class="kw">if</span> (!Pinned.IsValid()) { <span class="cm">/* 이미 삭제됨 */</span> <span class="kw">return</span>; }
+    Pinned->Use();
+}</pre>
+    <p class="hint">weak_ptr는 참조 카운트에 <b>전혀 영향을 안 준다.</b> "누가 진짜 주인이고 누가 들여다보기만 하는가"를 먼저 정하면 순환이 아예 안 생긴다.</p>
+  </div>
+</div></section>
+
+<!-- 6. move/Rule3-5 -->
+<section id="move"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 기반 문법</div>
+  <h2 class="sec"><span class="n">6</span>move semantics · Rule of 3/5</h2>
+  <div class="card">
+    <p style="font-weight:700">MoveTemp는 캐스팅일 뿐, 그 자체로는 아무것도 옮기지 않는다</p>
+    <pre class="code">TUniquePtr&lt;FWeaponData&gt; B = MoveTemp(A);
+<span class="cm">// MoveTemp(A)는 A를 "버려도 되는 값"으로 표시만 함</span>
+<span class="cm">// 이동 생성자가 그 표시를 보고 내부 포인터를 옮기고 A는 nullptr로 비움</span></pre>
+    <p class="hint">unique_ptr가 복사를 막고 이동만 허용하는 이유도 같다 — 복사를 허용하면 소유자가 둘이 되니, <b>원래 소유자를 비우고 넘기는</b> 이동만 허락한다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">Rule of 3 / Rule of 5</p>
+    <p style="font-size:13.5px;margin-top:8px">소멸자·복사 생성자·복사 대입 연산자 중 하나라도 직접 정의해야 한다면, <b>나머지도 같이</b> 정의해야 한다(Rule of 3). C++11부터는 이동 생성자·이동 대입 연산자까지 포함(Rule of 5).</p>
+    <p class="hint">실무에서는 이 5개를 손으로 다 쓰는 대신, <b style="color:var(--txt)">애초에 TUniquePtr/TSharedPtr로 자원을 감싸서</b> 컴파일러가 만들어주는 기본 복사/이동이 안전하게 동작하도록 만드는 게 훨씬 흔하다.</p>
+  </div>
+</div></section>
+
+<!-- 7. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 8. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 순환 참조를 아예 설계 단계에서 막으려면 클래스 관계를 어떻게 그리겠어요?"</i> → 소유 방향이 한쪽으로만 흐르게(트리 구조) 설계하면 weak_ptr을 나중에 끼워 맞추지 않아도 된다는 답으로 이어가면 된다.</p>
+</div></section>
+
+<!-- 9. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_배열_vs_LinkedList.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 4강 — 배열 vs LinkedList</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 11강</div>
+</div></footer>
+
+<script>
+/* 4. 순환 참조 시뮬레이터 킬러 위젯 */
+(function(){
+  var mode='shared';
+  var itemCount, slotCount, itemAlive, slotAlive, assigned, closed, itemReleasedSlotRef, slotReleasedItemRef;
+  var itemCnt=document.getElementById('itemCnt'),slotCnt=document.getElementById('slotCnt');
+  var itemSt=document.getElementById('itemSt'),slotSt=document.getElementById('slotSt');
+  var boxItem=document.getElementById('boxItem'),boxSlot=document.getElementById('boxSlot');
+  var leakBanner=document.getElementById('leakBanner'),log=document.getElementById('simLog');
+  var assignBtn=document.getElementById('stepAssign'),closeBtn=document.getElementById('stepClose');
+
+  function reset(){
+    itemCount=1;slotCount=1;itemAlive=true;slotAlive=true;
+    assigned=false;closed=false;itemReleasedSlotRef=false;slotReleasedItemRef=false;
+    leakBanner.className='leak-banner';leakBanner.textContent='';
+    log.textContent='아직 외부(인벤토리, UI)가 각각 하나씩 들고 있는 초기 상태다.';
+    assignBtn.disabled=false;closeBtn.disabled=false;
+    render();
+  }
+  function resolve(){
+    var changed=true;
+    while(changed){
+      changed=false;
+      if(itemAlive && itemCount<=0){itemAlive=false;changed=true;
+        if(assigned && !itemReleasedSlotRef){slotCount--;itemReleasedSlotRef=true;}}
+      if(slotAlive && slotCount<=0){slotAlive=false;changed=true;
+        if(assigned && mode==='shared' && !slotReleasedItemRef){itemCount--;slotReleasedItemRef=true;}}
+    }
+  }
+  function render(){
+    itemCnt.textContent=Math.max(itemCount,0);
+    slotCnt.textContent=Math.max(slotCount,0);
+    boxItem.classList.toggle('dead',!itemAlive);
+    boxSlot.classList.toggle('dead',!slotAlive);
+    itemSt.textContent=itemAlive?'살아있음':'delete됨';
+    slotSt.textContent=slotAlive?'살아있음':'delete됨';
+    if(closed){
+      if(mode==='shared' && itemAlive && slotAlive){
+        leakBanner.className='leak-banner leak';
+        leakBanner.textContent='💧 메모리 누수! 서로가 서로를 붙잡아서 카운트가 0이 안 됨';
+      }else if(!itemAlive && !slotAlive){
+        leakBanner.className='leak-banner ok';
+        leakBanner.textContent='✅ 둘 다 정상적으로 delete됨';
+      }
+    }
+  }
+  document.querySelectorAll('.modetoggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');mode=b.dataset.m;reset();
+    });
+  });
+  assignBtn.addEventListener('click',function(){
+    if(assigned)return;
+    slotCount++;   // Item.AssignedSlot -> Slot (항상 shared_ptr)
+    if(mode==='shared'){itemCount++;}   // Slot.Item -> Item
+    assigned=true;
+    log.textContent = mode==='shared'
+      ? 'Item.AssignedSlot(shared)과 Slot.Item(shared)이 서로를 가리킨다. Item=2, Slot=2.'
+      : 'Item.AssignedSlot(shared)만 Slot을 붙잡는다. Slot.Item은 weak라 Item 카운트는 그대로. Item=1, Slot=2.';
+    render();
+  });
+  closeBtn.addEventListener('click',function(){
+    if(!assigned || closed)return;
+    closed=true;
+    itemCount--;   // 외부 Inventory 참조 제거
+    slotCount--;   // 외부 UI 참조 제거
+    resolve();
+    log.textContent = mode==='shared'
+      ? '외부 참조를 지웠는데도 서로가 붙잡고 있어서 카운트가 1에서 안 내려간다.'
+      : 'Item 카운트가 0이 되어 delete → AssignedSlot도 같이 해제되어 Slot도 연쇄적으로 delete된다.';
+    render();
+  });
+  document.getElementById('stepReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 7. 오해 */
+(function(){
+  var items=[
+    {t:'"shared_ptr를 쓰면 메모리 누수 걱정을 안 해도 된다"',b:'아니다. 순환 참조는 참조 카운트가 <span class="truth">정상 동작하는데도</span> 메모리가 회수되지 않는 경우다. shared_ptr는 소유 관계를 잘못 설계하면 여전히 새어나갈 수 있다.'},
+    {t:'"unique_ptr도 결국 복사가 되긴 된다, 조금 불편할 뿐이다"',b:'아니다. unique_ptr의 복사 생성자/대입 연산자는 <span class="truth">= delete로 아예 삭제</span>돼 있어서 컴파일 자체가 안 된다. 되는 건 이동뿐이다.'},
+    {t:'"weak_ptr도 shared_ptr처럼 객체를 살아있게 만든다"',b:'아니다. weak_ptr는 <span class="truth">참조 카운트에 전혀 관여하지 않는다.</span> 살아있을 때 잠깐 접근하려면 Pin()/lock()으로 임시 shared_ptr을 얻어야 한다.'},
+    {t:'"TSharedPtr&lt;T, ESPMode::ThreadSafe&gt;면 객체 자체도 스레드 안전해진다"',b:'아니다. ThreadSafe는 <span class="truth">참조 카운트의 증감 연산만</span> atomic으로 만들어준다. 객체 멤버를 여러 스레드가 동시에 읽고 쓰면 여전히 Race Condition이 난다(OS 09강).'},
+    {t:'"MoveTemp(A)를 호출하면 그 시점에 실제로 데이터가 이동한다"',b:'아니다. MoveTemp 자체는 <span class="truth">캐스팅일 뿐</span>, 아무 데이터도 옮기지 않는다. 실제 이동은 받는 쪽의 이동 생성자/이동 대입 연산자가 실행될 때 일어난다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 8. 면접 */
+(function(){
+  var qa=[
+    {q:'unique_ptr와 shared_ptr의 차이는 뭔가요?',a:'unique_ptr은 소유자가 <b>단 하나</b>뿐이라 복사가 금지되고 이동만 가능하며, 스코프를 벗어나면 바로 delete됩니다. shared_ptr은 <b>참조 카운트</b>를 둬서 여러 곳에서 복사해 같이 소유할 수 있고, 마지막 소유자가 사라질 때만 delete됩니다.'},
+    {q:'멀티스레드에서 shared 포인터를 썼을 때 어떤 문제가 발생할 수 있을까요?',a:'참조 카운트 증감 자체는 atomic이라 카운트는 안 깨집니다. 하지만 <b>그 포인터가 가리키는 객체의 멤버</b>를 여러 스레드가 동시에 읽고 쓰면 별도 보호가 없어서 Race Condition이 생길 수 있습니다.'},
+    {q:'순환 참조가 왜 생기고, 어떻게 해결하나요?',a:'두 객체가 서로를 shared_ptr로 물고 있으면 바깥에서 아무도 안 써도 서로가 서로의 참조 카운트를 유지시켜 둘 다 delete가 안 됩니다. 관계 중 한쪽을 <b>weak_ptr</b>로 바꿔서 해결합니다.'},
+    {q:'여러 시스템이 함께 참조해야 하는 아이템 객체를 만든다면 unique_ptr과 shared_ptr 중 뭘 쓰시겠어요?',a:'소유자가 명확히 하나로 정해지지 않는다면 <b>shared_ptr</b>를 씁니다. 다만 진짜 소유자가 아니라 참조만 하는 관계가 있다면 <b>weak_ptr</b>로 순환 참조 위험을 먼저 없앤 다음 설계합니다.'},
+    {q:'move semantics가 왜 필요한가요?',a:'객체를 넘길 때마다 통째로 복사하면 비용이 큰데, 이동은 <b>내부 데이터를 그대로 옮기고 원본은 비우기만</b> 해서 실제 복사 없이 소유권만 넘길 수 있습니다.'},
+    {q:'Rule of 3(또는 Rule of 5)가 뭔가요?',a:'소멸자·복사 생성자·복사 대입 연산자 중 하나라도 직접 정의해야 한다면 <b>나머지도 같이</b> 정의해야 한다는 규칙입니다. Rule of 5는 이동 생성자·이동 대입 연산자까지 포함합니다.'},
+    {q:'weak_ptr을 Pin()이나 lock() 없이 바로 쓰면 안 되는 이유는요?',a:'weak_ptr은 객체가 살아있다는 걸 보장하지 않아서, 확인 없이 접근하면 <b>이미 삭제된 객체를 참조하는 댕글링 상태</b>일 수 있습니다. Pin()으로 확인 후 임시 shared_ptr을 받아야 안전합니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 9. 체크 */
+(function(){
+  var items=['unique_ptr이 왜 복사를 막고 이동만 허용하는지 설명할 수 있다','shared_ptr의 참조 카운트가 어떻게 늘고 줄어드는지, 0이 될 때 무슨 일이 일어나는지 안다','순환 참조가 왜 메모리 누수로 이어지는지, weak_ptr이 그걸 어떻게 끊는지 설명할 수 있다','TSharedPtr의 ThreadSafe 모드가 참조 카운트만 보호할 뿐 객체 내부는 보호하지 않는다는 걸 안다','Rule of 3/5가 뭔지, 스마트 포인터를 쓰면 왜 이 규칙을 손으로 덜 신경 써도 되는지 설명할 수 있다'];
+  var KEY='cpp11-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

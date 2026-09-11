@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8강 · 점과 다각형 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--cyan))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--pur);border-color:var(--pur)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+table.tb{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+table.tb th,table.tb td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tb th{color:var(--faint);font-weight:700;font-size:12.5px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}
+
+/* 킬러: 다각형 클릭 판정기 */
+.simsvg{background:var(--bg2);border:1px solid var(--line);border-radius:14px;cursor:crosshair;width:100%;max-width:420px;display:block;margin:0 auto}
+.legend{display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:12.5px;color:var(--dim);flex-wrap:wrap}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.pointlist{margin-top:16px;font-size:13px}
+.prow{display:flex;justify-content:space-between;padding:8px 12px;background:var(--card2);border:1px solid var(--line);border-radius:10px;margin-top:8px}
+.prow b.match{color:var(--grn)}.prow b.mismatch{color:var(--amber)}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:235px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--pur);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#23163a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pur),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--pur)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+.summary-tb td:first-child{color:var(--faint);font-weight:700}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:265px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>8강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#cross">외적 부호</a>
+    <a class="chip" href="#ray">Ray Casting</a>
+    <a class="chip" href="#play">클릭 판정기</a>
+    <a class="chip" href="#winding">Winding Number</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 충돌과 판정 · 시리즈 마무리</span>
+  <h1>점과 <span class="g">다각형</span></h1>
+  <p class="sub">오각형 안전 구역에 클릭 지점이 들어왔는지 어떻게 판정할까. 오목한 다각형 위를 직접 클릭해서 외적 부호법과 Ray Casting의 차이를 확인한다.</p>
+  <div class="meta">
+    <div class="m">📍 Point-in-Polygon</div>
+    <div class="m">🧩 선수지식 <b>1~7강</b></div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 질문</div>
+  <h2 class="sec"><span class="n">1</span>클릭한 지점이 이 구역 안에 있는지 어떻게 판정하나</h2>
+  <p class="lead">"오각형 모양의 안전 구역 안에 마우스 클릭 지점이 들어왔는지" 판정해야 한다. 7강의 AABB/구체로는 임의의 다각형을 표현할 수 없다.</p>
+  <div class="card">
+    <pre class="code"><span class="fn">bool</span> bIsInside = IsPointInPolygon(ClickedPoint, ZoneVertices);</pre>
+    <p style="margin-top:16px">스킬 범위 표시, 존(Zone) 감지, 미니맵 영역 클릭 판정처럼 사각형/원으로 안 떨어지는 영역을 다룰 때 자주 나온다. 대표적인 두 가지 방법 — <b style="color:var(--pur)">외적 부호 판정</b>과 <b style="color:var(--cyan)">Ray Casting</b> — 을 다룬다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 외적 부호 -->
+<section id="cross"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 볼록 다각형</div>
+  <h2 class="sec"><span class="n">2</span>외적 부호 판정 (볼록 다각형)</h2>
+  <p class="lead">다각형의 각 변에 대해, 점이 그 변의 "안쪽"에 있는지를 <b>외적의 부호(4강)</b>로 확인한다. 모든 변에서 부호가 일관되면 내부.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">for</span> (<span class="kw">int32</span> i = 0; i &lt; NumVertices; ++i)
+{
+    FVector2D Edge = Vertices[(i + 1) % NumVertices] - Vertices[i];
+    FVector2D ToPoint = Point - Vertices[i];
+    <span class="fn">float</span> Cross = Edge.X * ToPoint.Y - Edge.Y * ToPoint.X;   <span class="cm">// 2D 외적 (Z 성분만)</span>
+    <span class="kw">if</span> (Cross &gt; 0.0f) bHasPositive = <span class="kw">true</span>;
+    <span class="kw">if</span> (Cross &lt; 0.0f) bHasNegative = <span class="kw">true</span>;
+}
+<span class="kw">return</span> !(bHasPositive && bHasNegative);   <span class="cm">// 한쪽으로만 나오면 내부</span></pre>
+    <p class="hint">이 방법은 <b style="color:var(--amber)">볼록 다각형에서만</b> 정확하다. 오목한 부분이 있으면 변마다 "안쪽"의 의미가 뒤틀려서 부호 비교가 깨진다.</p>
+  </div>
+</div></section>
+
+<!-- 3. Ray Casting -->
+<section id="ray"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 일반해</div>
+  <h2 class="sec"><span class="n">3</span>Ray Casting — 오목 다각형까지 다루기</h2>
+  <p class="lead">점에서 임의의 방향(오른쪽 무한대)으로 광선을 쏴서, 다각형의 변과 <b>몇 번 교차하는지</b> 센다. <b style="color:var(--grn)">홀수</b>면 내부, <b style="color:var(--red)">짝수</b>면 외부.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">bool</span> bYCrosses = ((Vi.Y &gt; Point.Y) != (Vj.Y &gt; Point.Y));
+<span class="kw">if</span> (bYCrosses) {
+    <span class="fn">float</span> IntersectX = Vi.X + (Point.Y - Vi.Y) * (Vj.X - Vi.X) / (Vj.Y - Vi.Y);
+    <span class="kw">if</span> (Point.X &lt; IntersectX) bInside = !bInside;   <span class="cm">// 교차마다 안/밖 뒤집기</span>
+}</pre>
+    <p class="hint">점에서 뻗은 광선이 경계를 넘나들 때마다 안/밖이 뒤집힌다는 사실은 <b>볼록/오목과 무관하게 항상 성립</b>한다 — 그래서 일반적으로 적용된다.</p>
+  </div>
+</div></section>
+
+<!-- 4. 킬러: 클릭 판정기 -->
+<section id="play"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 클릭해보기</div>
+  <h2 class="sec"><span class="n">4</span>다각형 클릭 판정기</h2>
+  <p class="lead">이 오목한 L자 구역 위 아무 곳이나 클릭해보자. Ray Casting은 항상 맞지만, <b style="color:var(--amber)">오목한 모서리 안쪽</b>을 클릭하면 외적 부호법이 틀리는 걸 볼 수 있다.</p>
+  <div class="card">
+    <svg class="simsvg" viewBox="0 0 260 220" id="polySvg">
+      <polygon id="zonePoly" fill="rgba(168,85,247,.15)" stroke="var(--pur)" stroke-width="2"></polygon>
+      <g id="pointsLayer"></g>
+    </svg>
+    <div class="legend">
+      <span><i style="background:var(--grn)"></i>두 방법 모두 내부</span>
+      <span><i style="background:var(--faint)"></i>두 방법 모두 외부</span>
+      <span><i style="background:var(--amber)"></i>두 방법 불일치 (외적 부호법 오류)</span>
+    </div>
+    <div class="pointlist" id="pointList"></div>
+    <div class="btnrow" style="text-align:center;margin-top:14px"><button class="btn ghost" id="clearPts" style="font-family:inherit;font-size:13px;padding:9px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt);cursor:pointer">↺ 점 지우기</button></div>
+  </div>
+</div></section>
+
+<!-- 5. Winding Number -->
+<section id="winding"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 참고</div>
+  <h2 class="sec"><span class="n">5</span>Winding Number — 개념만 짚고 가기</h2>
+  <div class="card">
+    <p>판정할 점을 중심으로, 다각형 경계가 점 주위를 <b>몇 바퀴 감았는지</b> 계산한다. 0이면 밖, 0이 아니면 안.</p>
+    <p class="hint">Ray Casting은 "교차 횟수의 홀짝"을, Winding Number는 "각도 변화의 총합"을 본다. 자기 자신과 교차하는 별 모양 다각형에서 더 정교하다 — 일반 존 판정에는 Ray Casting으로 충분하다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">3D → 2D 투영해서 판정</p>
+    <pre class="code"><span class="kw">bool</span> IsActorInZone(AActor* Actor, <span class="kw">const</span> TArray&lt;FVector2D&gt;& ZoneVertices2D)
+{
+    FVector Location3D = Actor->GetActorLocation();
+    FVector2D Location2D = FVector2D(Location3D.X, Location3D.Y);   <span class="cm">// Z 무시, XY만 투영</span>
+    <span class="kw">return</span> IsPointInPolygonRayCast(Location2D, ZoneVertices2D);
+}</pre>
+  </div>
+</div></section>
+
+<!-- 6. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 7. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 8. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+  <div class="card">
+    <p style="font-weight:700;margin-bottom:6px">Part 정리 — 게임 수학 8강 총정리</p>
+    <table class="tb summary-tb">
+      <tr><td>1강</td><td>벡터, 위치/방향/변위</td></tr>
+      <tr><td>2강</td><td>크기, 정규화</td></tr>
+      <tr><td>3강</td><td>내적, 코사인 — 시야각 판정</td></tr>
+      <tr><td>4강</td><td>외적, 사인 — 좌/우 판정, 회전축</td></tr>
+      <tr><td>5강</td><td>좌표계, FTransform</td></tr>
+      <tr><td>6강</td><td>Look-At, atan2</td></tr>
+      <tr><td>7강</td><td>구체/AABB 충돌, 브로드-내로우 페이즈</td></tr>
+      <tr><td>8강</td><td>점-다각형 판정</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 8강</div>
+</div></footer>
+
+<script>
+/* 4. 다각형 클릭 판정기 킬러 위젯 */
+(function(){
+  var verts=[[30,190],[30,30],[150,30],[150,110],[230,110],[230,190]];
+  var poly=document.getElementById('zonePoly');
+  poly.setAttribute('points', verts.map(function(v){return v[0]+','+v[1];}).join(' '));
+
+  function rayCast(pt, vs){
+    var inside=false;
+    for(var i=0,j=vs.length-1;i<vs.length;j=i++){
+      var vi=vs[i], vj=vs[j];
+      var yCrosses=(vi[1]>pt[1]) !== (vj[1]>pt[1]);
+      if(yCrosses){
+        var ix=vi[0]+(pt[1]-vi[1])*(vj[0]-vi[0])/(vj[1]-vi[1]);
+        if(pt[0]<ix) inside=!inside;
+      }
+    }
+    return inside;
+  }
+  function crossSign(pt, vs){
+    var hasPos=false, hasNeg=false;
+    for(var i=0;i<vs.length;i++){
+      var a=vs[i], b=vs[(i+1)%vs.length];
+      var ex=b[0]-a[0], ey=b[1]-a[1];
+      var tx=pt[0]-a[0], ty=pt[1]-a[1];
+      var cross=ex*ty-ey*tx;
+      if(cross>0) hasPos=true;
+      if(cross<0) hasNeg=true;
+    }
+    return !(hasPos && hasNeg);
+  }
+
+  var svg=document.getElementById('polySvg'), layer=document.getElementById('pointsLayer');
+  var list=document.getElementById('pointList');
+  var pts=[];
+  svg.addEventListener('click',function(e){
+    var rect=svg.getBoundingClientRect();
+    var vb=svg.viewBox.baseVal;
+    var x=(e.clientX-rect.left)/rect.width*vb.width;
+    var y=(e.clientY-rect.top)/rect.height*vb.height;
+    var ray=rayCast([x,y],verts);
+    var cs=crossSign([x,y],verts);
+    var match = ray===cs;
+    var color = !ray ? 'var(--faint)' : (match ? 'var(--grn)' : 'var(--amber)');
+    pts.push({x:x,y:y,ray:ray,cs:cs,color:color});
+    render();
+  });
+  document.getElementById('clearPts').addEventListener('click',function(){pts=[];render();});
+
+  function render(){
+    layer.innerHTML=pts.map(function(p){
+      return '<circle cx="'+p.x.toFixed(1)+'" cy="'+p.y.toFixed(1)+'" r="6" fill="'+p.color+'" stroke="#0b0e1a" stroke-width="1.5"></circle>';
+    }).join('');
+    list.innerHTML=pts.slice(-5).reverse().map(function(p,idx){
+      var n=pts.length-idx;
+      return '<div class="prow"><span>점 '+n+' ('+p.x.toFixed(0)+', '+p.y.toFixed(0)+')</span>'+
+        '<span>Ray: <b>'+(p.ray?'내부':'외부')+'</b> · 외적: <b class="'+(p.ray===p.cs?'match':'mismatch')+'">'+(p.cs?'내부':'외부')+(p.ray!==p.cs?' ⚠':'')+'</b></span></div>';
+    }).join('');
+  }
+  render();
+})();
+
+/* 6. 오해 */
+(function(){
+  var items=[
+    {t:'"외적 부호 판정은 어떤 다각형에도 다 통한다"',b:'외적 부호 판정은 <span class="truth">볼록 다각형에서만</span> 정확하다. 오목한 부분이 있으면 변마다 안쪽 방향의 의미가 달라져서 틀린 결과가 나온다.'},
+    {t:'"레이 캐스팅에서 광선 방향은 아무 상관 없다"',b:'방향 자체는 어느 쪽이든 되지만, <span class="truth">일관되게 하나의 방향</span>을 계속 써야 한다. 광선이 꼭짓점을 정확히 스치는 경계 케이스도 별도로 주의해야 한다.'},
+    {t:'"3D 게임이니까 판정도 3D로 해야 정확하다"',b:'지면 위 구역처럼 <span class="truth">높이는 상관없고 평면 위치만 의미 있는 경우</span>가 대부분이라, 관심 평면으로 투영해서 2D로 판정하는 게 맞다.'},
+    {t:'"교차 횟수 홀짝으로 안/밖을 판정하는 게 임시방편 같다"',b:'수학적으로 탄탄한 근거가 있다. 광선이 경계를 지날 때마다 안/밖이 정확히 한 번씩 뒤집힌다는 사실은 <span class="truth">볼록/오목과 무관하게 항상 성립</span>해서, 오히려 외적 부호법보다 일반적이고 견고하다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 7. 면접 */
+(function(){
+  var qa=[
+    {q:'점이 다각형 내부에 있는지 어떻게 판정하나요?',a:'볼록 다각형이면 각 변에 대해 <b>외적의 부호</b>가 일관되게 같은 쪽인지 확인하고, 오목 다각형까지 다뤄야 하면 <b>Ray Casting</b>으로 광선이 경계와 교차하는 횟수가 홀수/짝수인지로 판정합니다.'},
+    {q:'외적 부호로 판정하는 방법의 한계는 뭔가요?',a:'<b>볼록 다각형에서만</b> 정확합니다. 오목한 다각형은 변마다 안쪽 방향의 의미가 달라져서 부호 비교만으로는 정확한 판정이 안 됩니다.'},
+    {q:'Ray Casting 방식이 왜 홀수/짝수로 안/밖을 구분하나요?',a:'점에서 뻗은 광선이 경계를 한 번 지날 때마다 안/밖 상태가 뒤집히기 때문입니다. <b>다각형 모양과 무관하게 항상 성립</b>하는 성질이라 교차 횟수의 홀짝만 세면 됩니다.'},
+    {q:'오목 다각형에서 점-다각형 판정을 해야 한다면 어떤 방법을 고르겠어요?',a:'<b>Ray Casting</b>을 씁니다. 외적 부호 판정은 볼록 전용이라 오목한 모양에서 틀릴 수 있고, Ray Casting은 모양과 무관하게 일반적으로 적용됩니다.'},
+    {q:'3D 게임에서 지면 위의 구역 판정을 어떻게 처리하나요?',a:'높이(Z)는 무시하고 <b>XY 평면으로 투영</b>한 다음, 2D 점-다각형 판정 알고리즘을 그대로 적용합니다.'},
+    {q:'Winding Number 방식은 Ray Casting과 뭐가 다른가요?',a:'Ray Casting은 교차 횟수의 홀짝을 보고, Winding Number는 <b>경계가 점 주위를 몇 바퀴 감았는지</b>를 계산합니다. 일반 존 판정엔 Ray Casting으로 충분합니다.'},
+    {q:'2D 외적과 3D 외적은 어떻게 다른가요?',a:'3D 외적은 결과가 벡터지만, 2D 외적은 <b>3D 외적 결과의 Z 성분만 뽑은 스칼라</b> 값입니다. 2D에서는 그 부호만으로 좌/우, 안/밖 관계를 판정할 수 있습니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 8. 체크 */
+(function(){
+  var items=['외적 부호로 볼록 다각형 내부 판정을 구현할 수 있다','이 방법이 오목 다각형에서 왜 실패하는지 설명할 수 있다','Ray Casting 방식의 원리(교차 횟수 홀짝)를 설명할 수 있다','3D 좌표를 2D로 투영해서 판정하는 이유와 방법을 안다','Winding Number가 Ray Casting과 어떻게 다른지 개념 수준에서 설명할 수 있다'];
+  var KEY='gm08-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

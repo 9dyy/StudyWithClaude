@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1강 · static의 여러 얼굴 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--amber))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--pur);border-color:var(--pur)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+h3.sub{font-size:17px;font-weight:700;margin-top:26px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--pur);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:#c084fc;transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--pur);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+table.tb{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+table.tb th,table.tb td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tb th{color:var(--faint);font-weight:700;font-size:12.5px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}
+
+/* 지도 표 */
+.map4{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:20px}
+.map4 .mc{background:var(--card2);border:1px solid var(--line);border-radius:13px;padding:15px}
+.map4 .mc .t{font-weight:700;font-size:14px;color:var(--ind2)}
+.map4 .mc p{font-size:12.5px;color:var(--dim);margin-top:6px}
+
+/* 킬러: 총알 카운터 */
+.mode-toggle{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;flex-wrap:wrap}
+.mode-toggle .lab{font-size:13.5px;font-weight:600;color:var(--faint);transition:.2s}
+.mode-toggle .lab.act{color:var(--pur)}
+.toggle{width:74px;height:38px;border-radius:30px;background:var(--bg2);border:1px solid var(--line);position:relative;cursor:pointer;transition:.25s;flex-shrink:0}
+.toggle.on{background:rgba(168,85,247,.2);border-color:var(--pur)}
+.toggle .knob{position:absolute;top:3px;left:3px;width:30px;height:30px;border-radius:50%;background:var(--faint);transition:.25s}
+.toggle.on .knob{left:41px;background:var(--pur)}
+.shared-box{text-align:center;background:rgba(168,85,247,.1);border:2px solid var(--pur);border-radius:14px;padding:16px;margin-top:18px;transition:.3s}
+.shared-box.pulse{animation:pulsePur .4s}
+@keyframes pulsePur{0%{transform:scale(1)}50%{transform:scale(1.04)}100%{transform:scale(1)}}
+.shared-box .lbl{font-size:12px;color:var(--faint)}
+.shared-box .val{font-family:ui-monospace,monospace;font-size:26px;font-weight:800;color:var(--pur);margin-top:4px}
+.bullets{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;min-height:70px}
+.bcard{background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:10px 14px;font-size:12.5px;text-align:center;animation:pop .3s}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.bcard .id{font-family:ui-monospace,monospace;color:var(--faint);font-size:11px}
+.bcard .own{margin-top:4px;font-weight:700}
+.bcard.normal .own{color:var(--amber)}
+.bcard.staticmode .own{color:var(--faint);font-size:11px}
+.warn-box{margin-top:14px;font-size:12.5px;color:var(--amber);background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.3);border-radius:10px;padding:10px 14px}
+
+/* this 해부 */
+.this-toggle{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:6px}
+.this-toggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.this-toggle button.on{background:var(--pur);color:#fff;border-color:var(--pur)}
+.this-view{margin-top:16px}
+.this-view .lbl2{font-size:12px;color:var(--faint);margin-bottom:4px;font-weight:700}
+
+/* 메모리 지도 */
+.memmap{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:20px}
+.memmap .row{padding:14px 18px;font-size:13px;border-bottom:1px solid var(--line)}
+.memmap .row:last-child{border-bottom:none}
+.memmap .row b{display:block;font-size:13.5px;margin-bottom:3px}
+.memmap .code{background:rgba(129,140,248,.08)}.memmap .code b{color:var(--ind2)}
+.memmap .data{background:rgba(168,85,247,.1)}.memmap .data b{color:var(--pur)}
+.memmap .heap{background:rgba(251,146,60,.08)}.memmap .heap b{color:var(--orange)}
+.memmap .stack{background:rgba(34,211,238,.08)}.memmap .stack b{color:var(--cyan)}
+.memmap .row span{color:var(--dim);font-size:12.5px}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:240px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--pur);font-weight:700}
+.flip .front .q{font-size:15.5px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#23163a,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--pur)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:270px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>1강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#faces">네 얼굴</a>
+    <a class="chip" href="#member">멤버 변수</a>
+    <a class="chip" href="#this">this 해부</a>
+    <a class="chip" href="#combo">static+const</a>
+    <a class="chip" href="#memory">메모리</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · C++ 문법 심화 · 면접 단골</span>
+  <h1>static의 <span class="g">여러 얼굴</span></h1>
+  <p class="sub">static은 붙는 위치에 따라 완전히 다른 일을 한다. 총알 카운터를 직접 만들어보고, static 멤버 함수에 왜 this가 없는지 컴파일러 관점까지 뜯어본다.</p>
+  <div class="meta">
+    <div class="m">🧩 네 가지 얼굴</div>
+    <div class="m">📌 선수지식 없음</div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 버그</div>
+  <h2 class="sec"><span class="n">1</span>총알 몇 발 쐈는지 세다가 만난 버그</h2>
+  <p class="lead">FPS 게임에서 "지금까지 발사된 총알 총개수"를 디버그 UI에 띄우고 싶다. 총알 클래스에 카운터를 하나 넣었다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> ABullet : <span class="kw">public</span> AActor
+{
+<span class="kw">public</span>:
+    int32 FiredCount = 0;   <span class="cm">// 총알 하나에 카운터 하나...?</span>
+
+    ABullet() { FiredCount++; }
+};</pre>
+    <p style="margin-top:16px">총알을 100발 쏘고 아무 총알이나 하나 골라 <code style="font-family:ui-monospace,monospace;color:var(--amber)">FiredCount</code>를 찍어보면 <b style="color:var(--red)">1</b>이 나온다. 각 총알은 자기가 태어날 때 자기 카운터만 1로 만들 뿐이다. "전체" 개수를 세려면 <b>모든 인스턴스가 공유하는 변수</b>가 필요하다 — <code style="font-family:ui-monospace,monospace;color:var(--pur)">static</code> 하나면 해결된다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 네 얼굴 지도 -->
+<section id="faces"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 지도</div>
+  <h2 class="sec"><span class="n">2</span>static의 네 얼굴</h2>
+  <p class="lead">static은 <b>어디에 붙느냐</b>에 따라 완전히 다른 의미가 된다. 공통점은 "인스턴스/함수 호출과 무관하게, 한 곳에 고정되어 산다"는 성격이다.</p>
+  <div class="map4">
+    <div class="mc"><div class="t">지역 static 변수</div><p>딱 한 번만 초기화되고, 함수가 끝나도 값이 유지된다</p></div>
+    <div class="mc"><div class="t">파일 스코프 (내부 링키지)</div><p>이 .cpp 파일 밖에서는 안 보인다</p></div>
+    <div class="mc"><div class="t">static 멤버 변수</div><p>인스턴스마다 따로 있지 않고, 클래스 전체가 하나를 공유</p></div>
+    <div class="mc"><div class="t">static 멤버 함수</div><p>특정 인스턴스에 속하지 않는다. this가 없다</p></div>
+  </div>
+
+  <h3 class="sub">지역 static — "딱 한 번만"</h3>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> PrintCallCount()
+{
+    <span class="kw">static</span> int32 CallCount = 0;   <span class="cm">// 최초 호출 때 딱 한 번만 초기화</span>
+    CallCount++;
+    UE_LOG(LogTemp, Log, TEXT(<span class="hl">"%d번째 호출됨"</span>), CallCount);
+}
+<span class="cm">// 1번째 → 2번째 → 3번째 ... CallCount가 0으로 안 돌아감</span></pre>
+    <p class="hint">C++11부터 지역 static 변수의 <b>최초 초기화</b>는 스레드 안전하게 보장된다. 하지만 초기화된 <b>값을 여러 스레드가 동시에 읽고 쓰는 것</b>까지 안전한 건 아니다.</p>
+  </div>
+
+  <h3 class="sub">파일 스코프 static — "이 파일 안에서만 보여"</h3>
+  <div class="card">
+    <pre class="code"><span class="cm">// BulletUtils.cpp</span>
+<span class="kw">static</span> float CalculateFalloff(float Distance) { ... }
+<span class="cm">// 다른 .cpp에서 쓰려 하면 링커 에러 — 내부 링키지라 이름이 파일 밖에 안 보임</span></pre>
+    <p class="hint">static이 없으면 <b>외부 링키지</b>(다른 파일에서 extern으로 가져다 씀), 있으면 <b>내부 링키지</b>(이 번역 단위 안에서만 존재). 요즘은 익명 네임스페이스를 더 권장하지만 기존 코드에서 흔히 본다.</p>
+  </div>
+</div></section>
+
+<!-- 3. static 멤버 변수 — 킬러 -->
+<section id="member"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 만들어보기</div>
+  <h2 class="sec"><span class="n">3</span>static 멤버 변수 — "이 클래스는 하나만 가진다"</h2>
+  <p class="lead">토글로 "일반 멤버 변수"와 "static 멤버 변수"를 바꿔가며 총알을 생성해보자. 공유되는 것과 안 되는 것의 차이가 눈에 보인다.</p>
+  <div class="card">
+    <div class="mode-toggle">
+      <span class="lab" id="labN">일반 멤버 변수</span>
+      <div class="toggle" id="memToggle"><div class="knob"></div></div>
+      <span class="lab" id="labS">static 멤버 변수</span>
+    </div>
+    <div class="shared-box" id="sharedBox" style="display:none">
+      <div class="lbl">ABullet::FiredCount (클래스 전체 공유)</div>
+      <div class="val" id="sharedVal">0</div>
+    </div>
+    <div class="bullets" id="bulletList"></div>
+    <div class="warn-box" id="warnBox" style="display:none">각 총알의 FiredCount가 전부 <b>1</b>이다. "총 몇 발 쐈나"를 알려면 이 카드를 전부 더해야 한다 — 도입의 버그가 이거다.</div>
+    <div class="btnrow" style="justify-content:center">
+      <button class="btn" id="spawnBtn">🔫 총알 생성</button>
+      <button class="btn ghost" id="resetSpawn">↺ 초기화</button>
+    </div>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> ABullet : <span class="kw">public</span> AActor
+{
+<span class="kw">public</span>:
+    <span class="kw">static</span> int32 FiredCount;   <span class="cm">// 선언만. 실체(정의)는 밖에서 한 번.</span>
+    ABullet() { FiredCount++; }
+};
+<span class="cm">// .cpp 파일에서 딱 한 번 정의(메모리 실체를 만들어줌)</span>
+int32 ABullet::FiredCount = 0;</pre>
+    <p class="hint">클래스 안의 선언은 실체 없는 <b>선언</b>일 뿐이다. 정의를 빼먹으면 링크 단계에서 <code style="font-family:ui-monospace,monospace;color:var(--red)">undefined reference</code> 에러가 난다 (C++17 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">inline static</code>은 예외 — 헤더 한 줄로 끝).</p>
+  </div>
+</div></section>
+
+<!-- 4. this 해부 -->
+<section id="this"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 면접 핵심</div>
+  <h2 class="sec"><span class="n">4</span>static 멤버 함수 — 왜 this가 없나</h2>
+  <p class="lead">일반 멤버 함수는 <b>숨겨진 첫 번째 매개변수로 this를 받는 일반 함수</b>다. 버튼을 눌러 컴파일러가 실제로 만드는 모양을 확인해보자.</p>
+  <div class="card">
+    <div class="this-toggle">
+      <button class="on" data-m="normal">일반 멤버 함수</button>
+      <button data-m="static">static 멤버 함수</button>
+    </div>
+    <div class="this-view" id="thisView"></div>
+  </div>
+  <p class="hint">static 멤버 함수는 사실상 <b>"클래스라는 이름공간 안에 들어 있는 평범한 전역 함수"</b>다. 그래서 (1) 인스턴스 없이 호출 가능, (2) non-static 멤버에 직접 접근 불가, (3) const 멤버 함수가 될 수 없다.</p>
+</div></section>
+
+<!-- 5. static + const -->
+<section id="combo"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 조합</div>
+  <h2 class="sec"><span class="n">5</span>static과 const — 완전히 다른 두 축</h2>
+  <table class="tb">
+    <tr><th>키워드</th><th>답하는 질문</th><th>관련 축</th></tr>
+    <tr><td><code style="font-family:ui-monospace,monospace;color:var(--pur)">static</code></td><td>이 변수가 어디에, 몇 개 존재하는가</td><td>존재 방식 (생명주기·저장 위치)</td></tr>
+    <tr><td><code style="font-family:ui-monospace,monospace;color:var(--cyan)">const</code></td><td>이 변수의 값을 바꿀 수 있는가</td><td>불변성</td></tr>
+  </table>
+  <div class="card">
+    <pre class="code"><span class="kw">int32</span> A = 10;                 <span class="cm">// 매번 새로 생성, 값도 바꿀 수 있음</span>
+<span class="kw">const int32</span> B = 10;           <span class="cm">// 매번 새로 생성되지만, 값은 못 바꿈</span>
+<span class="kw">static int32</span> C = 10;          <span class="cm">// 딱 한 번만 초기화, 값 유지 + 바꿀 수 있음</span>
+<span class="kw">static const int32</span> D = 10;    <span class="cm">// 딱 한 번만 초기화 + 절대 못 바꿈 — 진짜 상수</span></pre>
+    <p class="hint">몬스터 최대 체력처럼 <b>공유되면서 값도 안 바뀌어야 하는</b> 게임 밸런스 상수는 <code style="font-family:ui-monospace,monospace;color:var(--amber)">static constexpr</code>가 정석이다 (C++17부터 암묵적 inline이라 .cpp 정의도 불필요).</p>
+  </div>
+</div></section>
+
+<!-- 6. 메모리 -->
+<section id="memory"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 내부 동작</div>
+  <h2 class="sec"><span class="n">6</span>static은 메모리 어디에 사는가</h2>
+  <p class="lead">힙도 스택도 아니다. static은 <b>컴파일 시점에 이미 자리가 정해지는</b> 데이터/코드 영역에 산다.</p>
+  <div class="memmap">
+    <div class="row code"><b>코드(텍스트) 영역</b><span>static 멤버 함수 — 애초에 변수가 아니라 명령어라 저장 개념 자체가 없음</span></div>
+    <div class="row data"><b>데이터 영역 (+BSS)</b><span>지역 static 변수 · 파일 스코프 static · static 멤버 변수 — 프로그램 로드 시 이미 자리 잡음</span></div>
+    <div class="row heap"><b>힙 (Heap)</b><span>new로 런타임에 그때그때 요청 — AActor/UObject가 사는 곳, GC 대상</span></div>
+    <div class="row stack"><b>스택 (Stack)</b><span>함수 호출될 때 생겼다 리턴하면 사라짐 — 일반 지역 변수</span></div>
+  </div>
+  <p class="hint">static은 GC 대상이 아니고, 어떤 인스턴스가 몇 개 살아있든 상관없이 프로그램 종료까지 그 자리에 그대로 있다.</p>
+</div></section>
+
+<!-- 7. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 6가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 8. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"방금 말한 싱글톤, 언리얼에서는 어떻게 구현하는 게 좋을까요?"</i> → 9강(Singleton과 Factory)에서 다룬다.</p>
+</div></section>
+
+<!-- 9. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 8 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="02강_C++_캐스팅_4형제.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">2강 — C++ 캐스팅 4형제 →</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 1강</div>
+</div></footer>
+
+<script>
+/* 3. 총알 카운터 킬러 위젯 */
+(function(){
+  var isStatic=false,shared=0,bullets=[],nextId=1;
+  var tg=document.getElementById('memToggle'),labN=document.getElementById('labN'),labS=document.getElementById('labS');
+  var sharedBox=document.getElementById('sharedBox'),sharedVal=document.getElementById('sharedVal');
+  var list=document.getElementById('bulletList'),warn=document.getElementById('warnBox');
+  function render(){
+    sharedBox.style.display=isStatic?'block':'none';
+    list.innerHTML='';
+    bullets.forEach(function(b){
+      var c=document.createElement('div');c.className='bcard '+(isStatic?'staticmode':'normal');
+      c.innerHTML='<div class="id">Bullet #'+b.id+'</div><div class="own">'+(isStatic?'own FiredCount 없음<br>(공유값 참조)':'FiredCount: '+b.own)+'</div>';
+      list.appendChild(c);
+    });
+    warn.style.display=(!isStatic && bullets.length>=2)?'block':'none';
+  }
+  function spawn(){
+    var b={id:nextId++,own:1};
+    if(isStatic){shared++;sharedVal.textContent=shared;sharedBox.classList.remove('pulse');void sharedBox.offsetWidth;sharedBox.classList.add('pulse');}
+    bullets.push(b);
+    if(bullets.length>8)bullets.shift();
+    render();
+  }
+  function reset(){bullets=[];shared=0;sharedVal.textContent='0';render();}
+  tg.addEventListener('click',function(){
+    isStatic=!isStatic;tg.classList.toggle('on',isStatic);
+    labN.classList.toggle('act',!isStatic);labS.classList.toggle('act',isStatic);
+    reset();
+  });
+  document.getElementById('spawnBtn').addEventListener('click',spawn);
+  document.getElementById('resetSpawn').addEventListener('click',reset);
+  render();
+})();
+
+/* 4. this 해부 토글 */
+(function(){
+  var views={
+    normal:'<div class="lbl2">작성한 코드</div><pre class="code"><span class="kw">void</span> ApplyDamage(AActor* Target)\n{\n    Target->TakeDamage(Damage, ...);\n}</pre>'+
+      '<div class="lbl2" style="margin-top:14px">컴파일러가 실제로 만드는 모양</div><pre class="code"><span class="kw">void</span> ABullet_ApplyDamage(<span class="hl">ABullet* this</span>, AActor* Target)\n{\n    Target->TakeDamage(<span class="hl">this-></span>Damage, ...);\n}\n<span class="cm">// Bullet.ApplyDamage(Enemy) → 이렇게 바뀜. this가 숨겨진 첫 인자.</span></pre>',
+    static:'<div class="lbl2">작성한 코드</div><pre class="code"><span class="kw">static float</span> CalculateDamage(float Base, float Def)\n{\n    <span class="kw">return</span> Base * (1.0f - Def);\n}\n<span class="cm">// 호출: FDamageCalculator::CalculateDamage(100.f, 0.3f);</span></pre>'+
+      '<div class="lbl2" style="margin-top:14px">컴파일러가 실제로 만드는 모양</div><pre class="code"><span class="kw">float</span> FDamageCalculator_CalculateDamage(float Base, float Def)\n{\n    <span class="kw">return</span> Base * (1.0f - Def);\n}\n<span class="cm">// this 없음! 그냥 이름공간 안의 일반 함수와 동일하게 컴파일됨.</span></pre>'
+  };
+  var view=document.getElementById('thisView');
+  var btns=document.querySelectorAll('.this-toggle button');
+  function set(m){btns.forEach(function(b){b.classList.toggle('on',b.dataset.m===m);});view.innerHTML=views[m];}
+  btns.forEach(function(b){b.addEventListener('click',function(){set(b.dataset.m);});});
+  set('normal');
+})();
+
+/* 7. 오해 */
+(function(){
+  var items=[
+    {t:'"static 멤버 변수도 인스턴스마다 하나씩 있다"',b:'아니다. 인스턴스가 100개든 0개든 static 멤버 변수는 <span class="truth">딱 하나</span>다. 도입의 버그가 정확히 이 오해에서 나왔다.'},
+    {t:'"static 멤버 함수도 다른 멤버 변수를 자유롭게 쓸 수 있다"',b:'아니다. static 멤버 함수는 this가 없어서 <span class="truth">non-static 멤버 변수/함수에는 직접 접근이 안 된다.</span> 접근하려면 인스턴스를 인자로 따로 받아야 한다.'},
+    {t:'"헤더에서 static int32 Count = 0;라고 쓰면 끝이다"',b:'C++17 이전 일반 static 멤버 변수 기준으로는 아니다. 클래스 안 선언은 실체 없는 선언일 뿐이라, <span class="truth">.cpp에서 따로 정의</span>해야 한다. 안 하면 undefined reference 링커 에러가 난다.'},
+    {t:'"static이니까 멀티스레드에서 무조건 안전하다"',b:'지역 static 변수의 <b>최초 초기화</b>만 스레드 안전이 보장된다. <span class="truth">값을 여러 스레드가 동시에 읽고 쓰는 것은 별개 문제</span>라 여전히 Race Condition이 날 수 있다.'},
+    {t:'"static 변수는 힙(heap)에 저장된다"',b:'아니다. static 변수는 전부 <span class="truth">데이터 영역(+BSS)</span>에 산다. 결정적 차이는 주소가 정해지는 시점 — static은 컴파일 타임, 힙은 런타임이다.'},
+    {t:'"static 지역 변수는 값도 못 바꾼다"',b:'아니다. static은 "생명주기/공유"를 정하는 키워드지 "불변성"을 정하는 키워드가 아니다. <span class="truth">값까지 못 바꾸려면 static const/constexpr를 따로 붙여야 한다.</span>'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 8. 면접 */
+(function(){
+  var qa=[
+    {q:'static 함수에 대해 설명해보세요.',a:'클래스에 속하지만 특정 인스턴스에 종속되지 않는 멤버 함수입니다. 일반 멤버 함수는 숨겨진 첫 인자로 <b>this</b> 포인터를 받는데, static 멤버 함수는 이게 없어서 인스턴스 없이 클래스 이름만으로 호출할 수 있습니다. 대신 non-static 멤버에 직접 접근할 수 없습니다.'},
+    {q:'static 멤버 변수와 일반 멤버 변수의 차이는?',a:'일반 멤버 변수는 인스턴스마다 각자 메모리를 갖지만, static 멤버 변수는 <b>클래스 전체가 공유하는 딱 하나</b>만 존재합니다. 총 발사 횟수 같은 공유 카운터에 적합합니다.'},
+    {q:'static 멤버 함수는 왜 this가 없나요?',a:'일반 멤버 함수는 컴파일러가 내부적으로 첫 인자로 this를 암묵적으로 전달합니다. static 멤버 함수는 이 규칙에서 제외돼서, 사실상 <b>클래스 이름공간 안의 일반 함수</b>처럼 컴파일됩니다.'},
+    {q:'지역 static 변수는 언제, 몇 번 초기화되나요?',a:'그 코드 줄을 프로그램이 <b>처음 실행할 때 딱 한 번만</b> 초기화됩니다. 이후 호출에서는 이전 값을 그대로 쓰고, 함수가 끝나도 값이 사라지지 않습니다.'},
+    {q:'static int32 Count;만 쓰고 .cpp 정의를 안 해주면?',a:'컴파일은 되지만 링크 단계에서 <b>undefined reference</b> 에러가 납니다. C++17의 inline static을 쓰면 헤더 한 줄로 끝나서 이 문제가 없습니다.'},
+    {q:'static 멤버 변수를 여러 스레드가 동시에 증가시키면 안전한가요?',a:'안전하지 않습니다. static은 "공유된다"는 뜻이지 "동시 접근이 안전하다"는 뜻이 아닙니다. <b>atomic 타입이나 락</b>으로 보호해야 합니다.'},
+    {q:'싱글톤을 구현할 때 static을 어떻게 활용하나요?',a:'함수 안에 지역 static 객체를 두고 참조를 리턴하는 <b>Meyer&#39;s Singleton</b>을 많이 씁니다. 최초 호출 때 한 번만 생성되고 초기화가 스레드 안전하게 보장됩니다. 언리얼은 GameInstance나 Subsystem을 더 많이 씁니다.'},
+    {q:'static 변수는 스택, 힙 중 어디에 저장되나요?',a:'둘 다 아닙니다. <b>데이터/BSS 세그먼트</b>에 저장됩니다. 힙은 런타임에 동적 할당하지만, static은 컴파일 시점에 이미 주소가 정해진다는 게 근본적 차이입니다.'},
+    {q:'몬스터 최대 체력처럼 공유되면서 절대 안 바뀌는 상수는 어떻게 선언하나요?',a:'<b>static const</b>나 <b>static constexpr</b> 멤버 변수로 선언합니다. static은 클래스 전체 공유를, const는 값 변경 방지를 보장합니다. C++17이면 constexpr로 별도 .cpp 정의 없이 끝내는 걸 선호합니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 9. 체크 */
+(function(){
+  var items=['static의 네 가지 얼굴(지역 변수 / 파일 스코프 / 멤버 변수 / 멤버 함수)을 구분해서 말할 수 있다','static 멤버 함수가 왜 this가 없는지, 일반 멤버 함수의 컴파일 방식과 연결해서 설명할 수 있다','static 멤버 변수를 클래스 안에서 선언만 하면 안 되는 이유(선언 vs 정의)를 안다','지역 static 변수가 "딱 한 번만 초기화"된다는 걸 예시로 설명할 수 있다','static이 스레드 안전성을 자동으로 보장하지 않는다는 걸 안다','static 멤버 함수 안에서 non-static 멤버에 직접 접근이 안 되는 이유를 안다','static 변수가 힙/스택이 아니라 데이터 영역(멤버 함수는 코드 영역)에 산다는 걸 설명할 수 있다','static과 const가 서로 다른 축이라는 걸 알고, static const/constexpr를 왜 같이 쓰는지 설명할 수 있다'];
+  var KEY='cpp01-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4강 · 외적(Cross Product) — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--cyan),var(--pur))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--cyan)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#042733;background:var(--cyan);border-color:var(--cyan)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(34,211,238,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--cyan);background:rgba(34,211,238,.1);border:1px solid rgba(34,211,238,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--cyan),var(--pur));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--cyan);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}
+
+/* 킬러: 좌우 판정 시뮬레이터 */
+.simgrid{display:grid;grid-template-columns:260px 1fr;gap:24px;margin-top:20px;align-items:center}
+@media(max-width:640px){.simgrid{grid-template-columns:1fr}}
+.simsvg{background:var(--bg2);border:1px solid var(--line);border-radius:14px}
+.slider-row .lbl{font-size:13px;font-weight:700;display:flex;justify-content:space-between}
+.slider-row .lbl b{color:var(--cyan);font-family:ui-monospace,monospace}
+.slider-row input[type=range]{width:100%;margin-top:8px;accent-color:var(--cyan)}
+.readout{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;margin-top:18px}
+.readout .row{display:flex;justify-content:space-between;padding:4px 0}
+.readout .row b{font-family:ui-monospace,monospace}
+.verdict-badge{margin-top:10px;text-align:center;font-weight:800;font-size:14px;padding:8px;border-radius:10px}
+.verdict-badge.right{background:rgba(34,211,238,.15);color:var(--cyan)}
+.verdict-badge.left{background:rgba(251,146,60,.15);color:var(--orange)}
+.verdict-badge.neutral{background:rgba(148,163,184,.12);color:var(--dim)}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:230px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--cyan);font-weight:700}
+.flip .front .q{font-size:15.5px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#0f2e38,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--pur)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--pur));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--cyan)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--cyan);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--cyan)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:260px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>4강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#def">외적 정의</a>
+    <a class="chip" href="#anti">반교환법칙</a>
+    <a class="chip" href="#sim">좌우 시뮬</a>
+    <a class="chip" href="#normal">법선·경사</a>
+    <a class="chip" href="#dodge">회피 코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 내적과 외적 · 면접 필수</span>
+  <h1>외적 <span class="g">(Cross Product)</span></h1>
+  <p class="sub">내적은 좌/우를 못 구분한다. 슬라이더로 타겟을 돌려보며 외적의 부호가 어떻게 왼쪽/오른쪽을 갈라내는지 직접 확인한다.</p>
+  <div class="meta">
+    <div class="m">🧭 부호로 좌/우 판정</div>
+    <div class="m">🧩 선수지식 <b>1~3강</b></div>
+    <div class="m">⏱️ 약 18분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 질문</div>
+  <h2 class="sec"><span class="n">1</span>"적이 내 왼쪽에 있는지 오른쪽에 있는지" 어떻게 판단하나</h2>
+  <p class="lead">내적은 "얼마나 같은 방향인가"를 알려준다. 하지만 <b>"왼쪽인가 오른쪽인가"</b>엔 답을 못 준다 — 내적은 대칭(A·B == B·A)이라 방향의 치우침을 모른다.</p>
+  <div class="card">
+    <pre class="code">FVector ToEnemy = (EnemyLocation - MyLocation).GetSafeNormal();
+FVector MyForward = GetActorForwardVector();
+FVector CrossResult = FVector::CrossProduct(MyForward, ToEnemy);
+<span class="cm">// CrossResult.Z가 양수면 오른쪽, 음수면 왼쪽 (언리얼 좌표계 기준)</span></pre>
+    <p style="margin-top:16px">외적은 각도 대신 <b style="color:var(--cyan)">"어느 쪽으로 꺾여 있는가"</b>와 <b style="color:var(--pur)">"두 벡터에 동시에 수직인 방향"</b>을 알려준다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 외적 정의 -->
+<section id="def"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 정의</div>
+  <h2 class="sec"><span class="n">2</span>외적의 정의 — 결과가 벡터다</h2>
+  <div class="card">
+    <pre class="code">A × B = (A.Y*B.Z - A.Z*B.Y,  A.Z*B.X - A.X*B.Z,  A.X*B.Y - A.Y*B.X)
+
+FVector A = FVector(1, 0, 0);
+FVector B = FVector(0, 1, 0);
+FVector Result = FVector::CrossProduct(A, B);   <span class="cm">// (0, 0, 1)</span></pre>
+    <p class="hint">내적이 스칼라 하나를 뱉는 것과 달리, 외적은 <b>벡터</b>를 뱉는다 — 가장 먼저 기억할 차이. 결과는 두 벡터 모두에 수직인 <b style="color:var(--pur)">법선 벡터(Normal Vector)</b>다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 반교환법칙 -->
+<section id="anti"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 순서 주의</div>
+  <h2 class="sec"><span class="n">3</span>외적의 순서가 중요하다</h2>
+  <div class="card">
+    <p style="font-weight:700">A × B = -(B × A)</p>
+    <pre class="code" style="margin-top:12px">FVector Forward1 = FVector::CrossProduct(A, B);   <span class="cm">// 예: (0,0,1)</span>
+FVector Forward2 = FVector::CrossProduct(B, A);   <span class="cm">// (0,0,-1) — 정반대</span></pre>
+    <p class="hint">이게 좌/우 판정의 핵심이다. 순서를 바꾸면 부호가 뒤집히므로, 프로젝트 안에서 <b>순서를 일관되게</b> 정해놓고 써야 한다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">|A × B| = |A| * |B| * sin(θ)</p>
+    <p class="hint">이 값은 A와 B가 만드는 <b>평행사변형의 넓이</b>와 같다. 두 벡터가 평행하면(θ=0 또는 180°) sin(θ)=0이라 외적 결과가 0벡터가 된다 — "평행한 두 벡터는 법선을 정의할 수 없다"는 뜻.</p>
+  </div>
+</div></section>
+
+<!-- 4. 킬러: 좌우 판정 시뮬레이터 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>좌/우 판정 시뮬레이터</h2>
+  <p class="lead">타겟 각도를 움직여서 Cross.Z 부호가 어떻게 왼쪽/오른쪽을 갈라내는지 확인해보자. (양수 각도 = 오른쪽으로 회전)</p>
+  <div class="card">
+    <div class="simgrid">
+      <svg class="simsvg" viewBox="0 0 260 220" id="crossSvg">
+        <line id="forwardLine" x1="130" y1="180" x2="130" y2="50" stroke="var(--txt)" stroke-width="3"></line>
+        <line id="targetLine" stroke-width="3"></line>
+        <circle cx="130" cy="180" r="8" fill="var(--txt)"></circle>
+        <circle id="targetDot" r="6"></circle>
+        <text x="130" y="200" fill="var(--dim)" font-size="11" text-anchor="middle">Me</text>
+        <text x="130" y="42" fill="var(--dim)" font-size="11" text-anchor="middle">Forward</text>
+        <text x="30" y="120" fill="var(--orange)" font-size="11">← 왼쪽</text>
+        <text x="200" y="120" fill="var(--cyan)" font-size="11">오른쪽 →</text>
+      </svg>
+      <div>
+        <div class="slider-row">
+          <div class="lbl">타겟 각도 θ <b id="thetaVal">60°</b></div>
+          <input type="range" id="thetaSlider" min="-180" max="180" value="60">
+        </div>
+        <div class="readout">
+          <div class="row"><span>Cross(Forward, ToTarget).Z</span><b id="crossVal">0.866</b></div>
+          <div class="row"><span>Dot(Forward, ToTarget) = cos(θ)</span><b id="dotVal">0.500</b></div>
+          <div class="verdict-badge right" id="verdictBadge">오른쪽 →</div>
+        </div>
+      </div>
+    </div>
+    <p class="hint">Cross.Z와 Dot이 동시에 뜨는 이유: 외적의 크기는 <b>sin(θ)</b>, 내적은 <b>cos(θ)</b>다. 방향의 크기(내적)와 치우침(외적)은 서로 다른 정보라 둘 다 필요할 때가 많다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 법선/경사 -->
+<section id="normal"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 실전 조합</div>
+  <h2 class="sec"><span class="n">5</span>법선 벡터로 "걸을 수 있는 경사인지" 판정</h2>
+  <p class="lead">바닥 삼각형의 두 변을 외적하면 법선 벡터가 나온다. 이 법선과 월드 Up 벡터를 <b>내적(3강)</b>하면 바닥 기울기의 코사인이 된다 — 외적과 내적이 손을 잡는 지점.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">bool</span> IsFloorWalkable(<span class="kw">const</span> FVector& FloorNormal, <span class="fn">float</span> MaxWalkableAngleDegrees)
+{
+    <span class="cm">// 법선이 위(Up)를 향할수록 평평한 바닥, 옆을 향할수록 가파른 경사/벽</span>
+    <span class="fn">float</span> DotWithUp = FVector::DotProduct(FloorNormal.GetSafeNormal(), FVector::UpVector);
+    <span class="fn">float</span> MaxCos = FMath::Cos(FMath::DegreesToRadians(MaxWalkableAngleDegrees));
+    <span class="kw">return</span> DotWithUp >= MaxCos;   <span class="cm">// 3강의 시야각 판정과 정확히 같은 형태</span>
+}</pre>
+  </div>
+</div></section>
+
+<!-- 6. 회피 코드 -->
+<section id="dodge"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 실전 활용</div>
+  <h2 class="sec"><span class="n">6</span>좌우 회피(Dodge) 방향 결정</h2>
+  <div class="card">
+    <pre class="code">FVector GetDodgeDirection(AActor* Attacker) <span class="kw">const</span>
+{
+    FVector AttackerForward = Attacker->GetActorForwardVector();
+    FVector AttackerToMe = (GetActorLocation() - Attacker->GetActorLocation()).GetSafeNormal();
+    FVector Cross = FVector::CrossProduct(AttackerForward, AttackerToMe);
+
+    <span class="cm">// 공격자 기준 내가 오른쪽에 있으면, 더 바깥쪽인 오른쪽으로 회피</span>
+    <span class="kw">return</span> (Cross.Z >= 0.0f) ? GetActorRightVector() : -GetActorRightVector();
+}</pre>
+  </div>
+</div></section>
+
+<!-- 7. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 8. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<!-- 9. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="03강_내적_Dot_Product.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 3강 — 내적 (Dot Product)</div></div></a>
+  <a class="nx" href="06강_Look_At_회전값_구하기.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">6강 — Look-At, 회전값 구하기 →</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 4강</div>
+</div></footer>
+
+<script>
+/* 4. 좌우 판정 시뮬레이터 킬러 위젯 */
+(function(){
+  var cx=130, cy=180, len=110;
+  var thetaSlider=document.getElementById('thetaSlider'),thetaVal=document.getElementById('thetaVal');
+  var crossVal=document.getElementById('crossVal'),dotVal=document.getElementById('dotVal');
+  var badge=document.getElementById('verdictBadge');
+  var targetLine=document.getElementById('targetLine'),targetDot=document.getElementById('targetDot');
+
+  function pt(angleDeg,r){
+    var rad=angleDeg*Math.PI/180;
+    return {x:cx+r*Math.sin(rad), y:cy-r*Math.cos(rad)};
+  }
+  function render(){
+    var theta=parseFloat(thetaSlider.value);
+    thetaVal.textContent=theta+'°';
+    var cross=Math.sin(theta*Math.PI/180);
+    var dot=Math.cos(theta*Math.PI/180);
+    crossVal.textContent=cross.toFixed(3);
+    dotVal.textContent=dot.toFixed(3);
+
+    var cls,txt,col;
+    if(Math.abs(cross)<0.12){cls='neutral';txt=(dot>0?'거의 정면 (일직선)':'거의 후방 (일직선)');col='var(--dim)';}
+    else if(cross>0){cls='right';txt='오른쪽 →';col='var(--cyan)';}
+    else{cls='left';txt='← 왼쪽';col='var(--orange)';}
+    badge.className='verdict-badge '+cls;
+    badge.textContent=txt;
+
+    var tp=pt(theta,len);
+    targetLine.setAttribute('x1',cx);targetLine.setAttribute('y1',cy);
+    targetLine.setAttribute('x2',tp.x);targetLine.setAttribute('y2',tp.y);
+    targetLine.setAttribute('stroke', col);
+    targetDot.setAttribute('cx',tp.x);targetDot.setAttribute('cy',tp.y);
+    targetDot.setAttribute('fill', col);
+  }
+  thetaSlider.addEventListener('input',render);
+  render();
+})();
+
+/* 7. 오해 */
+(function(){
+  var items=[
+    {t:'"외적도 내적처럼 스칼라 하나가 나온다"',b:'외적의 결과는 <span class="truth">벡터</span>다. 좌/우 판정처럼 부호만 필요할 때 결과 벡터의 특정 성분(주로 Z)만 뽑아 쓰기 때문에 스칼라처럼 느껴질 뿐이다.'},
+    {t:'"A×B와 B×A는 같은 결과다"',b:'외적은 교환법칙이 성립하지 않는다. <code>A×B = -(B×A)</code>로 <span class="truth">정반대 방향</span>이 나온다. 인자 순서를 바꾸면 좌/우 판정 결과가 뒤집힌다.'},
+    {t:'"두 벡터가 평행하면 외적도 뭔가 의미 있는 방향이 나온다"',b:'두 벡터가 평행(또는 한쪽이 0벡터)이면 외적 결과는 <span class="truth">0벡터</span>다. 평행한 두 벡터로는 수직 방향이 정의되지 않는다.'},
+    {t:'"외적 결과 벡터를 그대로 방향으로 쓰면 된다"',b:'외적 결과 벡터의 크기는 |A||B|sin(θ)라서 제각각이다. <span class="truth">방향만 필요하면(회전축 등) 반드시 정규화</span>해서 써야 한다.'},
+    {t:'"좌/우 판정은 항상 Z 성분을 보면 된다"',b:'캐릭터가 지면과 수평으로 움직인다고 가정할 때만 성립한다. <span class="truth">비행체처럼 자유롭게 회전하는 오브젝트</span>라면 외적 결과와 실제 Up 벡터를 내적해서 부호를 판단해야 한다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 8. 면접 */
+(function(){
+  var qa=[
+    {q:'외적이 뭔가요?',a:'두 벡터로부터 그 두 벡터 모두에 수직인 새로운 벡터를 만드는 연산입니다. 내적은 결과가 스칼라지만 외적은 <b>결과가 벡터</b>라는 게 가장 큰 차이입니다.'},
+    {q:'외적으로 좌/우를 어떻게 판정하나요?',a:'정면 벡터와 타겟 방향 벡터를 외적하면, 결과 벡터의 특정 축(언리얼 기준 Z축) 부호로 좌/우를 판정합니다. <b>양수면 오른쪽, 음수면 왼쪽</b>입니다.'},
+    {q:'외적에서 A×B와 B×A는 같은가요?',a:'아니요, <b>방향이 정반대</b>입니다. 외적은 교환법칙이 성립하지 않아서 A×B = -(B×A)입니다. 인자 순서를 실수하면 결과가 뒤집힙니다.'},
+    {q:'외적 결과 벡터의 크기는 뭘 의미하나요?',a:'두 벡터가 이루는 각도의 <b>사인 값</b>에 두 벡터 크기를 곱한 값이고, 기하학적으로는 두 벡터가 만드는 <b>평행사변형의 넓이</b>와 같습니다.'},
+    {q:'두 벡터가 평행하면 외적 결과는 어떻게 되나요? 왜 그런가요?',a:'<b>0벡터</b>가 나옵니다. sin(0°)나 sin(180°)가 0이기 때문이고, 평행한 두 벡터로는 수직인 방향이 유일하게 정해지지 않기 때문입니다.'},
+    {q:'회전축을 구할 때 왜 외적을 쓰나요?',a:'두 방향 벡터가 이루는 평면에 <b>수직인 축</b>을 기준으로 돌려야 하는데, 그 축을 구하는 게 정확히 외적이 하는 일이기 때문입니다.'},
+    {q:'내적과 외적 중 어떤 걸 언제 쓰는지 설명해주세요.',a:'"얼마나 같은 방향인가", "시야각 안에 있는가"처럼 <b>각도의 크기</b>가 중요할 때는 내적을, "어느 쪽으로 치우쳤는가", "회전축이 뭔가"처럼 <b>방향의 부호나 수직 방향</b>이 필요할 때는 외적을 씁니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--pur)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 9. 체크 */
+(function(){
+  var items=['외적의 결과가 벡터라는 것과, 그 벡터가 두 원래 벡터 모두에 수직이라는 걸 안다','외적의 순서를 바꾸면 결과가 반대 방향이 된다는 걸(반교환 법칙) 설명할 수 있다','외적으로 좌/우 판정 로직을 짤 수 있다','외적 결과 벡터의 크기가 sin(θ) 및 평행사변형 넓이와 연결된다는 걸 안다','두 벡터가 평행할 때 외적이 0벡터가 되는 이유를 설명할 수 있다','내적과 외적을 각각 언제 써야 하는지 구분할 수 있다'];
+  var KEY='gm04-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>

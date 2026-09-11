@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7강 · 충돌 감지 기초 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--orange),var(--amber))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--orange)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#341603;background:var(--orange);border-color:var(--orange)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(251,146,60,.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--orange);background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--orange),var(--amber));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--orange);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+table.tb{width:100%;border-collapse:collapse;margin-top:18px;font-size:13.5px}
+table.tb th,table.tb td{padding:11px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tb th{color:var(--faint);font-weight:700;font-size:12.5px}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}
+
+/* 킬러: 충돌 플레이그라운드 */
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--orange);color:#341603;border-color:var(--orange)}
+.simgrid{display:grid;grid-template-columns:280px 1fr;gap:24px;align-items:center}
+@media(max-width:640px){.simgrid{grid-template-columns:1fr}}
+.simsvg{background:var(--bg2);border:1px solid var(--line);border-radius:14px}
+.slider-row{margin-top:14px}
+.slider-row .lbl{font-size:13px;font-weight:700;display:flex;justify-content:space-between}
+.slider-row .lbl b{color:var(--orange);font-family:ui-monospace,monospace}
+.slider-row input[type=range]{width:100%;margin-top:6px;accent-color:var(--orange)}
+.readout{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:13px;margin-top:16px}
+.readout .row{display:flex;justify-content:space-between;padding:3px 0}
+.readout .row b{font-family:ui-monospace,monospace}
+.verdict-badge{margin-top:10px;text-align:center;font-weight:800;font-size:14px;padding:8px;border-radius:10px}
+.verdict-badge.hit{background:rgba(52,211,153,.15);color:var(--grn)}
+.verdict-badge.miss{background:rgba(248,113,113,.15);color:var(--red)}
+
+/* 브로드/내로우 */
+.pipeline{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:20px}
+.pipeline .stage{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 20px;text-align:center;font-size:13px;width:100%;max-width:420px}
+.pipeline .stage b{display:block;font-size:14px;margin-bottom:4px}
+.pipeline .stage.broad b{color:var(--cyan)}.pipeline .stage.narrow b{color:var(--red)}
+.pipeline .down{color:var(--faint)}
+
+/* 오해/면접/체크 */
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:235px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--orange);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#3a2412,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--orange)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--orange);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--orange)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:265px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>7강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#formula">구체·AABB</a>
+    <a class="chip" href="#play">충돌 플레이그라운드</a>
+    <a class="chip" href="#phase">브로드·내로우</a>
+    <a class="chip" href="#channel">콜리전 채널</a>
+    <a class="chip" href="#ccd">터널링·CCD</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 충돌과 판정 · 실전 필수</span>
+  <h1>충돌 감지 <span class="g">기초</span></h1>
+  <p class="sub">총알이 벽에 맞았는지 매 프레임 어떻게 확인할까. 슬라이더로 도형을 직접 움직여 구체·AABB 충돌 판정을 눈으로 확인한다.</p>
+  <div class="meta">
+    <div class="m">⚡ 단순 도형으로 먼저 거른다</div>
+    <div class="m">🧩 선수지식 <b>1~6강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<!-- 1. 도입 -->
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 질문</div>
+  <h2 class="sec"><span class="n">1</span>총알이 벽에 맞았는지 매 프레임 어떻게 확인하나</h2>
+  <p class="lead">게임 오브젝트는 대개 복잡한 메시(Mesh)다. 메시의 정확한 삼각형 단위로 충돌을 매 프레임 계산하면 너무 느리다.</p>
+  <div class="card">
+    <p>그래서 실제로는 <b style="color:var(--orange)">충돌 감지 전용으로 단순화된 도형</b>(Collision Shape)을 따로 두고, 그 단순한 도형끼리 겹쳤는지를 계산한다. 언리얼 에디터에서 메시에 캡슐·박스 모양의 초록색 콜리전이 따로 붙어있는 게 바로 이거다.</p>
+  </div>
+</div></section>
+
+<!-- 2. 공식 -->
+<section id="formula"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 공식</div>
+  <h2 class="sec"><span class="n">2</span>구체 충돌 · AABB 충돌</h2>
+  <div class="card">
+    <p style="font-weight:700">구체(Sphere) — 가장 싸고 단순한 판정</p>
+    <pre class="code">겹침 여부 = Distance(CenterA, CenterB) &lt;= RadiusA + RadiusB
+
+<span class="fn">bool</span> IsSphereOverlapping(...)
+{
+    <span class="fn">float</span> DistSquared = FVector::DistSquared(CenterA, CenterB);   <span class="cm">// sqrt 생략</span>
+    <span class="fn">float</span> RadiusSum = RadiusA + RadiusB;
+    <span class="kw">return</span> DistSquared &lt;= RadiusSum * RadiusSum;
+}</pre>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">AABB(Axis-Aligned Bounding Box)</p>
+    <pre class="code"><span class="kw">bool</span> IsAABBOverlapping(<span class="kw">const</span> FAABB& A, <span class="kw">const</span> FAABB& B)
+{
+    <span class="cm">// 세 축 모두 겹쳐야 전체가 겹친 것</span>
+    <span class="kw">bool</span> bOverlapX = A.Min.X &lt;= B.Max.X && A.Max.X &gt;= B.Min.X;
+    <span class="kw">bool</span> bOverlapY = A.Min.Y &lt;= B.Max.Y && A.Max.Y &gt;= B.Min.Y;
+    <span class="kw">bool</span> bOverlapZ = A.Min.Z &lt;= B.Max.Z && A.Max.Z &gt;= B.Min.Z;
+    <span class="kw">return</span> bOverlapX && bOverlapY && bOverlapZ;
+}</pre>
+    <p class="hint">핵심: <b>3차원 판정을 축 3개의 독립적인 1차원 겹침 판정으로 쪼갠다.</b> 한 축이라도 안 겹치면 절대 겹칠 수 없다. AABB는 회전을 반영 못 해서 <b>1차 필터링용</b>으로 많이 쓰인다.</p>
+  </div>
+</div></section>
+
+<!-- 3. 킬러 -->
+<section id="play"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>충돌 판정 플레이그라운드</h2>
+  <p class="lead">B 도형을 슬라이더로 움직이며 구체/AABB 모드를 바꿔보자. 겹침 여부가 실시간으로 바뀐다.</p>
+  <div class="card">
+    <div class="modetoggle">
+      <button class="on" data-m="sphere">구체 (Sphere)</button>
+      <button data-m="aabb">AABB</button>
+    </div>
+    <div class="simgrid">
+      <svg class="simsvg" viewBox="0 0 260 220" id="collSvg">
+        <g id="shapeA"></g>
+        <g id="shapeB"></g>
+      </svg>
+      <div>
+        <div class="slider-row">
+          <div class="lbl">B의 X 위치 <b id="bxVal">170</b></div>
+          <input type="range" id="bxSlider" min="0" max="260" value="170">
+        </div>
+        <div class="slider-row">
+          <div class="lbl">B의 Y 위치 <b id="byVal">110</b></div>
+          <input type="range" id="bySlider" min="0" max="220" value="110">
+        </div>
+        <div class="readout" id="readoutBox"></div>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 4. 브로드/내로우 -->
+<section id="phase"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 최적화</div>
+  <h2 class="sec"><span class="n">4</span>브로드 페이즈 vs 내로우 페이즈</h2>
+  <p class="lead">오브젝트 1,000개면 모든 쌍(약 50만 쌍)을 정밀 검사하는 건 너무 비싸다.</p>
+  <table class="tb">
+    <tr><th>단계</th><th>목적</th><th>특징</th></tr>
+    <tr><td style="color:var(--cyan)">브로드 페이즈</td><td>겹칠 가능성 있는 쌍을 빠르게 걸러냄</td><td>AABB처럼 싸고 단순한 도형, 공간 분할(그리드, BVH)</td></tr>
+    <tr><td style="color:var(--red)">내로우 페이즈</td><td>브로드 페이즈 통과 쌍만 정밀 검사</td><td>실제 메시 형태, 정확한 충돌 지점·법선까지 계산</td></tr>
+  </table>
+  <div class="card">
+    <div class="pipeline">
+      <div class="stage"><b>1000개 오브젝트</b></div>
+      <div class="down">↓</div>
+      <div class="stage broad"><b>브로드 페이즈</b>AABB로 대략 겹치는 쌍만 추림 (예: 50쌍)</div>
+      <div class="down">↓</div>
+      <div class="stage narrow"><b>내로우 페이즈</b>그 50쌍만 정밀 충돌 검사 (실제 메시/캡슐 기준)</div>
+      <div class="down">↓</div>
+      <div class="stage"><b>실제 충돌 이벤트 발생</b></div>
+    </div>
+    <p class="hint">싼 연산으로 대부분을 걸러내고, 비싼 연산은 살아남은 소수에만 적용한다. 언리얼 물리 엔진(Chaos)도 내부적으로 이 2단계 구조를 쓴다.</p>
+  </div>
+</div></section>
+
+<!-- 5. 콜리전 채널 -->
+<section id="channel"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 규칙</div>
+  <h2 class="sec"><span class="n">5</span>콜리전 채널 — "누구와 부딪힐 것인가"</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// 총알은 Pawn과는 Overlap(겹침만 감지), WorldStatic과는 Block(막힘)</span>
+Projectile->GetCollisionComponent()->SetCollisionResponseToChannel(
+    ECC_Pawn, ECollisionResponse::ECR_Overlap);
+Projectile->GetCollisionComponent()->SetCollisionResponseToChannel(
+    ECC_WorldStatic, ECollisionResponse::ECR_Block);</pre>
+    <p class="hint">Ignore로 설정된 채널 쌍은 <b>브로드 페이즈 단계에서부터</b> 검사 대상에서 제외된다 — 정확성뿐 아니라 성능에도 직접 영향을 준다.</p>
+  </div>
+</div></section>
+
+<!-- 6. 터널링/CCD -->
+<section id="ccd"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>터널링(Tunneling)과 CCD</h2>
+  <p class="lead">한 프레임에 이동하는 거리가 벽 두께보다 크면, 총알이 벽 안팎 어디에도 걸리지 않고 통과해버린다.</p>
+  <div class="card">
+    <pre class="code">프레임 N:   ● (벽 앞)         ┃벽┃
+프레임 N+1:                   ┃벽┃         ● (벽 뒤, 통과해버림!)</pre>
+    <p class="hint">해결책: <b style="color:var(--cyan)">연속 충돌 감지(CCD)</b> — 이전 위치에서 현재 위치까지 <b>경로 전체</b>를 스윕(Sweep) 검사한다.</p>
+    <pre class="code">FHitResult HitResult;
+<span class="kw">bool</span> bHit = GetWorld()->SweepSingleByChannel(
+    HitResult, PreviousLocation, NewLocation, FQuat::Identity,
+    ECC_WorldStatic, FCollisionShape::MakeSphere(ProjectileRadius));
+<span class="kw">if</span> (bHit) { NewLocation = HitResult.Location; OnProjectileHit(HitResult); }</pre>
+    <p class="hint">언리얼 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">ProjectileMovementComponent</code>의 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">bSweepCollision</code> 옵션이 이 스위치다. 스윕은 비용이 크므로 빠른 오브젝트에만 선택적으로 켠다.</p>
+  </div>
+</div></section>
+
+<!-- 7. 오해 -->
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<!-- 8. 면접 -->
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 모든 오브젝트에 CCD를 켜두면 안 되나요?"</i> → 스윕 검사 비용 트레이드오프로 답하면 된다.</p>
+</div></section>
+
+<!-- 9. 체크 -->
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="08강_점과_다각형.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">8강 — 점과 다각형 →</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 7강</div>
+</div></footer>
+
+<script>
+/* 3. 충돌 판정 플레이그라운드 */
+(function(){
+  var mode='sphere';
+  var A={x:90,y:110,r:34,hw:34,hh:28};
+  var bxSlider=document.getElementById('bxSlider'),bySlider=document.getElementById('bySlider');
+  var bxVal=document.getElementById('bxVal'),byVal=document.getElementById('byVal');
+  var svgA=document.getElementById('shapeA'),svgB=document.getElementById('shapeB');
+  var readout=document.getElementById('readoutBox');
+  var Br=26,Bhw=26,Bhh=22;
+
+  document.querySelectorAll('.modetoggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');mode=b.dataset.m;render();
+    });
+  });
+
+  function render(){
+    var bx=parseFloat(bxSlider.value), by=parseFloat(bySlider.value);
+    bxVal.textContent=bx;byVal.textContent=by;
+    var hit,html;
+    if(mode==='sphere'){
+      var dx=bx-A.x, dy=by-A.y, dist=Math.sqrt(dx*dx+dy*dy);
+      var rsum=A.r+Br;
+      hit=dist<=rsum;
+      svgA.innerHTML='<circle cx="'+A.x+'" cy="'+A.y+'" r="'+A.r+'" fill="rgba(99,102,241,.25)" stroke="var(--ind2)" stroke-width="2"></circle><text x="'+A.x+'" y="'+A.y+'" fill="var(--ind2)" font-size="11" text-anchor="middle" dy="4">A</text>';
+      svgB.innerHTML='<circle cx="'+bx+'" cy="'+by+'" r="'+Br+'" fill="'+(hit?'rgba(52,211,153,.3)':'rgba(248,113,113,.25)')+'" stroke="'+(hit?'var(--grn)':'var(--red)')+'" stroke-width="2"></circle><text x="'+bx+'" y="'+by+'" fill="'+(hit?'var(--grn)':'var(--red)')+'" font-size="11" text-anchor="middle" dy="4">B</text>';
+      readout.innerHTML='<div class="row"><span>Distance(A, B)</span><b>'+dist.toFixed(1)+'</b></div><div class="row"><span>RadiusA + RadiusB</span><b>'+rsum.toFixed(1)+'</b></div>';
+    }else{
+      var overlapX=(A.x-A.hw)<=(bx+Bhw) && (A.x+A.hw)>=(bx-Bhw);
+      var overlapY=(A.y-A.hh)<=(by+Bhh) && (A.y+A.hh)>=(by-Bhh);
+      hit=overlapX && overlapY;
+      svgA.innerHTML='<rect x="'+(A.x-A.hw)+'" y="'+(A.y-A.hh)+'" width="'+(A.hw*2)+'" height="'+(A.hh*2)+'" fill="rgba(99,102,241,.25)" stroke="var(--ind2)" stroke-width="2"></rect><text x="'+A.x+'" y="'+A.y+'" fill="var(--ind2)" font-size="11" text-anchor="middle" dy="4">A</text>';
+      svgB.innerHTML='<rect x="'+(bx-Bhw)+'" y="'+(by-Bhh)+'" width="'+(Bhw*2)+'" height="'+(Bhh*2)+'" fill="'+(hit?'rgba(52,211,153,.3)':'rgba(248,113,113,.25)')+'" stroke="'+(hit?'var(--grn)':'var(--red)')+'" stroke-width="2"></rect><text x="'+bx+'" y="'+by+'" fill="'+(hit?'var(--grn)':'var(--red)')+'" font-size="11" text-anchor="middle" dy="4">B</text>';
+      readout.innerHTML='<div class="row"><span>X축 겹침</span><b>'+(overlapX?'예':'아니오')+'</b></div><div class="row"><span>Y축 겹침</span><b>'+(overlapY?'예':'아니오')+'</b></div>';
+    }
+    readout.innerHTML+='<div class="verdict-badge '+(hit?'hit':'miss')+'">'+(hit?'✅ 충돌함':'❌ 충돌 안 함')+'</div>';
+  }
+  bxSlider.addEventListener('input',render);
+  bySlider.addEventListener('input',render);
+  render();
+})();
+
+/* 7. 오해 */
+(function(){
+  var items=[
+    {t:'"충돌 판정은 항상 실제 메시 형태로 정밀하게 계산된다"',b:'정확도가 제일 중요한 순간(최종 충돌 확정)에만 정밀 계산을 하고, <span class="truth">그 전 단계에서는 훨씬 단순한 도형</span>으로 후보를 추려낸다.'},
+    {t:'"AABB는 회전한 오브젝트에도 그대로 잘 맞는다"',b:'AABB는 축에 정렬(Axis-Aligned)되어 있어서 오브젝트가 회전해도 <span class="truth">박스 자체는 회전하지 않는다.</span> 회전을 반영하려면 OBB 같은 다른 도형이 필요하다.'},
+    {t:'"구체 충돌이 제일 부정확하니까 안 쓰는 게 낫다"',b:'폭발 범위나 감지 범위처럼 <span class="truth">"원형 범위"가 실제로 의미 있는 상황</span>에서는 구체 충돌이 가장 자연스럽고 싸다.'},
+    {t:'"콜리전 채널 설정은 성능과 무관하고 그냥 규칙일 뿐이다"',b:'Ignore로 설정된 채널 쌍은 <span class="truth">브로드 페이즈 단계에서부터</span> 검사 대상에서 빠지기 때문에 성능에도 직접 영향을 준다.'},
+    {t:'"매 프레임 위치만 비교하면 충돌은 다 잡힌다"',b:'빠르게 움직이는 오브젝트는 한 프레임 이동 거리가 두께보다 커서 <span class="truth">그 사이를 통과해버릴 수 있다(터널링)</span>. CCD(스윕 검사)가 필요하다.'}
+  ];
+  var box=document.getElementById('misBox');
+  items.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d.t+'</span><span class="arr">⌄</span></summary><div class="body">'+d.b+'</div>';
+    box.appendChild(el);});
+})();
+
+/* 8. 면접 */
+(function(){
+  var qa=[
+    {q:'물체 간 충돌은 어떻게 감지하나요?',a:'메시 원본 대신 구체나 박스처럼 <b>단순화된 콜리전 도형</b>을 따로 두고, 그 도형끼리 겹쳤는지 계산합니다. 구체는 중심 거리와 반지름 합, 박스(AABB)는 각 축의 최소/최대값 겹침을 확인합니다.'},
+    {q:'구체 충돌 판정은 구체적으로 어떻게 계산하나요?',a:'두 구체 중심 거리가 반지름 합보다 작거나 같으면 겹친 것으로 판정합니다. 성능을 위해 실제로는 <b>제곱근 없이 제곱값끼리</b> 비교합니다.'},
+    {q:'AABB가 뭔가요?',a:'Axis-Aligned Bounding Box — 축에 정렬된 바운딩 박스입니다. 각 축의 최소/최대 좌표로 표현하고, <b>세 축 모두 겹칠 때만</b> 두 박스가 겹친 것으로 판정합니다.'},
+    {q:'브로드 페이즈와 내로우 페이즈가 왜 나뉘어 있나요?',a:'오브젝트가 많을 때 모든 쌍을 정밀 검사하면 계산량이 너무 커지기 때문입니다. <b>싼 연산으로 먼저 걸러내고</b>(브로드), 소수만 <b>정밀 검사</b>(내로우)해서 전체 연산량을 줄입니다.'},
+    {q:'성능이 중요할 때 구체·AABB·정밀 메시 충돌 중 뭘 고르겠어요?',a:'가능한 한 <b>싼 도형부터</b> 씁니다. 대략적인 범위는 구체/AABB로 충분하고, 정확한 충돌 지점이 필요한 마지막 단계에서만 정밀 충돌을 씁니다.'},
+    {q:'콜리전 채널이 왜 필요한가요?',a:'모든 오브젝트가 서로 부딪히면 안 되는 조합이 많기 때문입니다. 채널별로 <b>Block/Overlap/Ignore</b> 응답을 정해두면 불필요한 충돌 계산 자체를 줄일 수 있습니다.'},
+    {q:'AABB 충돌 판정 코드를 짜본다면 어떻게 하겠어요?',a:'각 박스를 최소점/최대점으로 표현하고, X·Y·Z축 각각에 대해 한쪽 최소값이 다른 쪽 최대값보다 작거나 같은지 비교합니다. <b>세 축 모두 겹쳐야</b> 전체가 겹친 것입니다.'},
+    {q:'빠른 총알이 벽을 뚫고 지나가는 문제를 어떻게 해결하나요?',a:'터널링 문제입니다. 이전 위치에서 현재 위치까지 경로 전체를 스윕 검사하는 <b>CCD</b>로 해결합니다. 계산 비용이 있어서 빠른 오브젝트에만 선택적으로 켭니다.'}
+  ];
+  var grid=document.getElementById('qaGrid');
+  qa.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d.q+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d.a+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+
+/* 9. 체크 */
+(function(){
+  var items=['구체 충돌 판정 공식을 안다','AABB 충돌 판정이 축별 1차원 겹침 검사로 이뤄진다는 걸 설명할 수 있다','브로드 페이즈와 내로우 페이즈가 왜 나뉘는지, 각각 뭘 하는지 안다','AABB의 한계(회전 미반영)를 설명할 수 있다','콜리전 채널이 정확성뿐 아니라 성능에도 영향을 준다는 걸 안다','터널링 문제가 왜 생기는지, CCD(스윕 검사)가 이걸 어떻게 해결하는지 설명할 수 있다'];
+  var KEY='gm07-check',saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/items.length*100)+'%';pct.textContent=done+' / '+items.length+' 완료'+(done===items.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  items.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+
+/* 진행바 + 스파이 */
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(c,i){c.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+</script>
+</body>
+</html>
