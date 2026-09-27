@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>보너스 · 클라 개발자 게임 수학 면접 BEST 20 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--pur),var(--ind))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em;flex-shrink:0}nav .logo b{color:var(--pur)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav button.chip{font-family:inherit;font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent;background:transparent;cursor:pointer}
+nav button.chip:hover{color:var(--txt);background:var(--card)}
+nav button.chip.on{color:#2a0a3a;background:var(--pur);border-color:var(--pur);font-weight:700}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(168,85,247,.18),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--pur);background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--pur),var(--ind2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--pur);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.tagline{color:var(--pur);font-weight:700}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--ind);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--ind2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--ind);background:var(--card)}
+.btn.pur{background:var(--pur);color:#fff}.btn.pur:hover{background:#c084fc}
+.btn.grn{background:var(--grn);color:#04221a}.btn.grn:hover{background:#6ee7b7}
+.btn.sm{padding:8px 13px;font-size:12.5px;border-radius:9px}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+code.mono, .mono{font-family:ui-monospace,monospace}
+
+/* 상단 진행률 */
+.topprog{margin-top:22px}
+.topprog .pbar{height:12px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.topprog .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pur),var(--cyan));transition:.4s}
+.topprog .row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:13px;color:var(--dim)}
+.topprog .stats{display:flex;gap:14px;margin-top:10px;flex-wrap:wrap}
+.topprog .stat{font-size:12.5px;padding:5px 11px;border-radius:20px;background:var(--bg2);border:1px solid var(--line)}
+.topprog .stat.know{color:var(--grn)}.topprog .stat.unsure{color:var(--amber)}.topprog .stat.unknown{color:var(--red)}
+
+/* 카테고리 필터(문항 리스트용, nav와 별개로 상단 재확인용) */
+.catrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.catrow button{font-family:inherit;font-size:13px;color:var(--dim);background:var(--card2);border:1px solid var(--line);padding:7px 14px;border-radius:20px;cursor:pointer;transition:.15s}
+.catrow button:hover{color:var(--txt);border-color:var(--pur)}
+.catrow button.on{background:var(--pur);color:#fff;border-color:var(--pur);font-weight:700}
+
+/* 문항 카드 */
+.qlist{margin-top:20px}
+.qcard{background:var(--card);border:1px solid var(--line);border-radius:15px;margin-top:12px;overflow:hidden;transition:border-color .2s}
+.qcard.st-know{border-color:rgba(52,211,153,.5)}
+.qcard.st-unsure{border-color:rgba(251,191,36,.5)}
+.qcard.st-unknown{border-color:rgba(248,113,113,.5)}
+.qcard summary{padding:18px 20px;cursor:pointer;list-style:none;display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.qcard summary::-webkit-details-marker{display:none}
+.qcard .qn{font-family:ui-monospace,monospace;font-weight:800;color:var(--pur);flex-shrink:0}
+.qcard .star{font-size:11px;font-weight:700;color:#2a0a3a;background:var(--amber);padding:2px 8px;border-radius:10px;flex-shrink:0;align-self:center}
+.qcard .qtext{font-weight:700;font-size:15.5px;flex:1;min-width:180px}
+.qcard .catbadge{font-size:11px;color:var(--faint);border:1px solid var(--line);padding:3px 9px;border-radius:10px;flex-shrink:0;align-self:center}
+.qcard .statedot{width:10px;height:10px;border-radius:50%;flex-shrink:0;align-self:center;background:var(--bg2);border:2px solid var(--faint)}
+.qcard.st-know .statedot{background:var(--grn);border-color:var(--grn)}
+.qcard.st-unsure .statedot{background:var(--amber);border-color:var(--amber)}
+.qcard.st-unknown .statedot{background:var(--red);border-color:var(--red)}
+.qcard .arr{margin-left:auto;color:var(--faint);transition:.25s;align-self:center}
+.qcard[open] summary .arr{transform:rotate(180deg)}
+.qcard .body{padding:0 20px 22px;color:var(--dim);font-size:14.5px}
+.qcard .ans{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;line-height:1.7}
+.qcard .ans b{color:var(--pur)}
+.qcard code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.kwrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.kw{font-family:ui-monospace,monospace;font-size:12px;padding:5px 10px;border-radius:8px;background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.35);color:#d8b4fe}
+.tailbox{margin-top:14px;font-size:13.5px;padding:12px 14px;border-radius:10px;background:rgba(34,211,238,.06);border:1px dashed rgba(34,211,238,.3)}
+.tailbox b{color:var(--cyan)}
+.tailbox a.go{color:var(--pur);font-weight:700;text-decoration:underline;cursor:pointer}
+.ratebtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.ratebtns button{font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:9px;padding:8px 13px;border:1px solid var(--line);background:var(--card2);color:var(--dim);transition:.15s}
+.ratebtns button:hover{transform:translateY(-1px)}
+.ratebtns button[data-r="know"]:hover,.ratebtns button[data-r="know"].active{background:var(--grn);color:#04221a;border-color:var(--grn)}
+.ratebtns button[data-r="unsure"]:hover,.ratebtns button[data-r="unsure"].active{background:var(--amber);color:#2a1a00;border-color:var(--amber)}
+.ratebtns button[data-r="unknown"]:hover,.ratebtns button[data-r="unknown"].active{background:var(--red);color:#2a0a0a;border-color:var(--red)}
+.opentag{font-size:11px;color:var(--pur);font-weight:700;background:rgba(168,85,247,.12);padding:3px 9px;border-radius:10px}
+
+/* 시뮬레이터 */
+.sim-idle{text-align:center;padding:20px 0}
+.sim-idle p{color:var(--dim);font-size:14.5px;max-width:520px;margin:0 auto}
+.simpanel{display:none}
+.simpanel.on{display:block}
+.simhead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.simhead .prog{font-family:ui-monospace,monospace;font-size:13px;color:var(--faint)}
+.simhead .catbadge{font-size:11px;color:var(--faint);border:1px solid var(--line);padding:3px 9px;border-radius:10px}
+.simtimerbar{height:10px;background:var(--bg2);border-radius:8px;overflow:hidden;border:1px solid var(--line);margin-top:14px}
+.simtimerbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--pur),var(--cyan));transition:width .1s linear}
+.simtimerbar.warn i{background:linear-gradient(90deg,var(--orange),var(--red))}
+.simsec{text-align:right;font-family:ui-monospace,monospace;font-size:13px;color:var(--faint);margin-top:4px}
+.simq{font-size:19px;font-weight:800;margin-top:20px;line-height:1.5}
+.simans{display:none;margin-top:18px}
+.simans.on{display:block}
+.simans .ans{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;line-height:1.7;font-size:14.5px;color:var(--dim)}
+.simans .ans b{color:var(--pur)}
+.simresult{display:none}
+.simresult.on{display:block}
+.simresult h3{font-size:20px;font-weight:800}
+.simresult .tallies{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.simresult .tallies .t{flex:1;min-width:110px;text-align:center;padding:16px 10px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+.simresult .tallies .t b{display:block;font-size:26px;font-family:ui-monospace,monospace}
+.simresult .tallies .know b{color:var(--grn)}.simresult .tallies .unsure b{color:var(--amber)}.simresult .tallies .unknown b{color:var(--red)}
+.simresult .weak{margin-top:16px;font-size:14.5px;color:var(--dim);padding:14px 16px;background:rgba(251,191,36,.06);border:1px dashed rgba(251,191,36,.3);border-radius:10px}
+.simresult .weak b{color:var(--amber)}
+
+/* 30초 체크 표 */
+table.kwtable{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+table.kwtable th,table.kwtable td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.kwtable th{color:var(--pur);font-size:12.5px;letter-spacing:.03em}
+table.kwtable td:first-child{color:var(--txt);font-weight:700;white-space:nowrap}
+table.kwtable td:last-child{color:var(--dim);font-family:ui-monospace,monospace;font-size:13px}
+
+/* 마무리 리스트/표 */
+.tiplist{margin-top:16px;padding-left:0;list-style:none}
+.tiplist li{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--dim)}
+.tiplist li:last-child{border-bottom:none}
+.tiplist li b{color:var(--txt);flex-shrink:0}
+table.donetable{width:100%;border-collapse:collapse;margin-top:18px;font-size:14px}
+table.donetable th,table.donetable td{padding:9px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.donetable th{color:var(--pur);font-size:12.5px}
+table.donetable td:last-child{color:var(--grn);font-weight:700}
+
+pre{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;margin-top:14px}
+pre .c{color:var(--faint)}pre .k{color:var(--pur)}pre .t{color:var(--cyan)}pre .s{color:var(--grn)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s}
+footer .nx:hover{border-color:var(--pur);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--pur)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.qcard summary{gap:8px}table.kwtable{font-size:12.5px}table.kwtable th,table.kwtable td{padding:8px 8px}}
+
+/* --- 목차 이동 (일괄 추가) --- */
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;
+  text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);
+  padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+footer .nx{margin:6px}
+footer .nx.alt .t{color:var(--dim);font-weight:600}
+footer .nx.alt:hover .t{color:var(--txt)}
+@media(max-width:560px){footer .nx{width:100%;max-width:320px;justify-content:center}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">MATH · <b>BONUS</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips" id="navChips">
+    <button class="chip on" data-cat="all">전체</button>
+    <button class="chip" data-cat="vec">벡터 기초</button>
+    <button class="chip" data-cat="dot">내적·외적</button>
+    <button class="chip" data-cat="coord">좌표계·회전</button>
+    <button class="chip" data-cat="coll">충돌·판정</button>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">BONUS · 면접 문제집 · 1~8강 총정리</span>
+  <h1>클라 개발자가 받는 <span class="g">게임 수학 면접 BEST 20</span></h1>
+  <p class="sub">1~8강에서 배운 걸 실제 면접 답변으로 묶었다. 답변을 통째로 외우지 말고 <b class="tagline">키워드</b>를 기억한 다음 자기 말로 재구성해라. 면접은 암송이 아니라 대화다.</p>
+  <div class="meta">
+    <div class="m">📋 문항 <b>20개</b></div>
+    <div class="m">🧩 선수지식 <b>1~8강 전체</b></div>
+    <div class="m">⏱️ 약 30분 + 시뮬레이터</div>
+  </div>
+
+  <div class="card topprog">
+    <div class="eyebrow" style="margin-bottom:2px">내 진행률</div>
+    <div class="pbar"><i id="topBar"></i></div>
+    <div class="row"><span id="topPct">0 / 20 문항 체크함</span><span id="topPctNum">0%</span></div>
+    <div class="stats">
+      <div class="stat know" id="statKnow">✅ 알았음 0</div>
+      <div class="stat unsure" id="statUnsure">🤔 애매함 0</div>
+      <div class="stat unknown" id="statUnknown">❌ 모르겠음 0</div>
+    </div>
+  </div>
+</div></header>
+
+<!-- 사용 가이드 -->
+<section id="guide"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 쓰는 법</div>
+  <h2 class="sec"><span class="n">1</span>이 문제집을 쓰는 법</h2>
+  <div class="card">
+    <p class="lead" style="margin-top:0">각 문항은 <b>Q(질문) → A(모범 답변) → 🔑(30초 키워드) → 연결(같이 묻기 쉬운 문항)</b> 순으로 구성했다. 카드를 클릭해서 펼치기 전에 먼저 스스로 답을 떠올려보고, 펼친 뒤 맞았는지 확인해라.</p>
+    <p class="hint">답변을 다 확인했으면 카드 아래 <b style="color:var(--txt)">알았음 / 애매함 / 모르겠음</b> 버튼으로 자기 상태를 기록한다. 이 기록은 브라우저에 저장되고, 아래 "면접 시뮬레이터"에서도 똑같이 쌓인다.</p>
+  </div>
+</div></section>
+
+<!-- 문항 리스트 -->
+<section id="list"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 20문항</div>
+  <h2 class="sec"><span class="n">2</span>카테고리별로 풀어보기</h2>
+  <p class="lead">위 nav 칩 또는 아래 버튼으로 카테고리를 필터링할 수 있다. 질문만 보고 스스로 답해본 다음 카드를 열어라.</p>
+  <div class="catrow" id="catRow">
+    <button class="on" data-cat="all">전체 20</button>
+    <button data-cat="vec">벡터 기초 5</button>
+    <button data-cat="dot">내적·외적 5</button>
+    <button data-cat="coord">좌표계·회전 5</button>
+    <button data-cat="coll">충돌·판정 5</button>
+  </div>
+  <div class="qlist" id="qList"></div>
+</div></section>
+
+<!-- 면접 시뮬레이터 -->
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 킬러 · 면접 시뮬레이터</div>
+  <h2 class="sec"><span class="n">3</span>실전처럼 — 면접 시뮬레이터</h2>
+  <p class="lead">20문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
+  <div class="card">
+    <div class="sim-idle" id="simIdle">
+      <p>준비되면 시작해라. 순서는 매번 랜덤으로 섞인다.</p>
+      <div class="btnrow" style="justify-content:center">
+        <button class="btn pur" id="simStart">🎤 면접 시뮬레이터 시작</button>
+      </div>
+    </div>
+
+    <div class="simpanel" id="simPanel">
+      <div class="simhead">
+        <span class="prog" id="simProg">1 / 20</span>
+        <span class="catbadge" id="simCatBadge">-</span>
+      </div>
+      <div class="simtimerbar" id="simTimerBar"><i id="simTimerFill"></i></div>
+      <div class="simsec" id="simSecText">30.0초</div>
+      <div class="simq" id="simQText"></div>
+      <div class="btnrow" style="justify-content:center" id="simRevealRow">
+        <button class="btn cyan" id="simReveal" style="background:var(--cyan);color:#04243a">💡 답변 확인</button>
+      </div>
+      <div class="simans" id="simAns">
+        <div class="ans" id="simAnsText"></div>
+        <div class="kwrow" id="simKwRow"></div>
+        <div class="tailbox" id="simTailBox"></div>
+        <div class="ratebtns" id="simRateBtns">
+          <button data-r="know">✅ 알았음</button>
+          <button data-r="unsure">🤔 애매함</button>
+          <button data-r="unknown">❌ 모르겠음</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="simresult" id="simResult">
+      <h3>🏁 시뮬레이터 결과</h3>
+      <div class="tallies">
+        <div class="t know"><b id="rKnow">0</b>알았음</div>
+        <div class="t unsure"><b id="rUnsure">0</b>애매함</div>
+        <div class="t unknown"><b id="rUnknown">0</b>모르겠음</div>
+      </div>
+      <div class="weak" id="rWeak"></div>
+      <div class="btnrow" style="justify-content:center">
+        <button class="btn pur" id="simRestart">↺ 다시 시뮬레이션</button>
+      </div>
+    </div>
+  </div>
+</div></section>
+
+<!-- 30초 체크 -->
+<section id="cheat"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 면접 직전</div>
+  <h2 class="sec"><span class="n">4</span>면접 직전 30초 체크 — 키워드만</h2>
+  <div class="card">
+    <table class="kwtable">
+      <tr><th>주제</th><th>한 줄 요약</th></tr>
+      <tr><td>벡터 vs 스칼라</td><td>방향 있으면 벡터, 없으면 스칼라</td></tr>
+      <tr><td>정규화</td><td>방향 유지, 크기만 1로. GetSafeNormal 써라</td></tr>
+      <tr><td>내적</td><td>정규화된 벡터끼리면 결과 = cos(각도)</td></tr>
+      <tr><td>외적</td><td>결과는 벡터, 두 벡터 모두에 수직, 순서 바꾸면 반대 방향</td></tr>
+      <tr><td>내적 용도</td><td>시야각(FOV) 판정, 투영</td></tr>
+      <tr><td>외적 용도</td><td>좌/우 판정, 회전축, 법선</td></tr>
+      <tr><td>월드 vs 로컬 좌표</td><td>절대 위치 vs 부모 기준 상대 위치</td></tr>
+      <tr><td>FTransform</td><td>위치 + 회전 + 스케일</td></tr>
+      <tr><td>Look-At</td><td>방향 벡터 → atan2 → Yaw/Pitch (Roll은 별도)</td></tr>
+      <tr><td>구체 충돌</td><td>중심 거리 &lt;= 반지름 합</td></tr>
+      <tr><td>AABB 충돌</td><td>세 축 모두 겹쳐야 충돌</td></tr>
+      <tr><td>브로드/내로우 페이즈</td><td>싼 필터링 먼저, 비싼 정밀 검사는 나중에</td></tr>
+      <tr><td>점-다각형 (볼록)</td><td>외적 부호가 모든 변에서 일관되면 내부</td></tr>
+      <tr><td>점-다각형 (오목까지)</td><td>Ray Casting, 교차 횟수 홀수면 내부</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<!-- 마무리 -->
+<section id="final"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 마무리</div>
+  <h2 class="sec"><span class="n">5</span>마지막 조언</h2>
+  <div class="card">
+    <ul class="tiplist">
+      <li><b>1.</b> 암송하지 마라. 키워드를 기억하고 자기 말로. 외운 티 나면 감점.</li>
+      <li><b>2.</b> 모르면 "모릅니다"가 낫다. 아는 척하다 꼬리질문에서 무너지는 게 최악.</li>
+      <li><b>3.</b> 게임 경험과 엮어라. "언리얼에서 ~할 때 이게 문제였다"는 답이 신입한테 가장 강력하다.</li>
+      <li><b>4.</b> 막히는 주제는 카드에 적힌 출처 강의로 돌아가라. 각 강의 "면접에서 나오면" 섹션만 모아 읽어도 좋다.</li>
+    </ul>
+    <p class="lead" style="margin-top:20px;text-align:center">수고했다. 이직 잘 되길.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" style="color:var(--pur)">강의 시리즈 완료</div>
+    <table class="donetable">
+      <tr><th>Part</th><th>강의</th><th>상태</th></tr>
+      <tr><td>A. 벡터 기초</td><td>1~2강</td><td>완료</td></tr>
+      <tr><td>B. 내적과 외적</td><td>3~4강</td><td>완료</td></tr>
+      <tr><td>C. 좌표계와 회전</td><td>5~6강</td><td>완료</td></tr>
+      <tr><td>D. 충돌과 판정</td><td>7~8강</td><td>완료</td></tr>
+      <tr><td>보너스</td><td>면접 BEST 20</td><td>완료</td></tr>
+    </table>
+    <p class="hint" style="text-align:center;margin-top:16px">게임 수학 강의 시리즈 끝.</p>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx alt" href="08강_점과_다각형.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 8강 — 점과 다각형</div></div></a>
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">강의 목록</div><div class="t">← 전체 게임 수학 강의 목록으로</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 보너스 · 면접 BEST 20</div>
+</div></footer>
+
+<script>
+/* ===== 데이터 ===== */
+/* tail 안의 [[Qn]] 은 목록에서 해당 문항 카드로 이동하는 링크가 된다 */
+var QUESTIONS = [
+  {id:'q1',cat:'vec',star:false,q:'벡터와 스칼라의 차이가 뭔가요?',src:'1강',
+   a:'<b>스칼라</b>는 크기만 있는 값이고 <b>벡터</b>는 크기와 방향을 같이 갖는 값입니다. 데미지나 HP는 스칼라고, 속도나 힘은 방향이 있으니 벡터입니다.',
+   kw:['스칼라 = 크기만','벡터 = 크기+방향','HP·데미지 vs 속도·힘'],
+   tail:'같이 묻기 쉬운 문항 → [[Q2]]'},
+  {id:'q2',cat:'vec',star:false,q:'FVector 하나가 항상 위치를 의미하나요?',src:'1강',
+   a:'아니요. 같은 <code>FVector</code> 타입이라도 문맥에 따라 <b>위치, 방향, 속도, 힘</b>을 전부 표현할 수 있습니다. 변수명과 문맥으로 구분해야 합니다.',
+   kw:['같은 타입 다른 의미','위치·방향·속도·힘','변수명과 문맥'],
+   tail:'같이 묻기 쉬운 문항 → [[Q1]]'},
+  {id:'q3',cat:'vec',star:false,q:'정규화가 뭐고 왜 필요한가요?',src:'2강',
+   a:'벡터를 <b>자기 크기로 나눠서</b> 방향은 유지하고 크기만 1로 만드는 연산입니다. 이동 입력처럼 방향만 필요한 자리에 크기가 제각각인 벡터를 그대로 쓰면, <b>대각선 이동이 더 빨라지는</b> 것 같은 버그가 생기기 때문에 정규화가 필요합니다.',
+   kw:['크기를 1로','방향 유지','대각선 이동 버그'],
+   tail:'같이 묻기 쉬운 문항 → [[Q4]]'},
+  {id:'q4',cat:'vec',star:false,q:'Normalize()와 GetSafeNormal()의 차이는요?',src:'2강',
+   a:'<code>Normalize()</code>는 크기가 0에 가까우면 <b>0으로 나누기</b>가 발생해서 NaN이 나올 수 있습니다. <code>GetSafeNormal()</code>은 이 경우를 감지해서 <b>0벡터를 안전하게 반환</b>합니다. 실무에서는 거의 항상 <code>GetSafeNormal()</code>을 씁니다.',
+   kw:['0으로 나누기 → NaN','0벡터 안전 반환','실무는 GetSafeNormal'],
+   tail:'같이 묻기 쉬운 문항 → [[Q3]] [[Q5]]'},
+  {id:'q5',cat:'vec',star:false,q:'거리 비교할 때 왜 SizeSquared를 쓰나요?',src:'2강',
+   a:'<b>제곱근 연산</b>이 비교적 비싼 연산이라, 단순히 대소만 비교할 거면 제곱값끼리 비교해도 결과가 같기 때문입니다. 거리 비교가 많은 로직(가장 가까운 적 찾기 등)에서 성능 차이가 실제로 납니다.',
+   kw:['sqrt 비용 회피','제곱끼리 비교','가장 가까운 적 찾기'],
+   tail:'같이 묻기 쉬운 문항 → [[Q4]]'},
+
+  {id:'q6',cat:'dot',star:false,q:'내적이 뭔가요?',src:'3강',
+   a:'두 벡터의 <b>같은 축 성분끼리 곱해서 더한</b> 값입니다. 결과는 <b>스칼라</b>이고, 두 벡터를 정규화한 상태에서 내적하면 그 값이 곧 둘 사이 각도의 <b>코사인</b> 값이 됩니다.',
+   kw:['성분끼리 곱해 합','결과 = 스칼라','정규화하면 cos(각도)'],
+   tail:'같이 묻기 쉬운 문항 → [[Q7]] [[Q10]]'},
+  {id:'q7',cat:'dot',star:false,q:'내적으로 시야각(FOV) 판정을 어떻게 하나요?',src:'3강',
+   a:'정면 방향 벡터와 타겟 방향 벡터를 <b>정규화</b>해서 내적을 구하고, 원하는 시야각의 <b>코사인 값</b>과 비교합니다. 각도가 커질수록 코사인 값은 작아진다는 걸 기억해야 <b>부등호 방향</b>을 안 틀립니다.',
+   kw:['정규화 후 내적','시야각의 cos와 비교','각도↑ cos↓ (부등호)'],
+   tail:'같이 묻기 쉬운 문항 → [[Q6]]'},
+  {id:'q8',cat:'dot',star:false,q:'외적이 뭔가요?',src:'4강',
+   a:'두 벡터로부터 <b>그 둘 모두에 수직인 새 벡터</b>를 만드는 연산입니다. 내적은 결과가 스칼라지만 외적은 <b>결과가 벡터</b>라는 게 가장 큰 차이입니다.',
+   kw:['두 벡터 모두에 수직','결과 = 벡터','내적은 스칼라'],
+   tail:'같이 묻기 쉬운 문항 → [[Q9]] [[Q10]]'},
+  {id:'q9',cat:'dot',star:false,q:'외적으로 좌/우를 어떻게 판정하나요?',src:'4강',
+   a:'정면 벡터와 타겟 방향 벡터를 외적하면, 결과 벡터의 <b>특정 축(언리얼 기준 Z) 부호</b>로 좌/우를 판정할 수 있습니다. 단, 외적은 <b>인자 순서를 바꾸면 결과가 반대 방향</b>이 되니 순서를 일관되게 써야 합니다.',
+   kw:['결과 벡터의 Z 부호','순서 바꾸면 반대','순서 일관성'],
+   tail:'같이 묻기 쉬운 문항 → [[Q8]] [[Q10]]'},
+  {id:'q10',cat:'dot',star:false,q:'내적과 외적을 각각 언제 쓰나요?',src:'3~4강',
+   a:'\'얼마나 같은 방향인가\'처럼 <b>각도 크기 자체</b>가 중요할 때는 <b>내적</b>을, \'어느 쪽으로 치우쳤는가\'나 회전축처럼 <b>방향의 부호나 수직 방향</b>이 필요할 때는 <b>외적</b>을 씁니다.',
+   kw:['내적 = 얼마나 같은 방향','외적 = 어느 쪽·수직 방향','FOV vs 좌/우'],
+   tail:'같이 묻기 쉬운 문항 → [[Q7]] [[Q9]]'},
+
+  {id:'q11',cat:'coord',star:false,q:'월드 좌표와 로컬 좌표의 차이가 뭔가요?',src:'5강',
+   a:'<b>월드 좌표</b>는 레벨 원점 기준 절대 위치고, <b>로컬 좌표</b>는 부모나 소켓 같은 기준점에 대한 상대 위치입니다. 무기를 손 소켓에 붙일 때 로컬 좌표를 고정해두면, 캐릭터가 움직여도 월드 좌표만 자동으로 재계산되면서 손을 따라다닙니다.',
+   kw:['월드 = 절대','로컬 = 부모 기준 상대','손 소켓의 무기'],
+   tail:'같이 묻기 쉬운 문항 → [[Q12]]'},
+  {id:'q12',cat:'coord',star:false,q:'FTransform은 뭘 담고 있나요?',src:'5강',
+   a:'<b>위치, 회전, 스케일</b> 세 가지를 하나로 묶은 구조체입니다. 이 셋을 합치면 한 좌표계를 다른 좌표계로 바꾸는 변환 전체를 표현할 수 있습니다.',
+   kw:['위치+회전+스케일','좌표계 변환 전체'],
+   tail:'같이 묻기 쉬운 문항 → [[Q11]]'},
+  {id:'q13',cat:'coord',star:false,q:'카메라나 몬스터가 특정 지점을 바라보게 하려면 회전값을 어떻게 구하나요?',src:'6강',
+   a:'목표 지점에서 현재 위치를 빼서 <b>방향 벡터</b>를 구하고 정규화한 다음, 그 벡터를 <b>회전값으로 변환</b>합니다. 언리얼의 <code>FindLookAtRotation</code>이 이 과정을 대신해줍니다.',
+   kw:['목표 − 현재 = 방향','정규화','방향 → 회전값','FindLookAtRotation'],
+   tail:'같이 묻기 쉬운 문항 → [[Q14]] [[Q15]]'},
+  {id:'q14',cat:'coord',star:false,q:'FindLookAtRotation은 내부적으로 어떻게 동작하나요?',src:'6강',
+   a:'방향 벡터를 구해서 정규화하고, 그 벡터의 X, Y, Z 성분을 <b>atan2 기반</b>으로 <b>Yaw와 Pitch</b>로 변환합니다. Roll은 방향 벡터만으로는 결정되지 않아서 보통 0으로 둡니다.',
+   kw:['atan2','Yaw / Pitch','Roll은 0'],
+   tail:'같이 묻기 쉬운 문항 → [[Q13]]'},
+  {id:'q15',cat:'coord',star:false,q:'캐릭터가 위/아래를 볼 때 몸통까지 숙여지면 이상한데 어떻게 처리하나요?',src:'6강',
+   a:'몸통 회전에는 <b>Pitch를 0으로 고정</b>해서 좌우 회전(Yaw)만 적용하고, 실제 시선 방향은 카메라나 머리 본 같은 <b>별도 요소</b>에 반영합니다.',
+   kw:['몸통 Pitch = 0','Yaw만 적용','시선은 카메라·머리 본'],
+   tail:'같이 묻기 쉬운 문항 → [[Q13]]'},
+
+  {id:'q16',cat:'coll',star:false,q:'물체 간 충돌은 어떻게 감지하나요?',src:'7강',
+   a:'메시 원본 형태 대신 <b>구체나 박스처럼 단순화된 콜리전 도형</b>으로 겹침을 계산합니다. 구체는 <b>중심 거리와 반지름 합</b>을 비교하고, AABB는 <b>각 축의 최소/최대값이 겹치는지</b> 확인합니다.',
+   kw:['단순화된 콜리전 도형','구체: 거리 ≤ 반지름 합','AABB: 세 축 모두 겹침'],
+   tail:'같이 묻기 쉬운 문항 → [[Q17]] [[Q20]]'},
+  {id:'q17',cat:'coll',star:false,q:'브로드 페이즈와 내로우 페이즈가 왜 나뉘나요?',src:'7강',
+   a:'오브젝트가 많을 때 모든 쌍을 정밀 검사하면 <b>계산량이 너무 커지기</b> 때문입니다. 먼저 싼 연산(AABB 등)으로 겹칠 가능성이 있는 쌍만 걸러내고, 그 소수만 정밀하게 검사해서 전체 연산량을 줄입니다.',
+   kw:['모든 쌍 검사는 비쌈','싼 필터링 먼저','소수만 정밀 검사'],
+   tail:'같이 묻기 쉬운 문항 → [[Q16]] [[Q20]]'},
+  {id:'q18',cat:'coll',star:false,q:'점이 다각형 내부에 있는지 어떻게 판정하나요?',src:'8강',
+   a:'<b>볼록 다각형</b>이면 각 변에 대해 <b>외적 부호가 일관되게</b> 같은 쪽인지 확인합니다. <b>오목 다각형</b>까지 다뤄야 하면 점에서 광선을 쏴서 다각형 경계와 교차하는 횟수가 홀수인지 짝수인지로 판정합니다.',
+   kw:['볼록: 외적 부호 일관','오목: Ray Casting','교차 홀수 = 내부'],
+   tail:'같이 묻기 쉬운 문항 → [[Q19]]'},
+  {id:'q19',cat:'coll',star:false,q:'Ray Casting 방식이 왜 홀수/짝수로 안/밖을 구분하나요?',src:'8강',
+   a:'점에서 뻗은 광선이 다각형 경계를 <b>한 번 지날 때마다 안과 밖이 뒤집히기</b> 때문입니다. 다각형 모양과 무관하게 항상 성립해서, 교차 횟수의 홀짝만 세면 일반적으로 판정할 수 있습니다.',
+   kw:['경계 통과마다 안↔밖 반전','모양 무관','교차 횟수의 홀짝'],
+   tail:'같이 묻기 쉬운 문항 → [[Q18]]'},
+  {id:'q20',cat:'coll',star:false,q:'성능이 중요한 상황에서 충돌 판정 방식을 어떻게 고르겠어요?',src:'7~8강 종합',
+   a:'가능한 한 <b>싼 도형부터</b> 씁니다. 대략적인 범위 판정은 구체나 AABB로 충분하고, 실제 정확한 충돌 지점이 필요한 <b>마지막 단계에서만</b> 정밀 충돌을 씁니다. 처음부터 모든 오브젝트에 정밀 메시 충돌을 매 프레임 돌리는 건 낭비입니다.',
+   kw:['싼 도형부터','정밀 검사는 마지막에','전 오브젝트 정밀 충돌은 낭비'],
+   tail:'같이 묻기 쉬운 문항 → [[Q16]] [[Q17]]'}
+];
+var CATLABEL = {vec:'벡터 기초',dot:'내적·외적',coord:'좌표계·회전',coll:'충돌·판정'};
+var STORE_KEY = 'gmbonus-check';
+
+/* ===== 꼬리질문 링크 ([[Q2]] → 해당 카드로 이동) ===== */
+function linkTail(t){ return t.replace(/\[\[(Q\d+)\]\]/g, function(m,q){ return '<a class="go" href="#" data-q="'+q.toLowerCase()+'">'+q+'</a>'; }); }
+function plainTail(t){ return t.replace(/\[\[(Q\d+)\]\]/g, '$1'); }
+
+/* ===== 상태 저장/로드 ===== */
+function loadState(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)||'{}'); }catch(e){ return {}; } }
+function saveState(st){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(st)); }catch(e){} }
+var state = loadState();
+
+function setRating(id, r){
+  state[id] = r;
+  saveState(state);
+  updateTopProgress();
+  var card = document.querySelector('.qcard[data-id="'+id+'"]');
+  if(card){
+    card.classList.remove('st-know','st-unsure','st-unknown');
+    card.classList.add('st-'+r);
+    var btns = card.querySelectorAll('.ratebtns button');
+    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.r===r); });
+  }
+}
+
+function updateTopProgress(){
+  var total = QUESTIONS.length, done=0, k=0,u=0,x=0;
+  QUESTIONS.forEach(function(q){
+    var r = state[q.id];
+    if(r){ done++; if(r==='know')k++; else if(r==='unsure')u++; else if(r==='unknown')x++; }
+  });
+  document.getElementById('topBar').style.width = (done/total*100)+'%';
+  document.getElementById('topPct').textContent = done+' / '+total+' 문항 체크함';
+  document.getElementById('topPctNum').textContent = Math.round(done/total*100)+'%';
+  document.getElementById('statKnow').textContent = '✅ 알았음 '+k;
+  document.getElementById('statUnsure').textContent = '🤔 애매함 '+u;
+  document.getElementById('statUnknown').textContent = '❌ 모르겠음 '+x;
+}
+
+/* ===== 문항 리스트 렌더 ===== */
+(function(){
+  var list = document.getElementById('qList');
+  QUESTIONS.forEach(function(qd, i){
+    var det = document.createElement('details');
+    det.className = 'qcard';
+    if(state[qd.id]) det.classList.add('st-'+state[qd.id]);
+    det.dataset.id = qd.id;
+    det.dataset.cat = qd.cat;
+
+    var kwHtml = qd.kwText
+      ? '<p style="margin-top:14px;font-size:13px;color:var(--faint)">🔑 '+qd.kwText+'</p>'
+      : '<div class="kwrow">'+qd.kw.map(function(k){return '<span class="kw">🔑 '+k+'</span>';}).join('')+'</div>';
+
+    det.innerHTML =
+      '<summary>'+
+        '<span class="statedot"></span>'+
+        '<span class="qn">Q'+(i+1)+'</span>'+
+        (qd.star?'<span class="star">★최빈출</span>':'')+
+        (qd.open?'<span class="opentag">오픈 질문</span>':'')+
+        '<span class="qtext">'+qd.q+'</span>'+
+        '<span class="catbadge">'+CATLABEL[qd.cat]+' · '+qd.src+'</span>'+
+        '<span class="arr">▾</span>'+
+      '</summary>'+
+      '<div class="body">'+
+        '<div class="ans"><b>A.</b> '+qd.a+'</div>'+
+        kwHtml+
+        (qd.tail?'<div class="tailbox"><b>연결:</b> '+linkTail(qd.tail)+'</div>':'')+
+        '<div class="ratebtns">'+
+          '<button data-r="know"'+(state[qd.id]==='know'?' class="active"':'')+'>✅ 알았음</button>'+
+          '<button data-r="unsure"'+(state[qd.id]==='unsure'?' class="active"':'')+'>🤔 애매함</button>'+
+          '<button data-r="unknown"'+(state[qd.id]==='unknown'?' class="active"':'')+'>❌ 모르겠음</button>'+
+        '</div>'+
+      '</div>';
+
+    det.querySelectorAll('.ratebtns button').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        setRating(qd.id, btn.dataset.r);
+      });
+    });
+    list.appendChild(det);
+  });
+  updateTopProgress();
+})();
+
+/* ===== 꼬리 링크 클릭: 필터 해제 후 대상 카드 펼치기 ===== */
+document.getElementById('qList').addEventListener('click', function(e){
+  var a = e.target.closest ? e.target.closest('a.go') : null;
+  if(!a) return;
+  e.preventDefault(); e.stopPropagation();
+  var all = document.querySelector('#catRow button[data-cat="all"]');
+  if(all) all.click();
+  var card = document.querySelector('.qcard[data-id="'+a.dataset.q+'"]');
+  if(card){ card.open = true; card.scrollIntoView({behavior:'smooth', block:'center'}); }
+});
+
+/* ===== 카테고리 필터 (nav 칩 + 리스트 위 버튼 동기화) ===== */
+(function(){
+  var navChips = [].slice.call(document.querySelectorAll('#navChips .chip'));
+  var catBtns = [].slice.call(document.querySelectorAll('#catRow button'));
+  var cards = [].slice.call(document.querySelectorAll('.qcard'));
+
+  function applyFilter(cat){
+    navChips.forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); });
+    catBtns.forEach(function(c){ c.classList.toggle('on', c.dataset.cat===cat); });
+    cards.forEach(function(c){
+      c.style.display = (cat==='all' || c.dataset.cat===cat) ? '' : 'none';
+    });
+  }
+  navChips.forEach(function(c){
+    c.addEventListener('click', function(){
+      applyFilter(c.dataset.cat);
+      document.getElementById('list').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+  catBtns.forEach(function(c){
+    c.addEventListener('click', function(){ applyFilter(c.dataset.cat); });
+  });
+})();
+
+/* ===== 면접 시뮬레이터 ===== */
+(function(){
+  var idleBox = document.getElementById('simIdle');
+  var panel = document.getElementById('simPanel');
+  var result = document.getElementById('simResult');
+  var progEl = document.getElementById('simProg');
+  var catBadge = document.getElementById('simCatBadge');
+  var timerBar = document.getElementById('simTimerBar');
+  var timerFill = document.getElementById('simTimerFill');
+  var secText = document.getElementById('simSecText');
+  var qText = document.getElementById('simQText');
+  var revealRow = document.getElementById('simRevealRow');
+  var ansBox = document.getElementById('simAns');
+  var ansText = document.getElementById('simAnsText');
+  var kwRow = document.getElementById('simKwRow');
+  var tailBox = document.getElementById('simTailBox');
+  var rateBtns = [].slice.call(document.querySelectorAll('#simRateBtns button'));
+
+  var DURATION = 30;
+  var queue = [], idx = 0, remain = DURATION, timerId = null, revealed = false;
+  var tally = {know:0, unsure:0, unknown:0};
+  var catTally = {};
+
+  function shuffle(arr){
+    var a = arr.slice();
+    for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; }
+    return a;
+  }
+
+  function startSim(){
+    queue = shuffle(QUESTIONS);
+    idx = 0;
+    tally = {know:0, unsure:0, unknown:0};
+    catTally = {};
+    idleBox.style.display = 'none';
+    result.classList.remove('on');
+    panel.classList.add('on');
+    showQuestion();
+  }
+
+  function showQuestion(){
+    revealed = false;
+    var qd = queue[idx];
+    progEl.textContent = (idx+1)+' / '+queue.length;
+    catBadge.textContent = CATLABEL[qd.cat]+' · '+qd.src;
+    qText.textContent = qd.q + (qd.star?'  ★최빈출':'');
+    ansBox.classList.remove('on');
+    revealRow.style.display = 'flex';
+    rateBtns.forEach(function(b){ b.classList.remove('active'); });
+    timerBar.classList.remove('warn');
+    remain = DURATION;
+    updateTimerUI();
+    if(timerId) clearInterval(timerId);
+    timerId = setInterval(function(){
+      remain -= 0.1;
+      if(remain <= 0){ remain = 0; updateTimerUI(); clearInterval(timerId); revealAnswer(); return; }
+      updateTimerUI();
+    }, 100);
+  }
+
+  function updateTimerUI(){
+    var pct = Math.max(0, remain/DURATION*100);
+    timerFill.style.width = pct+'%';
+    secText.textContent = remain.toFixed(1)+'초';
+    timerBar.classList.toggle('warn', remain <= 10);
+  }
+
+  function revealAnswer(){
+    if(revealed) return;
+    revealed = true;
+    if(timerId) clearInterval(timerId);
+    var qd = queue[idx];
+    ansText.innerHTML = '<b>A.</b> '+qd.a;
+    if(qd.kwText){
+      kwRow.innerHTML = '<span class="kw" style="width:100%">🔑 '+qd.kwText+'</span>';
+    } else {
+      kwRow.innerHTML = qd.kw.map(function(k){return '<span class="kw">🔑 '+k+'</span>';}).join('');
+    }
+    tailBox.style.display = qd.tail ? '' : 'none';
+    tailBox.innerHTML = qd.tail ? '<b>연결:</b> '+plainTail(qd.tail) : '';
+    revealRow.style.display = 'none';
+    ansBox.classList.add('on');
+  }
+
+  rateBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      if(!revealed) revealAnswer();
+      var qd = queue[idx];
+      var r = btn.dataset.r;
+      rateBtns.forEach(function(b){ b.classList.toggle('active', b===btn); });
+      setRating(qd.id, r);
+      tally[r]++;
+      if(!catTally[qd.cat]) catTally[qd.cat] = {know:0,unsure:0,unknown:0};
+      catTally[qd.cat][r]++;
+      setTimeout(function(){
+        idx++;
+        if(idx >= queue.length){ finishSim(); }
+        else{ showQuestion(); }
+      }, 400);
+    });
+  });
+
+  document.getElementById('simReveal').addEventListener('click', revealAnswer);
+
+  function finishSim(){
+    panel.classList.remove('on');
+    result.classList.add('on');
+    document.getElementById('rKnow').textContent = tally.know;
+    document.getElementById('rUnsure').textContent = tally.unsure;
+    document.getElementById('rUnknown').textContent = tally.unknown;
+
+    var weakCats = Object.keys(catTally).map(function(c){
+      var t = catTally[c];
+      return {cat:c, weak:t.unsure+t.unknown};
+    }).filter(function(x){ return x.weak>0; }).sort(function(a,b){ return b.weak-a.weak; });
+
+    var weakBox = document.getElementById('rWeak');
+    if(weakCats.length===0){
+      weakBox.innerHTML = '🎉 모든 문항을 "알았음"으로 답했다. 약한 카테고리가 없다.';
+    } else {
+      var top = weakCats[0].weak;
+      var names = weakCats.filter(function(x){ return x.weak===top; }).map(function(x){ return CATLABEL[x.cat]; });
+      weakBox.innerHTML = '취약 카테고리: <b>'+names.join(', ')+'</b> — 이 파트를 다시 복습해라.';
+    }
+  }
+
+  document.getElementById('simStart').addEventListener('click', startSim);
+  document.getElementById('simRestart').addEventListener('click', function(){
+    result.classList.remove('on');
+    idleBox.style.display = 'block';
+  });
+})();
+
+/* ===== 스크롤 진행바 ===== */
+(function(){
+  var bar = document.getElementById('bar');
+  function onScroll(){
+    var s = window.scrollY, h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h>0 ? s/h*100 : 0)+'%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
