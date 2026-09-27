@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>4-1강 · 몬스터 목록 자료구조 고르기 — 인터랙티브 보충 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 몬스터 목록 삭제 시뮬레이터 + 프레임 비용 계산기 */
+.arr{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;min-height:54px;padding:12px;background:var(--bg2);border:1px solid var(--line);border-radius:12px}
+.arr .c{width:44px;height:44px;border-radius:9px;background:var(--card2);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:13px;font-weight:800;cursor:pointer;transition:.2s;position:relative}
+.arr .c small{font-size:9px;color:var(--faint);font-weight:500}
+.arr .c:hover{border-color:var(--red)}
+.arr .c.mv{border-color:var(--amber);background:rgba(251,191,36,.16)}
+.arr .c.dead{opacity:.45;text-decoration:line-through;border-style:dashed;border-color:var(--red)}
+.arr.list .c{border-radius:22px}
+.arr.list .c::after{content:"→";position:absolute;right:-10px;top:12px;color:var(--faint);font-size:11px}
+.arr.list .c:last-child::after{content:""}
+.arr.list{gap:14px}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:14px}
+.ctrl .btn{padding:9px 14px;font-size:13px}
+.bars{margin-top:16px;display:grid;gap:10px}
+.brow{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;font-size:13px}
+.brow .nm{color:var(--dim)}
+.brow .tr{height:20px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.brow .tr i{display:block;height:100%;border-radius:7px;transition:width .35s}
+.brow .vl{font-family:ui-monospace,monospace;text-align:right;color:var(--txt)}
+.brow.best .nm{color:var(--grn);font-weight:700}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);cursor:pointer}
+.chk input{accent-color:var(--acc)}
+.dem{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.dem .d{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.dem .d h4{font-size:13.5px;margin-bottom:8px}
+.dem .d.bad h4{color:var(--red)}.dem .d.good h4{color:var(--grn)}
+.dem .row{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+.dem .row span{font-family:ui-monospace,monospace;font-size:12px;padding:3px 8px;border-radius:7px;border:1px solid var(--line);background:var(--bg2)}
+.dem .row span.x{border-color:var(--red);color:var(--red);text-decoration:line-through}
+.dem .row span.ok{border-color:rgba(52,211,153,.5);color:var(--grn)}
+.dem .res{font-size:12.5px;color:var(--dim);margin-top:6px}
+@media(max-width:600px){.brow{grid-template-columns:90px 1fr 58px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>4-1강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">질문</a>
+    <a class="chip" href="#cand">후보</a>
+    <a class="chip" href="#sim">삭제 시뮬</a>
+    <a class="chip" href="#cost">비용</a>
+    <a class="chip" href="#danger">함정</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">보충 강의 · AI 면접 실전 기출 · 4강 후속</span>
+  <h1>몬스터 목록, <span class="g">뭘 쓸까</span></h1>
+  <p class="sub">"매 프레임 전체를 순회하는데 삽입/삭제도 많다." 반사적으로 <code style="background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan)">std::list</code>라고 답하면 4강의 함정에 그대로 빠진다. 후보를 걸러내고, swap-and-pop과 지연 삭제로 푸는 과정을 직접 눌러보며 익힌다.</p>
+  <div class="meta">
+    <div class="m">🎯 실제로 받은 질문</div>
+    <div class="m">🧩 선수지식 <b>4강 · 7강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 실제 질문</div>
+  <h2 class="sec"><span class="n">1</span>"몬스터 목록에 어떤 STL 자료구조를 쓸래?"</h2>
+  <p class="lead">"게임에서 몬스터 객체의 목록을 만들어야 해. <b>매 프레임마다 호출해서 렌더</b>해야 하고, <b>삽입과 삭제가 많이 일어나.</b>" — 조건이 두 개다.</p>
+  <div class="two">
+    <div class="box bad"><h4>❌ 반사적인 답</h4><p>"삽입/삭제가 많으니까 <code>std::list</code>요." — 조건 ①(매 프레임 전체 순회)을 안 봤다. 순회가 노드마다 캐시 미스를 낸다(4강).</p></div>
+    <div class="box good"><h4>✅ 조건을 먼저 나눈다</h4><p><b>① 접근 패턴</b>이 매 프레임 전체 순회 → 연속 메모리 우선. <b>② 삭제</b>는 순서가 필요한가? → 아니면 swap-and-pop. 이 순서로 골라야 한다.</p></div>
+  </div>
+</div></section>
+
+<section id="cand"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 후보 걸러내기</div>
+  <h2 class="sec"><span class="n">2</span>후보를 늘어놓고, 조건 ①로 걸러낸다</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>STL</th><th>언리얼</th><th>순회</th><th>중간 삭제</th><th>비고</th></tr>
+      <tr><td><b>vector</b></td><td>TArray</td><td>매우 빠름</td><td>O(n) → <b>swap-and-pop이면 O(1)</b></td><td>기본값</td></tr>
+      <tr><td>list</td><td>TDoubleLinkedList</td><td>느림(노드마다 미스)</td><td>반복자 있으면 O(1)</td><td>주소·반복자 안정</td></tr>
+      <tr><td>deque</td><td>TDeque (UE5)</td><td>vector보다 조금 느림</td><td>O(n)</td><td>앞/뒤 삽입이 필요할 때</td></tr>
+      <tr><td>set / map</td><td>TSet / TMap</td><td>느림</td><td>O(log n) / O(1) 평균</td><td><b>키로 찾을 때</b></td></tr>
+    </table>
+    <p class="hint"><b>전 원소 순회</b>가 가장 잦은 연산이면 연속 메모리가 아닌 후보는 대부분 탈락한다. 남는 문제는 단 하나 — <b>"vector의 중간 삭제가 O(n)인데 어떡하나."</b> 답은 swap-and-pop이다.</p>
+    <pre class="code"><span class="cm">// 순서가 상관없으면: 지울 자리에 마지막 원소를 옮기고 끝을 제거 — O(1)</span>
+<span class="kw">void</span> RemoveAtSwap(std::vector&lt;FMonster&gt;&amp; V, <span class="kw">size_t</span> Index)
+{
+    V[Index] = std::move(V.back());
+    V.pop_back();
+}
+<span class="cm">// 언리얼은 이미 만들어 놨다</span>
+Monsters.RemoveAtSwap(Index);</pre>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 지워보기</div>
+  <h2 class="sec"><span class="n">3</span>몬스터 목록 삭제 시뮬레이터</h2>
+  <p class="lead">전략을 고르고 <b>몬스터 카드를 클릭</b>해 죽여보자. 노란 카드는 이번에 <b>메모리에서 옮겨진 원소</b>다. 전략마다 <b>원소 이동 횟수</b>와 <b>순서 유지 여부</b>가 어떻게 달라지는지 본다. 순서 유지가 필요 없다면 왜 swap-and-pop이 이기는지가 보인다.</p>
+  <div class="card">
+    <div class="modetoggle" id="stMode">
+      <button data-m="erase" class="on">vector erase (밀기)</button>
+      <button data-m="swap">swap-and-pop</button>
+      <button data-m="defer">지연 삭제 (일괄 정리)</button>
+      <button data-m="list">std::list (노드 해제)</button>
+    </div>
+    <div class="arr" id="arr"></div>
+    <div class="stats" id="stStats"></div>
+    <div class="ctrl">
+      <button class="btn ghost" id="bRand">💀 랜덤 하나 죽이기</button>
+      <button class="btn ghost" id="bSpawn">➕ 스폰 (끝에 추가)</button>
+      <button class="btn ghost" id="bFlush" style="display:none">🧹 프레임 끝 — 일괄 정리</button>
+      <button class="btn ghost" id="bReset">↺ 초기화</button>
+    </div>
+    <div class="simmsg" id="stMsg">카드를 눌러 몬스터를 죽여보자.</div>
+    <p class="hint">해볼 것 ① <b>vector erase</b>로 앞쪽(#0 근처)을 죽이면 뒤 원소가 <b>전부</b> 한 칸씩 밀린다(노란색). ② <b>swap-and-pop</b>은 이동이 <b>1번</b>뿐이지만 <b>ID 순서가 뒤섞인다</b> — 몬스터 목록에선 순서가 의미 없으니 괜찮다. ③ <b>지연 삭제</b>는 죽이는 순간엔 이동이 0이고 표시만 한다 → "프레임 끝 정리"에서 한 번에 처리. ④ <b>list</b>는 이동이 없다(포인터 2개만 수정). 그런데 이건 <b>그 노드를 이미 들고 있을 때</b>의 이야기다 — 아래 계산기에서 "찾아가는 비용"을 넣어보자.</p>
+  </div>
+</div></section>
+
+<section id="cost"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 프레임 비용</div>
+  <h2 class="sec"><span class="n">4</span>한 프레임에 얼마가 드나 — 순회가 지배한다</h2>
+  <p class="lead">몬스터 <b>N마리</b>를 매 프레임 순회하고, 그 프레임에 <b>K마리가 죽고 K마리가 스폰</b>된다고 하자. 슬라이더를 움직여 전략별 비용을 비교한다. 삭제를 O(1)로 만들어도 <b>순회 비용이 크면 list가 지는 이유</b>를 확인하는 게 목표다.</p>
+  <div class="card">
+    <div class="slrow"><span>몬스터 수 N</span><input type="range" id="sN" min="100" max="20000" step="100" value="5000"><b id="vN">5000</b></div>
+    <div class="slrow"><span>프레임당 죽는 수 K</span><input type="range" id="sK" min="1" max="200" step="1" value="20"><b id="vK">20</b></div>
+    <div class="slrow"><span>list 노드 순회 비용 배수</span><input type="range" id="sM" min="1" max="20" step="1" value="8"><b id="vM">8</b><span style="color:var(--faint);font-size:12px">(캐시 미스 가중치)</span></div>
+    <div class="slrow"><label class="chk"><input type="checkbox" id="cHeld"> list: 지울 노드를 <b>순회 중 이미 들고 있음</b> (반복자 보유)</label></div>
+    <div class="bars" id="bars"></div>
+    <div class="simmsg" id="cMsg"></div>
+    <p class="hint">교육용 단순 모델이다. <b>원소 순회 1개 = 1</b>, <b>연속 메모리 원소 이동 1개 = 0.25</b>(순차 복사라 더 쌈), <b>list 노드 순회 1개 = 위의 배수</b>, <b>list 스폰(new) 1회 = 20</b>. 실제 수치는 CPU·할당기마다 다르지만 <b>자릿수 감각</b>은 4강의 캐시 미스 표와 같다. list의 "찾아가는" 삭제는 평균 N/2개 노드를 따라간다.</p>
+  </div>
+</div></section>
+
+<section id="danger"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 실전 함정</div>
+  <h2 class="sec"><span class="n">5</span>순회 중 삭제 — 가장 자주 터지는 버그</h2>
+  <p class="lead">몬스터가 죽는 일은 대개 <b>순회 도중</b>에 일어난다. 아래는 <b>죽은 몬스터 3마리(✕)</b>가 섞인 목록에서 세 가지 방식으로 정리한 결과다.</p>
+  <div class="card">
+    <div class="dem" id="dem"></div>
+    <pre class="code"><span class="cm">// ❌ 순회 중 삭제 — 반복자 무효화 / 원소 건너뜀 / 크래시</span>
+<span class="kw">for</span> (AMonster* M : Monsters) { <span class="kw">if</span> (M-&gt;IsDead()) Monsters.Remove(M); }
+
+<span class="cm">// ✅ ① 역순 인덱스 + swap  ② 지연 삭제(프레임 끝에 한 번에)</span>
+<span class="kw">for</span> (<span class="kw">int32</span> i = Monsters.Num() - 1; i &gt;= 0; --i) { <span class="kw">if</span> (Monsters[i]-&gt;IsDead()) Monsters.RemoveAtSwap(i); }
+Monsters.RemoveAll([](<span class="kw">const</span> AMonster* M){ <span class="kw">return</span> M-&gt;IsDead(); });   <span class="cm">// C++20: std::erase_if</span></pre>
+    <p class="hint">삽입도 마찬가지다. 순회 중 스폰이 일어나 <code>push_back</code>으로 <b>재할당</b>이 일어나면 순회 중인 반복자와 <b>원소를 가리키던 모든 포인터</b>가 무효화된다. 새로 생긴 건 <code>PendingAdd</code>에 모아뒀다가 순회 뒤에 합친다. 밖에서 포인터를 들고 있다면 <b>Reserve / 포인터 저장 / 핸들(인덱스+세대) / Object Pool(7강)</b> 중 하나가 필요하다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"몬스터가 수천 마리로 늘면 순회 비용 자체가 문제인데 어떻게 줄이시겠어요?"</i> → 활성 범위 밖은 업데이트 빈도를 낮추거나(휴면/LOD), 공간 분할로 필요한 것만 순회한다. 공간 분할은 GameMath 7-1강에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_배열_vs_LinkedList.html"><div style="text-align:left"><div class="s">본강</div><div class="t">← 4강 — 배열 vs LinkedList</div></div></a>
+  <a class="nx" href="05강_Stack과_Queue.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">5강 — Stack과 Queue →</div></div></a>
+  <div class="cap">게임 개발자를 위한 C++ 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 4-1강 (보충)</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"삽입/삭제가 많으니 std::list다"','조건에 <span class="truth">순회 빈도</span>가 빠져 있다. 삽입/삭제가 O(1)이어도 매 프레임 전 원소를 도는 비용(노드마다 캐시 미스)이 그걸 압도한다. 4강 결론 그대로다.'],
+ ['"vector의 중간 삭제는 무조건 O(n)이라 느리다"','순서가 상관없으면 <span class="truth">swap-and-pop으로 O(1)</span>이다. 순서가 필요해도 원소가 수백~수천 개면 memmove가 캐시 위에서 일어나 생각보다 싸다.'],
+ ['"erase하면 다음 원소를 가리키던 반복자는 그대로 쓸 수 있다"','<code>std::vector::erase</code>는 삭제 지점 이후의 <span class="truth">반복자를 전부 무효화</span>한다. erase가 돌려주는 새 반복자를 받아 써야 한다.'],
+ ['"vector에 push_back해도 이미 가져온 포인터는 안전하다"','재할당이 일어나는 순간 <span class="truth">원소 주소가 전부 바뀐다.</span> 포인터를 밖에 들고 있다면 <code>Reserve</code>, 포인터 저장, 핸들 중 하나가 필요하다.'],
+ ['"STL 자료구조를 고르는 문제니까 복잡도 표로 답하면 된다"','이 질문의 정답은 복잡도 표에 없다. <span class="truth">접근 패턴(순회), 캐시, 순회 중 변경, 포인터 안정성</span>까지 말해야 답변이 완성된다.']
+];
+var QA=[
+ ['몬스터 목록을 관리하려는데 매 프레임 순회하고 삽입/삭제가 많습니다. 어떤 STL 자료구조를 쓰시겠어요?','<b>std::vector</b>, 언리얼이면 TArray를 쓰겠습니다. 매 프레임 전체를 도는 게 가장 잦은 연산이라 연속 메모리의 캐시 지역성이 크게 작용하고, 삽입은 끝에 하면 상각 O(1)입니다. 삭제는 순서가 필요 없으면 마지막 원소와 바꿔 지우는 <b>swap-and-pop</b>으로 O(1)에 처리합니다. list는 삽입/삭제는 O(1)이지만 순회 때 캐시 미스가 커서 이 조건엔 불리합니다.'],
+ ['순회 중에 원소를 삭제하면 왜 문제가 되나요? 어떻게 해결하나요?','컨테이너가 바뀌면서 순회 중인 <b>반복자가 무효화</b>되거나 원소를 건너뛰고 심하면 크래시가 납니다. 역순 인덱스로 돌며 지우거나, 순회 중엔 삭제 표시만 해두고 프레임 끝에 <b>erase-remove나 RemoveAll로 일괄 정리</b>하는 지연 삭제를 씁니다.'],
+ ['vector에 원소를 추가하면 기존 포인터는 안전한가요?','아닙니다. 용량이 꽉 차 <b>재할당</b>이 일어나면 모든 원소가 새 버퍼로 옮겨지며 주소가 바뀌어 기존 포인터와 반복자가 전부 무효화됩니다. <b>Reserve</b>로 용량을 확보하거나, 포인터를 저장하거나, 인덱스+세대 같은 핸들로 참조합니다.'],
+ ['swap-and-pop이 뭐고 언제 쓰면 안 되나요?','지울 원소 자리에 <b>마지막 원소를 옮기고 끝을 제거</b>해서 O(1)에 삭제하는 방법입니다. 대신 <b>원소 순서가 바뀌기</b> 때문에 순서가 의미 있는 컨테이너에는 쓸 수 없습니다. 몬스터 목록처럼 전체를 한 번씩 도는 용도라면 순서가 필요 없어 잘 맞습니다.'],
+ ['그럼 std::list는 언제 쓰시나요?','원소의 <b>주소/반복자가 절대 무효화되면 안 되고</b>, 순회는 드물며, 이미 노드를 들고 있는 상태에서 삽입/삭제할 때입니다. 콜백 목록처럼 순회 중 자기 자신을 지워야 하는 구조가 예입니다.'],
+ ['스폰과 소멸이 너무 잦아서 그것 자체가 병목이면요?','<b>Object Pooling</b>으로 바꿉니다. 미리 만들어둔 객체를 활성/비활성 플래그로 켜고 꺼서, 컨테이너의 삽입/삭제와 할당/해제를 모두 없앱니다.']
+];
+var CK=['"삽입/삭제가 많다"는 조건만으로 list를 고르면 안 되는 이유를 순회 빈도와 캐시 지역성으로 설명할 수 있다','swap-and-pop이 뭔지, 어떤 조건에서만 쓸 수 있는지 설명할 수 있다','순회 중 삭제/삽입이 왜 위험한지, 지연 삭제로 어떻게 푸는지 코드로 말할 수 있다','vector 재할당이 기존 포인터/반복자를 무효화하는 이유와 대응책을 안다','list와 set/map이 유리한 조건을 각각 한 문장으로 말할 수 있다'];
+var KEY='cpp04-1-check';
+
+/* 킬러 1: 삭제 시뮬레이터 */
+(function(){
+  var mode='erase',arr,nextId,moves,killed,lastMv,order;
+  var $=function(i){return document.getElementById(i);};
+  function reset(){arr=[];nextId=0;for(var i=0;i<12;i++)arr.push({id:nextId++,dead:false});moves=0;killed=0;lastMv=[];msg('카드를 눌러 몬스터를 죽여보자.');draw();}
+  function msg(t,c){var m=$('stMsg');m.textContent=t;m.className='simmsg'+(c?' '+c:'');}
+  function inOrder(){var p=-1;for(var i=0;i<arr.length;i++){if(arr[i].dead)continue;if(arr[i].id<p)return false;p=arr[i].id;}return true;}
+  function kill(i){
+    if(arr[i].dead)return;
+    var id=arr[i].id;killed++;lastMv=[];
+    if(mode==='erase'){
+      var m=arr.length-1-i;moves+=m;arr.splice(i,1);
+      for(var k=i;k<arr.length;k++)lastMv.push(k);
+      msg('#'+id+' 삭제 — 뒤 원소 '+m+'개를 한 칸씩 앞으로 밀었다 (원소 이동 +'+m+')',m>3?'bad':'');
+    }else if(mode==='swap'){
+      var last=arr.length-1;
+      if(i!==last){arr[i]=arr[last];lastMv.push(i);moves+=1;}
+      arr.pop();
+      msg('#'+id+' 삭제 — 마지막 원소를 그 자리로 옮기고 끝을 제거 (원소 이동 +'+(i!==last?1:0)+'). 순서는 바뀔 수 있다.','good');
+    }else if(mode==='defer'){
+      arr[i].dead=true;
+      msg('#'+id+' 삭제 표시만 했다 (이동 0). 순회 중에도 안전 — "프레임 끝 — 일괄 정리"에서 한 번에 치운다.','good');
+    }else{
+      arr.splice(i,1);
+      msg('#'+id+' 노드 해제 — 앞뒤 노드의 포인터 2개만 수정 (원소 이동 0). 단, 이 노드를 이미 들고 있다는 전제다.','');
+    }
+    draw();
+  }
+  function flush(){
+    var w=0,mv=0;lastMv=[];var out=[];
+    for(var r=0;r<arr.length;r++){if(!arr[r].dead){if(w!==r){mv++;}out.push(arr[r]);if(w!==r)lastMv.push(w);w++;}}
+    var n=arr.length-out.length;arr=out;moves+=mv;
+    msg(n?('일괄 정리 — 죽은 '+n+'마리를 한 번의 패스로 제거 (원소 이동 +'+mv+'). 삭제가 여러 번이어도 정리는 한 번.'):'정리할 게 없다.',n?'good':'');
+    draw();
+  }
+  function draw(){
+    var a=$('arr');a.className='arr'+(mode==='list'?' list':'');
+    a.innerHTML=arr.map(function(m,i){return '<div class="c'+(m.dead?' dead':'')+(lastMv.indexOf(i)>=0?' mv':'')+'" data-i="'+i+'">#'+m.id+'<small>['+i+']</small></div>';}).join('');
+    [].forEach.call(a.querySelectorAll('.c'),function(c){c.addEventListener('click',function(){kill(+c.dataset.i);});});
+    var live=arr.filter(function(m){return !m.dead;}).length;
+    $('stStats').innerHTML=
+      '<div class="s"><div class="v">'+live+'</div><div class="l">살아있는 몬스터</div></div>'+
+      '<div class="s"><div class="v">'+killed+'</div><div class="l">지금까지 죽인 수</div></div>'+
+      '<div class="s"><div class="v'+(moves>12?' warn':'')+'">'+moves+'</div><div class="l">원소 이동 (누적)</div></div>'+
+      '<div class="s"><div class="v" style="font-size:16px;line-height:33px;color:'+(inOrder()?'var(--grn)':'var(--amber)')+'">'+(inOrder()?'유지':'뒤섞임')+'</div><div class="l">ID 순서</div></div>';
+    $('bFlush').style.display=mode==='defer'?'':'none';
+  }
+  document.querySelectorAll('#stMode button').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('#stMode button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');mode=b.dataset.m;reset();});});
+  $('bRand').addEventListener('click',function(){var l=[];arr.forEach(function(m,i){if(!m.dead)l.push(i);});if(!l.length){msg('죽일 몬스터가 없다. 스폰해보자.');return;}kill(l[Math.floor(Math.random()*l.length)]);});
+  $('bSpawn').addEventListener('click',function(){arr.push({id:nextId++,dead:false});lastMv=[];msg('#'+(nextId-1)+' 스폰 — 끝에 추가(상각 O(1)). 이동 0.');draw();});
+  $('bFlush').addEventListener('click',flush);
+  $('bReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 킬러 2: 프레임 비용 계산기 */
+(function(){
+  var $=function(i){return document.getElementById(i);};
+  var MOVE=0.25,ALLOC=20;
+  function fmt(x){return x>=1e6?(x/1e6).toFixed(2)+'M':x>=1e3?(x/1e3).toFixed(1)+'k':Math.round(x)+'';}
+  function calc(){
+    var N=+$('sN').value,K=+$('sK').value,M=+$('sM').value,held=$('cHeld').checked;
+    $('vN').textContent=N;$('vK').textContent=K;$('vM').textContent=M;
+    var rows=[
+      {nm:'vector erase (밀기)',v:N+K*(N/2)*MOVE+K*MOVE,c:'var(--red)'},
+      {nm:'vector swap-and-pop',v:N+K*MOVE+K*MOVE,c:'var(--grn)'},
+      {nm:'vector 지연 삭제',v:N+(K>0?N*MOVE:0)+K*MOVE,c:'var(--cyan)'},
+      {nm:'std::list'+(held?' (노드 보유)':' (찾아가서 삭제)'),v:N*M+K*(held?1:(N/2)*M)+K*ALLOC,c:'var(--amber)'}
+    ];
+    var max=0,best=0;rows.forEach(function(r,i){if(r.v>max)max=r.v;if(r.v<rows[best].v)best=i;});
+    $('bars').innerHTML=rows.map(function(r,i){return '<div class="brow'+(i===best?' best':'')+'"><div class="nm">'+r.nm+'</div><div class="tr"><i style="width:'+(r.v/max*100)+'%;background:'+r.c+'"></i></div><div class="vl">'+fmt(r.v)+'</div></div>';}).join('');
+    var lst=rows[3].v,vs=rows[1].v;
+    $('cMsg').innerHTML='가장 싼 전략: <b>'+rows[best].nm+'</b> — swap-and-pop 대비 list는 <b>'+(lst/vs).toFixed(1)+'배</b> 비용. '+(held?'노드를 이미 들고 있어도 <b>순회 비용(N×'+M+')</b> 자체가 커서 밀린다.':'삭제할 때마다 노드를 <b>찾아가야</b> 해서 더 크게 밀린다.');
+    $('cMsg').className='simmsg';
+  }
+  ['sN','sK','sM'].forEach(function(id){$(id).addEventListener('input',calc);});$('cHeld').addEventListener('change',calc);
+  calc();
+})();
+
+/* 순회 중 삭제 재현 */
+(function(){
+  var base=['A','B✕','C✕','D','E✕','F'];
+  function isDead(s){return s.indexOf('✕')>=0;}
+  function span(list,mark){return '<div class="row">'+list.map(function(s){return '<span class="'+(isDead(s)?'x':'ok')+'">'+s.replace('✕','')+'</span>';}).join('')+'</div>';}
+  // 1) 정방향 인덱스 순회 + erase (i++ 그대로)
+  var a=base.slice(),i=0,skipped=[];
+  while(i<a.length){if(isDead(a[i])){a.splice(i,1);}i++;}
+  var r1=a.filter(isDead);
+  // 2) 역순 + swap
+  var b=base.slice();for(var j=b.length-1;j>=0;j--){if(isDead(b[j])){b[j]=b[b.length-1];b.pop();}}
+  // 3) 지연 삭제
+  var c=base.filter(function(s){return !isDead(s);});
+  document.getElementById('dem').innerHTML=
+    '<div class="d bad"><h4>❌ 정방향 인덱스 + erase</h4><div class="res">시작: ' +base.map(function(s){return isDead(s)?'✕'+s[0]:s;}).join(' ')+'</div>'+span(a)+'<div class="res">죽은 몬스터 <b style="color:var(--red)">'+r1.length+'마리가 남았다</b> — erase 뒤 원소가 당겨졌는데 i를 또 증가시켜 <b>바로 다음 원소(C✕)를 건너뛰었다.</b></div></div>'+
+    '<div class="d good"><h4>✅ 역순 + swap-and-pop</h4>'+span(b)+'<div class="res">죽은 것 <b style="color:var(--grn)">0마리</b>. 뒤에서부터 돌아서 swap으로 가져오는 원소는 <b>이미 검사한 것</b>이다. (순서는 바뀐다)</div></div>'+
+    '<div class="d good"><h4>✅ 지연 삭제 (일괄 정리)</h4>'+span(c)+'<div class="res">죽은 것 <b style="color:var(--grn)">0마리</b>, <b>순서도 유지</b>. 순회 중엔 표시만 하고 프레임 끝에 한 번의 패스로 정리한다.</div></div>';
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

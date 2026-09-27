@@ -29,8 +29,8 @@ Network/lectures_html/            ← HTML render: 15 lectures + 보너스 + ind
 OS/강의계획서.md
 OS/lectures_md/NN_제목.md          ← OS series, 15 lectures + 보너스 (Markdown source)
 OS/lectures_html/NN강_제목.html    ← HTML render of every OS lecture + 보너스 + index.html
-Cpp/강의계획서.md, Cpp/lectures/, Cpp/lectures_html/          ← Cpp series, 12 lectures + 보너스 (HTML: all)
-GameMath/강의계획서.md, GameMath/lectures/, GameMath/lectures_html/  ← GameMath series, 8 lectures + 보너스 (HTML: all)
+Cpp/강의계획서.md, Cpp/lectures/, Cpp/lectures_html/          ← Cpp series, 12 lectures + 보충 2(04-1, 10-1) + 보너스 (HTML: all)
+GameMath/강의계획서.md, GameMath/lectures/, GameMath/lectures_html/  ← GameMath series, 8 lectures + 보충 1(07-1) + 보너스 (HTML: all)
 AI면접_대비_학습순서.md            ← tiered (S/A/B/C) study order across all series; the HTML conversion followed it
 ```
 

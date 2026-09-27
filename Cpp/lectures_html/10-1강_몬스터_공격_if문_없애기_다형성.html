@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10-1강 · 다형성으로 if문 없애기 — 인터랙티브 보충 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 디스패치 추적기 */
+.mrow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.mon{display:flex;flex-direction:column;align-items:center;gap:6px;background:var(--card2);border:2px solid var(--line);border-radius:14px;padding:10px 12px;min-width:92px;cursor:pointer;transition:.15s;font-family:inherit;color:var(--txt)}
+.mon:hover{border-color:var(--acc);transform:translateY(-2px)}
+.mon.sel{border-color:var(--amber);background:rgba(251,191,36,.1)}
+.mon .ic{font-size:26px;line-height:1}
+.mon .nm{font-size:12.5px;font-weight:700}
+.mon small{font-size:10.5px;color:var(--faint);font-family:ui-monospace,monospace}
+.mon.new{border-color:var(--pur);animation:pop .4s}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.pn2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:18px}
+.pn{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.pn h4{font-size:13.5px;margin-bottom:8px}
+.pn.a h4{color:var(--red)}.pn.b h4{color:var(--grn)}
+.chain{font-family:ui-monospace,monospace;font-size:12.5px;line-height:2;background:#0a0d18;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.chain div{color:var(--faint);padding:0 6px;border-radius:5px;transition:.15s}
+.chain div.cmp{color:var(--amber);background:rgba(251,191,36,.08)}
+.chain div.hit{color:#04221a;background:var(--grn);font-weight:800}
+.vt{font-family:ui-monospace,monospace;font-size:12.5px;background:#0a0d18;border:1px solid var(--line);border-radius:10px;padding:10px 12px;line-height:1.85}
+.vt .r{display:grid;grid-template-columns:96px 1fr;gap:8px;color:var(--faint);padding:0 6px;border-radius:5px}
+.vt .r.on{color:#04221a;background:var(--grn);font-weight:800}
+.vt .step{color:var(--dim);margin-top:8px;font-size:12px;line-height:1.7}
+.vt .step b{color:var(--cyan)}
+.fnl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px}
+.fnl label{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:13px;color:var(--dim);cursor:pointer;font-family:ui-monospace,monospace}
+.fnl label.on{border-color:var(--grn);color:var(--txt)}
+.fnl input{accent-color:var(--acc)}
+.rs{border-radius:12px;padding:12px 14px;font-size:13.5px;margin-top:10px}
+.rs.bad{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.45);color:var(--red)}
+.rs.good{background:rgba(52,211,153,.08);border:1px solid rgba(52,211,153,.45);color:var(--grn)}
+.rs.mid{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.45);color:var(--amber)}
+.rs b{color:var(--txt)}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:14px}
+.ctrl .btn{padding:9px 14px;font-size:13px}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);cursor:pointer}
+.chk input{accent-color:var(--acc)}
+.pill{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--bg2)}
+.pill button{font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 14px;border:none;background:none;color:var(--dim);cursor:pointer}
+.pill button.on{background:var(--acc);color:#fff}
+.dlog{font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.8;background:#0a0d18;border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:12px;min-height:80px}
+.dlog .g{color:var(--grn)}.dlog .r{color:var(--red)}.dlog .d{color:var(--faint)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>10-1강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">질문</a>
+    <a class="chip" href="#poly">다형성</a>
+    <a class="chip" href="#sim">추적기</a>
+    <a class="chip" href="#ext">종류 추가</a>
+    <a class="chip" href="#dtor">소멸자</a>
+    <a class="chip" href="#pick">선택</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">보충 강의 · AI 면접 실전 기출 · 10강 후속</span>
+  <h1>Attack의 <span class="g">if문</span>을 없애라</h1>
+  <p class="sub">몬스터 A·B·C가 각자 Attack을 구현하는데, 호출할 때마다 if문으로 종류를 찾고 있다. 10강이 "상태별 if-else"를 풀었다면 이건 <b>"종류별 if-else"</b>다. 가상 함수가 vtable로 어떻게 분기를 대신하는지 직접 눌러 확인한다.</p>
+  <div class="meta">
+    <div class="m">🎯 실제로 받은 질문</div>
+    <div class="m">🧩 선수지식 <b>2강 · 10강</b></div>
+    <div class="m">⏱️ 약 25분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 실제 질문</div>
+  <h2 class="sec"><span class="n">1</span>종류를 찾는 if문은 번식한다</h2>
+  <p class="lead">"몬스터 A, B, C가 각각 Attack을 구현하면 공격할 때 if문으로 어떤 몬스터인지 계속 찾아야 해. 넌 어떻게 설계할 거야?"</p>
+  <div class="card">
+    <pre class="code"><span class="kw">enum class</span> EMonsterType { Slime, Archer, Golem };
+
+<span class="kw">void</span> DoAttack(FMonster&amp; M, AActor* Target)
+{
+    <span class="kw">if</span>      (M.Type == EMonsterType::Slime)  { <span class="cm">/* 몸통 박치기 */</span> }
+    <span class="kw">else if</span> (M.Type == EMonsterType::Archer) { <span class="cm">/* 화살 발사 */</span> }
+    <span class="kw">else if</span> (M.Type == EMonsterType::Golem)  { <span class="cm">/* 광역 내려찍기 */</span> }
+}
+<span class="cm">// DoMove, OnHit, OnDeath, PlaySound ... 전부 똑같은 if 체인이 생긴다</span></pre>
+    <p class="hint">공격뿐 아니라 <b>이동·피격·사망·사운드</b>까지 같은 분기가 생긴다. 종류 하나를 추가하면 <b>그 분기가 있는 모든 함수를 찾아 고쳐야</b> 하고, 하나라도 빠뜨리면 그 종류만 <b>조용히 아무것도 안 한다</b>(컴파일러도 못 잡는다). 10강 State에서 본 문제와 뿌리가 같다 — "무엇인지 확인하고 분기해서 행동한다"를 <b>"객체에게 그 행동을 시킨다"</b>로 뒤집는 것.</p>
+  </div>
+</div></section>
+
+<section id="poly"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 해법 ① 가상 함수</div>
+  <h2 class="sec"><span class="n">2</span>종류마다 "자기 Attack"을 갖는다</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> AMonster
+{
+<span class="kw">public</span>:
+    <span class="kw">virtual</span> ~AMonster() = <span class="kw">default</span>;                 <span class="cm">// ★ 반드시 virtual (5절)</span>
+    <span class="kw">virtual void</span> Attack(AActor* Target) = 0;       <span class="cm">// 순수 가상: 자식이 반드시 구현</span>
+};
+<span class="kw">class</span> ASlime  : <span class="kw">public</span> AMonster { <span class="kw">public</span>: <span class="kw">void</span> Attack(AActor* T) <span class="kw">override</span> { <span class="cm">/* 몸통 박치기 */</span> } };
+<span class="kw">class</span> AArcher : <span class="kw">public</span> AMonster { <span class="kw">public</span>: <span class="kw">void</span> Attack(AActor* T) <span class="kw">override</span> { <span class="cm">/* 화살 발사 */</span> } };
+<span class="kw">class</span> AGolem  : <span class="kw">public</span> AMonster { <span class="kw">public</span>: <span class="kw">void</span> Attack(AActor* T) <span class="kw">override</span> { <span class="cm">/* 광역 내려찍기 */</span> } };
+
+<span class="cm">// 호출하는 쪽 — 종류를 전혀 모른다</span>
+<span class="kw">for</span> (AMonster* M : Monsters) { M-&gt;Attack(Player); }</pre>
+    <p class="hint">호출하는 쪽에 <b>if가 하나도 없다.</b> Dragon을 추가하면 <b>새 클래스 하나</b>만 만들면 된다(개방-폐쇄 원칙). 구현을 빠뜨리거나 <code>override</code> 시그니처가 어긋나면 <b>컴파일 에러</b>가 나서 "조용히 아무것도 안 하는" 버그도 막힌다.</p>
+    <pre class="code" style="margin-top:12px">Slime 객체         Slime의 vtable                 Archer의 vtable
+┌─────────┐       ┌───────────────────────┐    ┌───────────────────────┐
+│ vptr ───┼──────→│ Attack → ASlime::Attack  │    │ Attack → AArcher::Attack │
+│ HP ...  │       │ ~AMonster → ...          │    │ ~AMonster → ...          │
+└─────────┘       └───────────────────────┘    └───────────────────────┘
+
+M-&gt;Attack(Player) = ① M의 vptr 읽기  ② vtable의 Attack 칸 읽기  ③ 그 주소로 간접 호출</pre>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 눌러보기</div>
+  <h2 class="sec"><span class="n">3</span>디스패치 추적기 — if 체인 vs vtable</h2>
+  <p class="lead">몬스터를 눌러 <b>공격</b>시켜보자. 왼쪽은 <b>if 체인</b>이 몇 번 비교하고 나서야 맞는 분기에 도착하는지, 오른쪽은 <b>vptr → vtable → 함수</b>로 곧바로 가는 경로를 보여준다. 뒤쪽 종류(Golem)를 누를수록 if 체인의 비교가 늘어난다.</p>
+  <div class="card">
+    <div class="mrow" id="mons"></div>
+    <div class="pn2">
+      <div class="pn a"><h4>if / else if 방식</h4><div class="chain" id="chain"></div></div>
+      <div class="pn b"><h4>가상 함수 (vtable 디스패치)</h4><div class="vt" id="vt"></div></div>
+    </div>
+    <div class="stats" id="dStats"></div>
+    <div class="ctrl"><button class="btn ghost" id="bAll">⚔ 전원 공격 (한 바퀴)</button><button class="btn ghost" id="bZero">↺ 카운터 초기화</button></div>
+    <p class="hint">if 방식은 종류가 늘수록(그리고 뒤에 있을수록) 비교가 <b>선형으로 늘어난다.</b> 가상 호출은 종류가 몇 개든 <b>포인터 두 번 따라가고 간접 호출 한 번</b>이다. 다만 간접 호출이라 인라인이 안 되고 vtable 접근이 캐시에 없으면 미스가 난다 — 대부분의 게임 로직에선 무시할 수준이지만 수만 개를 매 프레임 도는 핫루프라면 문제가 될 수 있다. <b>진짜 이득은 속도가 아니라 수정 범위와 누락 방지다.</b> 다음 실험에서 확인한다.</p>
+  </div>
+</div></section>
+
+<section id="ext"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 종류 추가 실험</div>
+  <h2 class="sec"><span class="n">4</span>Dragon을 추가하면 몇 군데를 고치나</h2>
+  <p class="lead">몬스터 Dragon을 추가한다. Dragon이 해야 하는 <b>행동 5개</b> 중 몇 개를 구현했는지 체크해보자. <b>하나를 빠뜨렸을 때</b> 두 구조가 어떻게 다르게 반응하는지가 관찰 포인트다.</p>
+  <div class="card">
+    <div class="ctrl" style="margin-top:0"><span style="font-size:13px;color:var(--dim)">Dragon <span class="pill" id="dgSw"><button data-v="0" class="on">추가 전</button><button data-v="1">추가함</button></span></span></div>
+    <div id="dgBody" style="display:none">
+      <div class="fnl" id="fnl"></div>
+      <div class="pn2">
+        <div class="pn a"><h4>if / else if 방식</h4><div id="rsA"></div></div>
+        <div class="pn b"><h4>가상 함수 (순수 가상 = 0)</h4><div id="rsB"></div></div>
+      </div>
+      <p class="hint">위에서 추적기에 Dragon 몬스터가 추가된 것도 확인해보자. 체크를 하나 해제하면 — if 방식은 <b>빌드가 통과한 채로 Dragon만 그 행동을 안 한다</b>(런타임에 발견). 가상 함수는 <b>컴파일 에러</b>다: "추상 클래스는 인스턴스화할 수 없다". 버그를 <b>빌드 시점으로 끌어오는 것</b>이 다형성의 실전 가치다.</p>
+    </div>
+    <p class="hint" id="dgOff">"추가함"을 눌러보자.</p>
+  </div>
+</div></section>
+
+<section id="dtor"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 실전 함정</div>
+  <h2 class="sec"><span class="n">5</span>기반 클래스 소멸자는 <code style="font-size:.75em;background:var(--bg2);padding:2px 8px;border-radius:6px;color:var(--cyan)">virtual</code></h2>
+  <p class="lead"><code>AMonster*</code>로 들고 있는 Golem을 <code>delete</code>하면 무슨 일이 일어날까. 소멸자를 <b>virtual로 켜고 끄며</b> 호출 순서를 확인하자.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> AMonster { <span class="kw">public</span>: <span class="cm">/* virtual */</span> ~AMonster() {} };
+<span class="kw">class</span> AGolem : <span class="kw">public</span> AMonster { TArray&lt;<span class="kw">int32</span>&gt; BigBuffer; };
+
+AMonster* M = <span class="kw">new</span> AGolem();
+<span class="kw">delete</span> M;   <span class="cm">// 기반 포인터로 delete</span></pre>
+    <div class="ctrl"><label class="chk"><input type="checkbox" id="vdt"> 기반 소멸자를 <b>virtual</b>로 선언</label><button class="btn" id="bDel">🗑 delete M (Golem)</button></div>
+    <div class="dlog" id="dlog"><span class="d">delete를 눌러보자.</span></div>
+    <p class="hint">virtual이 아니면 표준상 <b>미정의 동작</b>이다(실제로는 대개 기반 소멸자만 호출되어 자식 멤버가 누수). 언리얼의 <code>UObject</code>/<code>AActor</code>는 소멸자가 이미 virtual이고 엔진이 수명을 관리하지만, <b>순수 C++ 클래스(F 접두사)에서 상속을 쓸 때</b>는 직접 챙겨야 한다. 또 하나: 컨테이너에 <code>TArray&lt;AMonster&gt;</code>처럼 <b>값으로 저장하면 슬라이싱</b>이 일어나 자식 부분이 잘리고 다형성이 사라진다 — 다형성은 <b>포인터/참조</b>로만 동작한다.</p>
+  </div>
+</div></section>
+
+<section id="pick"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 판단</div>
+  <h2 class="sec"><span class="n">6</span>무엇이 다른가에 따라 고른다</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>몬스터끼리 다른 것</th><th>선택</th><th>이유</th></tr>
+      <tr><td><b>수치</b> (데미지·사거리·쿨다운)</td><td>데이터 테이블(<code>UDataTable</code>/<code>UDataAsset</code>)</td><td>클래스를 나눌 필요 없음. 새 몬스터 = 행 추가</td></tr>
+      <tr><td><b>행동</b> 자체 몇 종류</td><td>가상 함수</td><td>가장 단순. 호출부에 if가 없다</td></tr>
+      <tr><td>행동이 <b>조합</b>되거나 런타임에 교체</td><td>컴포지션(Strategy) / 컴포넌트</td><td>상속 트리가 다중 상속의 늪이 되는 걸 피함</td></tr>
+      <tr><td><b>상태</b>에 따라 행동이 바뀜</td><td>State Pattern (10강)</td><td>현재 상태 객체에게 위임, 전환 조건은 상태가 앎</td></tr>
+    </table>
+    <pre class="code" style="margin-top:14px"><span class="cm">// Strategy — 행동을 별도 객체로 빼서 몬스터가 갖게 한다 (10강 State와 뼈대가 같다)</span>
+<span class="kw">class</span> IAttackBehavior { <span class="kw">public</span>: <span class="kw">virtual</span> ~IAttackBehavior() = <span class="kw">default</span>; <span class="kw">virtual void</span> Execute(AMonster* Owner, AActor* Target) = 0; };
+
+<span class="kw">class</span> AMonster
+{
+<span class="kw">public</span>:
+    <span class="kw">void</span> Attack(AActor* Target) { AttackBehavior-&gt;Execute(<span class="kw">this</span>, Target); }                 <span class="cm">// 위임</span>
+    <span class="kw">void</span> SetAttack(TUniquePtr&lt;IAttackBehavior&gt; B) { AttackBehavior = MoveTemp(B); }   <span class="cm">// 런타임 교체</span>
+<span class="kw">private</span>:
+    TUniquePtr&lt;IAttackBehavior&gt; AttackBehavior;
+};</pre>
+    <p class="hint">State와의 차이: State는 <b>상태가 바뀌며 스스로 전환</b>하고, Strategy는 <b>바깥에서 정책을 주입</b>한다. 보스가 페이즈 2에서 공격 방식이 바뀌면 State에 가깝고, 몬스터 프리셋마다 공격 방식을 조립하면 Strategy에 가깝다. 몬스터가 수만 개라면 종류별로 배열을 나눠 일괄 처리하는 <b>데이터 지향</b> 방식도 있지만, 일반적인 게임 로직에선 가상 함수로 충분하다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"이 Attack 로직이 몬스터의 상태에 따라 바뀌면요?"</i> → 10강 State Pattern으로 이어진다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="10강_State_Pattern.html"><div style="text-align:left"><div class="s">본강</div><div class="t">← 10강 — State Pattern</div></div></a>
+  <a class="nx" href="11강_스마트_포인터.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">11강 — 스마트 포인터 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 C++ 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 10-1강 (보충)</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"if/switch로 종류를 나누는 게 빠르니까 가상 함수는 느리다"','가상 호출은 간접 호출 한 번이라 비용이 아주 작다. 종류가 늘면 if 체인의 비교 횟수가 오히려 커지고, 무엇보다 <span class="truth">수정 범위와 누락 버그</span>가 실제 비용이다. 병목이 프로파일러로 확인될 때만 데이터 지향을 고려한다.'],
+ ['"다형성은 상속이 있어야만 가능하다"','템플릿(컴파일 타임 다형성), 함수 객체/델리게이트, 컴포지션도 같은 효과를 낸다. 가상 함수는 <span class="truth">런타임에 종류가 정해질 때</span> 쓰는 도구 중 하나다.'],
+ ['"자식의 override는 붙여도 그만 안 붙여도 그만이다"','<code>override</code>를 붙이면 <span class="truth">시그니처가 어긋났을 때 컴파일 에러</span>로 잡아준다. 안 붙이면 오타 하나로 새 함수가 만들어져 기반 버전이 그대로 호출되는 버그가 조용히 생긴다.'],
+ ['"기반 클래스 소멸자는 상관없다"','기반 포인터로 delete하는 구조라면 <span class="truth"><code>virtual ~</code>가 필수</span>다. 아니면 자식 소멸자가 안 불려 누수/미정의 동작이다.'],
+ ['"몬스터 종류가 다르면 무조건 클래스를 나눠야 한다"','다른 게 수치뿐이면 <span class="truth">데이터 테이블이 정답</span>이다. 클래스를 나누는 건 <b>행동이 다를 때</b>다.']
+];
+var QA=[
+ ['몬스터 A, B, C가 각자 Attack을 구현해야 하는데 공격할 때마다 if문으로 종류를 확인해야 합니다. 어떻게 설계하시겠어요?','기반 클래스에 Attack을 <b>가상 함수</b>로 선언하고 몬스터마다 override하게 만들겠습니다. 호출하는 쪽은 기반 포인터로 Attack만 부르면 실제 타입에 맞는 함수가 <b>런타임에 선택</b>돼서 if 분기가 사라집니다. 새 몬스터를 추가해도 클래스 하나만 만들면 돼서 기존 코드를 수정하지 않아도 됩니다.'],
+ ['가상 함수는 내부적으로 어떻게 동작하나요?','가상 함수가 있는 클래스의 객체는 <b>vptr</b>이라는 숨은 포인터를 갖고 이게 그 클래스의 <b>vtable</b>을 가리킵니다. 호출할 때 vptr로 vtable을 찾아 해당 칸의 함수 주소로 <b>간접 호출</b>합니다. 그래서 컴파일 시점이 아니라 런타임에 실제 타입의 함수가 선택되는 동적 바인딩이 됩니다.'],
+ ['가상 함수의 비용은 뭔가요?','간접 호출이라 <b>인라인이 안 되고</b> vptr/vtable 접근에서 캐시 미스가 날 수 있습니다. 대부분은 무시할 수준이지만 수만 개를 매 프레임 도는 핫루프라면 종류별로 배열을 나눠 일괄 처리하는 방식을 고려합니다.'],
+ ['기반 클래스 소멸자를 virtual로 두는 이유는요?','기반 포인터로 delete할 때 virtual이 아니면 <b>기반 소멸자만 호출</b>돼서 자식의 멤버가 정리되지 않고 미정의 동작이 됩니다. virtual이면 자식 소멸자부터 순서대로 호출됩니다.'],
+ ['몬스터를 TArray&lt;AMonster&gt;처럼 값으로 저장하면 어떻게 되나요?','<b>슬라이싱</b>이 일어나서 자식 부분이 잘려나가고 가상 함수도 기반 버전으로 동작합니다. 다형성은 포인터나 참조로만 작동하므로 포인터나 스마트 포인터를 담아야 합니다.'],
+ ['상속 말고 다른 방법은 없나요? 몬스터 행동이 조합되는 경우는요?','행동을 별도 객체로 분리하는 <b>Strategy</b>나 컴포넌트 방식으로 몬스터가 행동을 갖게 하고 위임합니다. 조합이 자유롭고 런타임 교체도 가능합니다. 종류마다 다른 게 수치뿐이라면 클래스를 나누지 않고 <b>데이터 테이블</b>로 처리합니다.']
+];
+var CK=['종류별 if/switch가 왜 번식하는지, 새 종류를 추가할 때 어떤 문제가 생기는지 설명할 수 있다','가상 함수로 if를 없애는 구조를 코드로 쓸 수 있다','vptr/vtable로 동적 바인딩이 어떻게 일어나는지 그림으로 설명할 수 있다','virtual 소멸자, 슬라이싱, override의 이유를 각각 설명할 수 있다','수치/행동/조합/상태 의존에 따라 데이터 테이블·가상 함수·Strategy·State를 고를 수 있다'];
+var KEY='cpp10-1-check';
+
+/* 킬러 1: 디스패치 추적기 */
+(function(){
+  var T={S:{n:'Slime',ko:'슬라임',ic:'🟢',a:'몸통 박치기',cls:'ASlime'},A:{n:'Archer',ko:'궁수',ic:'🏹',a:'화살 발사',cls:'AArcher'},G:{n:'Golem',ko:'골렘',ic:'🗿',a:'광역 내려찍기',cls:'AGolem'},D:{n:'Dragon',ko:'드래곤',ic:'🐉',a:'브레스',cls:'ADragon'}};
+  var dragon=false,sel=-1,ifCmp=0,vcall=0,calls=0;
+  var base=['S','A','G','S','G','A'];
+  function mons(){return dragon?base.concat(['D']):base;}
+  function order(){return dragon?['S','A','G','D']:['S','A','G'];}
+  function attack(i){
+    var t=mons()[i];sel=i;calls++;var o=order(),cmp=0;
+    for(var k=0;k<o.length;k++){cmp++;if(o[k]===t)break;}
+    ifCmp+=cmp;vcall++;draw(t,cmp);
+  }
+  function draw(t,cmp){
+    var ms=mons();
+    document.getElementById('mons').innerHTML=ms.map(function(x,i){return '<button class="mon'+(i===sel?' sel':'')+(x==='D'?' new':'')+'" data-i="'+i+'"><span class="ic">'+T[x].ic+'</span><span class="nm">'+T[x].ko+'</span><small>#'+i+' '+T[x].cls+'</small></button>';}).join('');
+    [].forEach.call(document.querySelectorAll('#mons .mon'),function(b){b.addEventListener('click',function(){attack(+b.dataset.i);});});
+    var o=order(),ch='';
+    o.forEach(function(k,idx){
+      var cls='';if(t){var pos=o.indexOf(t);if(idx<pos)cls='cmp';else if(idx===pos)cls='hit';}
+      ch+='<div class="'+cls+'">'+(idx?'else ':'')+'if (Type == '+T[k].n+') → '+T[k].a+'</div>';
+    });
+    document.getElementById('chain').innerHTML=ch+(t?'<div style="color:var(--dim);margin-top:6px">비교 '+cmp+'번 후 분기 도착</div>':'<div style="color:var(--faint);margin-top:6px">몬스터를 눌러보자</div>');
+    var vt='';o.forEach(function(k){vt+='<div class="r'+(t===k?' on':'')+'"><span>vtable('+T[k].cls+')</span><span>Attack → '+T[k].cls+'::Attack</span></div>';});
+    if(t)vt+='<div class="step"><b>①</b> M-&gt;vptr 읽기 → vtable('+T[t].cls+')<br><b>②</b> vtable[Attack] 읽기 → '+T[t].cls+'::Attack<br><b>③</b> 간접 호출 (종류가 몇 개든 <b>항상 이 3단계</b>)</div>';
+    else vt+='<div class="step">몬스터를 눌러보자</div>';
+    document.getElementById('vt').innerHTML=vt;
+    document.getElementById('dStats').innerHTML=
+      '<div class="s"><div class="v">'+calls+'</div><div class="l">공격 호출 수</div></div>'+
+      '<div class="s"><div class="v warn">'+ifCmp+'</div><div class="l">if 비교 (누적)</div></div>'+
+      '<div class="s"><div class="v" style="color:var(--grn)">'+vcall+'</div><div class="l">vtable 디스패치 (누적, 호출당 1회)</div></div>';
+  }
+  document.getElementById('bAll').addEventListener('click',function(){var n=mons().length;for(var i=0;i<n;i++)attack(i);});
+  document.getElementById('bZero').addEventListener('click',function(){ifCmp=0;vcall=0;calls=0;sel=-1;draw(null,0);});
+  window.__dragonOn=function(on){dragon=on;sel=-1;draw(null,0);};
+  draw(null,0);
+})();
+
+/* 킬러 2: 종류 추가 실험 */
+(function(){
+  var FN=['Attack','Move','OnHit','OnDeath','PlaySound'];
+  var done={};FN.forEach(function(f){done[f]=true;});
+  var sw=document.getElementById('dgSw');
+  function render(){
+    var box=document.getElementById('fnl');
+    box.innerHTML=FN.map(function(f){return '<label class="'+(done[f]?'on':'')+'"><input type="checkbox" data-f="'+f+'"'+(done[f]?' checked':'')+'> '+f+'()</label>';}).join('');
+    [].forEach.call(box.querySelectorAll('input'),function(c){c.addEventListener('change',function(){done[c.dataset.f]=c.checked;render();});});
+    var miss=FN.filter(function(f){return !done[f];});
+    // if 방식: 고쳐야 하는 곳 = 함수 5곳
+    var a='<div class="rs '+(miss.length?'bad':'good')+'">수정해야 하는 함수 <b>'+FN.length+'곳</b> (각 함수의 if 체인에 <code>else if (Dragon)</code> 추가)<br>';
+    a+=miss.length?'<b>빌드: 성공 ✔</b> (컴파일러는 모른다)<br>런타임: Dragon이 <b>'+miss.map(function(f){return f+'()';}).join(', ')+' 를 조용히 안 한다</b> — 발견은 QA나 유저 몫':'모두 수정함 — 그래도 <b>다음 종류를 추가할 때마다 이 5곳을 다시 찾아야</b> 한다';
+    a+='</div>';
+    document.getElementById('rsA').innerHTML=a;
+    var b='<div class="rs '+(miss.length?'mid':'good')+'">새 클래스 <b>ADragon 1개</b>'+(miss.length?'':' — 기존 파일은 손대지 않음')+'<br>';
+    b+=miss.length?'<b>컴파일 에러 ✖</b> — <code>ADragon</code>: 순수 가상 함수 <code>'+miss.map(function(f){return f+'()';}).join(', ')+'</code> 미구현, 추상 클래스는 인스턴스화할 수 없다.<br>→ 빌드 시점에 <b>발견</b>된다':'빌드: 성공 ✔ — 모든 순수 가상 함수를 구현했다';
+    b+='</div>';
+    document.getElementById('rsB').innerHTML=b;
+  }
+  function show(on){
+    document.getElementById('dgBody').style.display=on?'':'none';
+    document.getElementById('dgOff').style.display=on?'none':'';
+    window.__dragonOn(on);
+    if(on)render();
+  }
+  sw.querySelectorAll('button').forEach(function(bt){bt.addEventListener('click',function(){sw.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});bt.classList.add('on');show(bt.dataset.v==='1');});});
+})();
+
+/* 소멸자 */
+(function(){
+  var lg=document.getElementById('dlog'),v=document.getElementById('vdt');
+  document.getElementById('bDel').addEventListener('click',function(){
+    if(v.checked){
+      lg.innerHTML='<div class="d">delete M;  // M의 실제 타입 = AGolem</div><div class="g">~AGolem()   → BigBuffer 해제 ✔</div><div class="g">~AMonster()  → 기반 부분 정리 ✔</div><div class="g">메모리 누수 없음 (virtual이라 vtable로 자식 소멸자부터 호출)</div>';
+    }else{
+      lg.innerHTML='<div class="d">delete M;  // M의 정적 타입 = AMonster*</div><div class="r">~AMonster()  ✔ (이것만 호출됨)</div><div class="r">~AGolem()   ✖ 호출 안 됨 → BigBuffer 누수</div><div class="r">표준상 미정의 동작 (virtual 소멸자가 아님)</div>';
+    }
+  });
+  v.addEventListener('change',function(){lg.innerHTML='<span class="d">다시 delete를 눌러보자.</span>';});
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

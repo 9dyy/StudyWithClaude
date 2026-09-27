@@ -179,6 +179,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
     <button class="chip" data-cat="dot">내적·외적</button>
     <button class="chip" data-cat="coord">좌표계·회전</button>
     <button class="chip" data-cat="coll">충돌·판정</button>
+    <button class="chip" data-cat="ai">AI 면접 기출</button>
   </div>
 </div></nav>
 
@@ -187,7 +188,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
   <h1>클라 개발자가 받는 <span class="g">게임 수학 면접 BEST 20</span></h1>
   <p class="sub">1~8강에서 배운 걸 실제 면접 답변으로 묶었다. 답변을 통째로 외우지 말고 <b class="tagline">키워드</b>를 기억한 다음 자기 말로 재구성해라. 면접은 암송이 아니라 대화다.</p>
   <div class="meta">
-    <div class="m">📋 문항 <b>20개</b></div>
+    <div class="m">📋 문항 <b>21개</b></div>
     <div class="m">🧩 선수지식 <b>1~8강 전체</b></div>
     <div class="m">⏱️ 약 30분 + 시뮬레이터</div>
   </div>
@@ -195,7 +196,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
   <div class="card topprog">
     <div class="eyebrow" style="margin-bottom:2px">내 진행률</div>
     <div class="pbar"><i id="topBar"></i></div>
-    <div class="row"><span id="topPct">0 / 20 문항 체크함</span><span id="topPctNum">0%</span></div>
+    <div class="row"><span id="topPct">0 / 21 문항 체크함</span><span id="topPctNum">0%</span></div>
     <div class="stats">
       <div class="stat know" id="statKnow">✅ 알았음 0</div>
       <div class="stat unsure" id="statUnsure">🤔 애매함 0</div>
@@ -216,15 +217,16 @@ footer .nx.alt:hover .t{color:var(--txt)}
 
 <!-- 문항 리스트 -->
 <section id="list"><div class="wrap">
-  <div class="eyebrow">SECTION 02 · 20문항</div>
+  <div class="eyebrow">SECTION 02 · 21문항</div>
   <h2 class="sec"><span class="n">2</span>카테고리별로 풀어보기</h2>
   <p class="lead">위 nav 칩 또는 아래 버튼으로 카테고리를 필터링할 수 있다. 질문만 보고 스스로 답해본 다음 카드를 열어라.</p>
   <div class="catrow" id="catRow">
-    <button class="on" data-cat="all">전체 20</button>
+    <button class="on" data-cat="all">전체 21</button>
     <button data-cat="vec">벡터 기초 5</button>
     <button data-cat="dot">내적·외적 5</button>
     <button data-cat="coord">좌표계·회전 5</button>
     <button data-cat="coll">충돌·판정 5</button>
+    <button data-cat="ai">AI 면접 기출 1</button>
   </div>
   <div class="qlist" id="qList"></div>
 </div></section>
@@ -233,7 +235,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
 <section id="sim"><div class="wrap">
   <div class="eyebrow">SECTION 03 · 킬러 · 면접 시뮬레이터</div>
   <h2 class="sec"><span class="n">3</span>실전처럼 — 면접 시뮬레이터</h2>
-  <p class="lead">20문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
+  <p class="lead">21문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
   <div class="card">
     <div class="sim-idle" id="simIdle">
       <p>준비되면 시작해라. 순서는 매번 랜덤으로 섞인다.</p>
@@ -244,7 +246,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
 
     <div class="simpanel" id="simPanel">
       <div class="simhead">
-        <span class="prog" id="simProg">1 / 20</span>
+        <span class="prog" id="simProg">1 / 21</span>
         <span class="catbadge" id="simCatBadge">-</span>
       </div>
       <div class="simtimerbar" id="simTimerBar"><i id="simTimerFill"></i></div>
@@ -301,6 +303,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
       <tr><td>브로드/내로우 페이즈</td><td>싼 필터링 먼저, 비싼 정밀 검사는 나중에</td></tr>
       <tr><td>점-다각형 (볼록)</td><td>외적 부호가 모든 변에서 일관되면 내부</td></tr>
       <tr><td>점-다각형 (오목까지)</td><td>Ray Casting, 교차 횟수 홀수면 내부</td></tr>
+      <tr><td>최근접 객체 찾기</td><td>O(N) 전수(DistSquared) → 질의가 많으면 그리드 링 확장, 종료 조건 R×셀크기, 옆 셀 필수</td></tr>
     </table>
   </div>
 </div></section>
@@ -327,6 +330,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
       <tr><td>B. 내적과 외적</td><td>3~4강</td><td>완료</td></tr>
       <tr><td>C. 좌표계와 회전</td><td>5~6강</td><td>완료</td></tr>
       <tr><td>D. 충돌과 판정</td><td>7~8강</td><td>완료</td></tr>
+      <tr><td>보충 · AI 면접 기출</td><td>7-1강</td><td>완료</td></tr>
       <tr><td>보너스</td><td>면접 BEST 20</td><td>완료</td></tr>
     </table>
     <p class="hint" style="text-align:center;margin-top:16px">게임 수학 강의 시리즈 끝.</p>
@@ -425,9 +429,13 @@ var QUESTIONS = [
   {id:'q20',cat:'coll',star:false,q:'성능이 중요한 상황에서 충돌 판정 방식을 어떻게 고르겠어요?',src:'7~8강 종합',
    a:'가능한 한 <b>싼 도형부터</b> 씁니다. 대략적인 범위 판정은 구체나 AABB로 충분하고, 실제 정확한 충돌 지점이 필요한 <b>마지막 단계에서만</b> 정밀 충돌을 씁니다. 처음부터 모든 오브젝트에 정밀 메시 충돌을 매 프레임 돌리는 건 낭비입니다.',
    kw:['싼 도형부터','정밀 검사는 마지막에','전 오브젝트 정밀 충돌은 낭비'],
-   tail:'같이 묻기 쉬운 문항 → [[Q16]] [[Q17]]'}
+   tail:'같이 묻기 쉬운 문항 → [[Q16]] [[Q17]]'},
+  {id:'q21',cat:'ai',star:true,q:'2차원 평면에서 수많은 객체 중에 가장 가까운 객체를 찾는 방법은?',src:'7-1강',
+   a:'기본은 모든 객체를 돌면서 <b>제곱 거리</b>가 가장 작은 걸 고르는 <b>O(N) 전수 탐색</b>입니다. 제곱 거리로 비교하면 sqrt가 필요 없습니다. 질의가 많아서 이게 부담이면 평면을 <b>그리드</b>로 나눠서 기준점이 속한 셀부터 바깥으로 넓혀가며 찾는 공간 분할을 씁니다. 근처 셀만 보게 돼서 질의당 평균 O(1)에 가까워지는데, <b>옆 셀에 더 가까운 점</b>이 있을 수 있어서 찾은 최소 거리가 이미 본 범위의 안전 거리(R×셀 크기) 이하가 될 때까지 링을 넓혀야 정확합니다. 분포가 불균등하면 쿼드트리, 점이 고정이라면 KD-tree를 고려합니다.',
+   kw:['O(N) 전수 + DistSquared','질의 N번 → O(N²)','그리드 링 확장','종료 조건 R×셀크기','쿼드트리 / KD-tree'],
+   tail:'"내 셀만 보면 안 되나요?" → 경계 근처 오답. "가장 가까운 K개는?" → K개가 찰 때까지 링 확장. 관련 문항 → [[Q5]] [[Q17]]'}
 ];
-var CATLABEL = {vec:'벡터 기초',dot:'내적·외적',coord:'좌표계·회전',coll:'충돌·판정'};
+var CATLABEL = {vec:'벡터 기초',dot:'내적·외적',coord:'좌표계·회전',coll:'충돌·판정',ai:'AI 면접 기출'};
 var STORE_KEY = 'gmbonus-check';
 
 /* ===== 꼬리질문 링크 ([[Q2]] → 해당 카드로 이동) ===== */
@@ -484,7 +492,7 @@ function updateTopProgress(){
       '<summary>'+
         '<span class="statedot"></span>'+
         '<span class="qn">Q'+(i+1)+'</span>'+
-        (qd.star?'<span class="star">★최빈출</span>':'')+
+        (qd.star?'<span class="star">★실제 출제</span>':'')+
         (qd.open?'<span class="opentag">오픈 질문</span>':'')+
         '<span class="qtext">'+qd.q+'</span>'+
         '<span class="catbadge">'+CATLABEL[qd.cat]+' · '+qd.src+'</span>'+
@@ -592,7 +600,7 @@ document.getElementById('qList').addEventListener('click', function(e){
     var qd = queue[idx];
     progEl.textContent = (idx+1)+' / '+queue.length;
     catBadge.textContent = CATLABEL[qd.cat]+' · '+qd.src;
-    qText.textContent = qd.q + (qd.star?'  ★최빈출':'');
+    qText.textContent = qd.q + (qd.star?'  ★실제 출제':'');
     ansBox.classList.remove('on');
     revealRow.style.display = 'flex';
     rateBtns.forEach(function(b){ b.classList.remove('active'); });

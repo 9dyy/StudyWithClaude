@@ -180,6 +180,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
     <button class="chip" data-cat="mem">메모리</button>
     <button class="chip" data-cat="io">I/O</button>
     <button class="chip" data-cat="synth">종합</button>
+    <button class="chip" data-cat="ai">AI 면접 기출</button>
   </div>
 </div></nav>
 
@@ -188,7 +189,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
   <h1>클라 개발자가 받는 <span class="g">OS 면접 BEST 20</span></h1>
   <p class="sub">1~15강에서 배운 걸 실제 면접 답변으로 묶었다. 답변을 통째로 외우지 말고 <b class="tagline">키워드</b>를 기억한 다음 자기 말로 재구성해라. 면접은 암송이 아니라 대화다.</p>
   <div class="meta">
-    <div class="m">📋 문항 <b>20개</b></div>
+    <div class="m">📋 문항 <b>21개</b></div>
     <div class="m">🧩 선수지식 <b>1~15강 전체</b></div>
     <div class="m">⏱️ 약 30분 + 시뮬레이터</div>
   </div>
@@ -196,7 +197,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
   <div class="card topprog">
     <div class="eyebrow" style="margin-bottom:2px">내 진행률</div>
     <div class="pbar"><i id="topBar"></i></div>
-    <div class="row"><span id="topPct">0 / 20 문항 체크함</span><span id="topPctNum">0%</span></div>
+    <div class="row"><span id="topPct">0 / 21 문항 체크함</span><span id="topPctNum">0%</span></div>
     <div class="stats">
       <div class="stat know" id="statKnow">✅ 알았음 0</div>
       <div class="stat unsure" id="statUnsure">🤔 애매함 0</div>
@@ -217,17 +218,18 @@ footer .nx.alt:hover .t{color:var(--txt)}
 
 <!-- 문항 리스트 -->
 <section id="list"><div class="wrap">
-  <div class="eyebrow">SECTION 02 · 20문항</div>
+  <div class="eyebrow">SECTION 02 · 21문항</div>
   <h2 class="sec"><span class="n">2</span>카테고리별로 풀어보기</h2>
   <p class="lead">위 nav 칩 또는 아래 버튼으로 카테고리를 필터링할 수 있다. 질문만 보고 스스로 답해본 다음 카드를 열어라.</p>
   <div class="catrow" id="catRow">
-    <button class="on" data-cat="all">전체 20</button>
+    <button class="on" data-cat="all">전체 21</button>
     <button data-cat="proc">기초 3</button>
     <button data-cat="sched">스케줄링 3</button>
     <button data-cat="concur">동시성 5</button>
     <button data-cat="mem">메모리 5</button>
     <button data-cat="io">I/O 3</button>
     <button data-cat="synth">종합 1</button>
+    <button data-cat="ai">AI 면접 기출 1</button>
   </div>
   <div class="qlist" id="qList"></div>
 </div></section>
@@ -236,7 +238,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
 <section id="sim"><div class="wrap">
   <div class="eyebrow">SECTION 03 · 킬러 · 면접 시뮬레이터</div>
   <h2 class="sec"><span class="n">3</span>실전처럼 — 면접 시뮬레이터</h2>
-  <p class="lead">20문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
+  <p class="lead">21문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
   <div class="card">
     <div class="sim-idle" id="simIdle">
       <p>준비되면 시작해라. 순서는 매번 랜덤으로 섞인다.</p>
@@ -247,7 +249,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
 
     <div class="simpanel" id="simPanel">
       <div class="simhead">
-        <span class="prog" id="simProg">1 / 20</span>
+        <span class="prog" id="simProg">1 / 21</span>
         <span class="catbadge" id="simCatBadge">-</span>
       </div>
       <div class="simtimerbar" id="simTimerBar"><i id="simTimerFill"></i></div>
@@ -302,6 +304,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
       <tr><td>페이지 폴트</td><td>Major = 디스크 = hitch</td></tr>
       <tr><td>TLB</td><td>변환 캐시</td></tr>
       <tr><td>배열 vs 링크드</td><td>공간 지역성, 캐시 라인 64B</td></tr>
+      <tr><td>Stack vs Heap</td><td>자동/명시적 관리, 1~8MB 제한, 힙은 할당 비용·단편화</td></tr>
       <tr><td>비동기 I/O</td><td>대기를 Game Thread 밖으로</td></tr>
       <tr><td>파일 열기</td><td>핸들 생성, inode</td></tr>
     </table>
@@ -331,6 +334,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
       <tr><td>3. 동시성</td><td>7~10강</td><td>완료</td></tr>
       <tr><td>4. 메모리 관리</td><td>11~13강</td><td>완료</td></tr>
       <tr><td>5. I/O와 파일</td><td>14~15강</td><td>완료</td></tr>
+      <tr><td>추가 · AI 면접 기출</td><td>3강 (Stack/Heap)</td><td>Q21</td></tr>
       <tr><td>보너스</td><td>면접 BEST 20</td><td>완료</td></tr>
     </table>
     <p class="hint" style="text-align:center;margin-top:16px">운영체제 강의 시리즈 끝.</p>
@@ -424,9 +428,13 @@ var QUESTIONS = [
   {id:'q20',cat:'synth',star:false,open:true,q:'멀티스레드 프로그래밍 경험을 말해보세요.',
    a:'<i style="color:var(--faint)">이건 정답이 없는 경험 질문입니다. 1~15강을 엮어서 스토리로 답하세요. 예시 틀 ↓</i><br><br>언리얼에서 무거운 [경로 탐색/세이브 직렬화 등]을 Game Thread에서 하다가 hitch가 발생한 적이 있습니다. 이걸 <code>AsyncTask</code>로 워커 스레드에 옮겼는데, 결과를 적용할 때 공유 데이터에서 Race Condition이 생겨서 <code>FCriticalSection</code>으로 보호했습니다. 그런데 단순 카운터였던 부분은 <code>FThreadSafeCounter</code>로 바꿔서 락 비용을 줄였고, UObject를 만지는 부분은 반드시 Game Thread로 콜백을 넘겨서 처리했습니다.',
    kwText:'(한 답변에 여러 개념을 자연스럽게) hitch → 워커 → Race → Mutex → atomic → Game Thread 콜백',
-   tail:'답변에 등장한 키워드 아무거나 깊게 파고듦. 그래서 자기가 진짜 아는 것만 말해야 한다.<br><br><b>팁:</b> 모르는 걸 키워드로 던지면 꼬리질문에서 무너진다. 위 20문항 중 자신 있는 것 위주로 스토리를 짜라.'}
+   tail:'답변에 등장한 키워드 아무거나 깊게 파고듦. 그래서 자기가 진짜 아는 것만 말해야 한다.<br><br><b>팁:</b> 모르는 걸 키워드로 던지면 꼬리질문에서 무너진다. 위 20문항 중 자신 있는 것 위주로 스토리를 짜라.'},
+  {id:'q21',cat:'ai',star:false,q:'Stack과 Heap에 대해 설명해 주세요. (AI 면접 실제 출제)',
+   a:'둘 다 프로세스 메모리의 영역인데 할당과 수명 관리 방식이 다릅니다. <b>Stack</b>은 함수를 호출할 때 스택 프레임이 자동으로 잡히고 리턴하면 자동으로 해제돼서 비용이 거의 없고 지역 변수가 여기 있습니다. 대신 크기가 보통 <b>1~8MB</b>로 제한돼서 깊은 재귀나 큰 지역 배열은 스택 오버플로를 냅니다. <b>Heap</b>은 <code>new</code>/<code>malloc</code>으로 명시적으로 할당하고 <code>delete</code>/<code>free</code>로 해제해야 하며, 할당기가 빈 공간을 찾는 비용이 들고 반복하면 <b>단편화</b>가 생기지만, 크기가 크고 함수가 끝나도 살아 있을 수 있습니다. 게임에서는 자주 생기고 사라지는 객체는 Object Pool로 힙 비용을 줄이고, 수명을 스코프에 묶고 싶으면 RAII나 스마트 포인터를 씁니다.',
+   kw:['자동 vs 명시적 관리','크기 제한 1~8MB','할당 비용·단편화','수명(함수 종료 vs 직접 해제)'],
+   tail:'"<code>int* p = new int(5);</code>에서 p와 5는 각각 어디 있나요?" → Q3와 3강 (p는 Stack, 5는 Heap) / "스택 오버플로는 언제?" → 3강 / "힙 할당이 반복되면?" → Cpp 7강 Object Pooling'}
 ];
-var CATLABEL = {proc:'프로세스·스레드',sched:'스케줄링',concur:'동시성',mem:'메모리',io:'I/O',synth:'종합'};
+var CATLABEL = {proc:'프로세스·스레드',sched:'스케줄링',concur:'동시성',mem:'메모리',io:'I/O',synth:'종합',ai:'AI 면접 기출'};
 var STORE_KEY = 'osbonus-check';
 
 /* ===== 상태 저장/로드 ===== */

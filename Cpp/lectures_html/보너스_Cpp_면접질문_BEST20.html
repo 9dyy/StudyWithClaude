@@ -179,6 +179,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
     <button class="chip" data-cat="ds">자료구조</button>
     <button class="chip" data-cat="pat">디자인 패턴</button>
     <button class="chip" data-cat="mix">판단형·종합</button>
+    <button class="chip" data-cat="ai">AI 면접 기출</button>
   </div>
 </div></nav>
 
@@ -187,7 +188,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
   <h1>클라 개발자가 받는 <span class="g">C++·자료구조·패턴 면접 BEST 20</span></h1>
   <p class="sub">1~10강에서 배운 걸 실제 면접 답변으로 묶었다. ★는 수강생이 실제로 받았던 질문이다. 답변을 통째로 외우지 말고 <b class="tagline">키워드</b>를 기억한 다음 자기 말로 재구성해라. 면접은 암송이 아니라 대화다.</p>
   <div class="meta">
-    <div class="m">📋 문항 <b>20개</b></div>
+    <div class="m">📋 문항 <b>23개</b></div>
     <div class="m">🧩 선수지식 <b>1~10강 전체</b></div>
     <div class="m">⏱️ 약 30분 + 시뮬레이터</div>
   </div>
@@ -195,7 +196,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
   <div class="card topprog">
     <div class="eyebrow" style="margin-bottom:2px">내 진행률</div>
     <div class="pbar"><i id="topBar"></i></div>
-    <div class="row"><span id="topPct">0 / 20 문항 체크함</span><span id="topPctNum">0%</span></div>
+    <div class="row"><span id="topPct">0 / 23 문항 체크함</span><span id="topPctNum">0%</span></div>
     <div class="stats">
       <div class="stat know" id="statKnow">✅ 알았음 0</div>
       <div class="stat unsure" id="statUnsure">🤔 애매함 0</div>
@@ -222,15 +223,16 @@ footer .nx.alt:hover .t{color:var(--txt)}
 
 <!-- 문항 리스트 -->
 <section id="list"><div class="wrap">
-  <div class="eyebrow">SECTION 02 · 20문항</div>
+  <div class="eyebrow">SECTION 02 · 23문항</div>
   <h2 class="sec"><span class="n">2</span>카테고리별로 풀어보기</h2>
   <p class="lead">위 nav 칩 또는 아래 버튼으로 카테고리를 필터링할 수 있다. 질문만 보고 스스로 답해본 다음 카드를 열어라.</p>
   <div class="catrow" id="catRow">
-    <button class="on" data-cat="all">전체 20</button>
+    <button class="on" data-cat="all">전체 23</button>
     <button data-cat="syn">문법 심화 5</button>
     <button data-cat="ds">자료구조 5</button>
     <button data-cat="pat">디자인 패턴 7</button>
     <button data-cat="mix">판단형·종합 3</button>
+    <button data-cat="ai">AI 면접 기출 3</button>
   </div>
   <div class="qlist" id="qList"></div>
 </div></section>
@@ -239,7 +241,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
 <section id="sim"><div class="wrap">
   <div class="eyebrow">SECTION 03 · 킬러 · 면접 시뮬레이터</div>
   <h2 class="sec"><span class="n">3</span>실전처럼 — 면접 시뮬레이터</h2>
-  <p class="lead">20문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
+  <p class="lead">23문항을 랜덤 순서로 하나씩 제시한다. 문항당 <b>30초</b> 안에 입으로 답을 말해보고, 시간이 다 되거나 "답변 확인"을 누르면 모범 답변이 뜬다. 그다음 스스로 채점하면 다음 문항으로 넘어간다.</p>
   <div class="card">
     <div class="sim-idle" id="simIdle">
       <p>준비되면 시작해라. 순서는 매번 랜덤으로 섞인다.</p>
@@ -250,7 +252,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
 
     <div class="simpanel" id="simPanel">
       <div class="simhead">
-        <span class="prog" id="simProg">1 / 20</span>
+        <span class="prog" id="simProg">1 / 23</span>
         <span class="catbadge" id="simCatBadge">-</span>
       </div>
       <div class="simtimerbar" id="simTimerBar"><i id="simTimerFill"></i></div>
@@ -303,6 +305,8 @@ footer .nx.alt:hover .t{color:var(--txt)}
       <tr><td>Observer</td><td>발행-구독으로 느슨한 결합, 발행자는 구독자를 모름</td></tr>
       <tr><td>Singleton</td><td>생성자 private + 복사 금지, 언리얼은 GameInstance/Subsystem으로 대체</td></tr>
       <tr><td>State Pattern</td><td>상태별 클래스 분리, 전환 조건은 상태 자신이 앎</td></tr>
+      <tr><td>몬스터 목록 STL</td><td>vector(TArray) + swap-and-pop + 지연 삭제, 순회가 지배하면 list는 불리</td></tr>
+      <tr><td>다형성</td><td>virtual + vtable로 if 제거, virtual 소멸자·슬라이싱 주의, 수치만 다르면 데이터 테이블</td></tr>
     </table>
   </div>
 </div></section>
@@ -329,6 +333,7 @@ footer .nx.alt:hover .t{color:var(--txt)}
       <tr><td>B. 자료구조 기본기</td><td>4~6강</td><td>Q6~10</td></tr>
       <tr><td>C. 디자인 패턴</td><td>7~10강</td><td>Q11~17</td></tr>
       <tr><td>D. 판단형·종합</td><td>4·6·7~10강</td><td>Q18~20</td></tr>
+      <tr><td>E. AI 면접 기출</td><td>4-1강 · 10-1강 · 오픈 질문</td><td>Q21~23</td></tr>
       <tr><td>11~12강</td><td>스마트 포인터 · 정렬 알고리즘</td><td style="color:var(--faint)">본강에서 복습</td></tr>
     </table>
     <p class="hint" style="text-align:center;margin-top:16px">C++·자료구조·디자인패턴 강의 시리즈 끝.</p>
@@ -427,9 +432,21 @@ var QUESTIONS = [
   {id:'q20',cat:'mix',star:false,open:true,q:'Object Pooling, Observer, Singleton/Factory, State 중 두 개 이상을 같이 써야 하는 시스템을 설계해볼 수 있나요?',src:'7~10강 종합',
    a:'적 스폰 시스템을 예로 들면, <b>Object Pool</b>에서 적 액터를 꺼내고(7강), <b>Factory</b>가 적 타입별 초기화를 담당하고(9강), 이 전체를 관리하는 창구를 <b>WorldSubsystem</b> 하나로 두고(9강), 적이 스폰/사망할 때 이벤트를 <b>Broadcast</b>해서 UI나 퀘스트 시스템이 구독하게(8강) 만들 수 있습니다. 적의 대기/추격/공격 상태는 <b>State Pattern</b>으로 분리합니다(10강).',
    kwText:'Pool(7) → Factory(9) → WorldSubsystem(9) → Broadcast(8) → State(10) — 한 시스템에 엮기',
-   tail:'같이 묻기 쉬운 문항 → [[Q11]] [[Q13]] [[Q16]] [[Q17]]'}
+   tail:'같이 묻기 쉬운 문항 → [[Q11]] [[Q13]] [[Q16]] [[Q17]]'},
+  {id:'q21',cat:'ai',star:true,open:true,q:'지금까지 기억나는 게임 중에 "이건 어떻게 구현했을까" 싶었던 게임이 있나요? → 그 기능은 어떻게 구현했을 것 같나요?',src:'오픈 질문',
+   a:'<i style="color:var(--faint)">정답이 없는 추측형 질문입니다. 추측임을 밝히고, 아는 개념으로 근거를 대세요. 예시 틀 ↓</i><br><br>공장형 게임이 궁금했습니다. 수만 개의 기계와 벨트, 아이템이 동시에 돌아가는데 <b>최적화</b>를 어떻게 했을지가 궁금했습니다. 개체마다 Actor나 Tick을 두면 감당이 안 될 것 같아서, 데이터를 <b>구조체 배열처럼 연속 메모리</b>에 두고 종류별로 한꺼번에 처리하는 구조를 썼을 것 같습니다. 화면 밖이거나 멈춘 기계는 <b>업데이트를 건너뛰고</b>, 벨트 위 아이템은 개별 객체가 아니라 구간 단위로 묶어 이동을 계산하고, 렌더는 <b>인스턴싱</b>으로 묶어 드로우콜을 줄였을 것 같습니다. 정확한 구현은 모르지만 배열의 캐시 지역성, Object Pooling, 공간 분할 같은 기법을 응용한 추측입니다.',
+   kwText:'추측임을 밝힘 → 연속 메모리(캐시 지역성) → 활성 구역만 업데이트 → 인스턴싱/풀링',
+   tail:'답변에 나온 키워드를 파고든다 → [[Q22]] [[Q11]] [[Q7]]. 실제로 자기가 궁금했던 게임으로 바꿔서 준비하자.'},
+  {id:'q22',cat:'ai',star:true,q:'몬스터 목록에 어떤 C++ STL 자료구조를 쓰시겠어요? 매 프레임 순회·렌더하고 삽입/삭제가 많습니다.',src:'4-1강',
+   a:'<b>std::vector</b>, 언리얼이면 <code>TArray</code>를 쓰겠습니다. 매 프레임 전체를 도는 게 가장 잦은 연산이라 연속 메모리의 <b>캐시 지역성</b>이 가장 크게 작용하고, 삽입은 끝에 하면 상각 O(1)입니다. 삭제는 순서가 필요 없으면 마지막 원소와 바꿔서 지우는 <b>swap-and-pop</b>으로 O(1)에 처리하고, 순회 중 삭제는 삭제 표시만 해두고 <b>프레임 끝에 한 번에 정리</b>합니다. list는 삽입/삭제는 O(1)이지만 순회 때 캐시 미스가 커서 이 조건엔 불리합니다.',
+   kw:['vector(TArray)','swap-and-pop','지연 삭제','순회 = 캐시 지역성','list는 순회에 불리'],
+   tail:'"포인터가 무효화되면요?" → Reserve / 포인터 저장 / 핸들 / Object Pool [[Q11]]. 관련 문항 → [[Q6]] [[Q18]]'},
+  {id:'q23',cat:'ai',star:true,q:'몬스터 A, B, C가 각자 Attack을 구현하는데, 공격할 때마다 if문으로 종류를 찾아야 합니다. 어떻게 설계하시겠어요?',src:'10-1강',
+   a:'기반 클래스에 Attack을 <b>가상 함수</b>로 선언하고 몬스터마다 override하게 만들겠습니다. 호출하는 쪽은 기반 포인터로 Attack만 부르면 실제 타입에 맞는 함수가 <b>런타임에 선택</b>돼서 if 분기가 사라지고, 새 몬스터를 추가해도 클래스 하나만 만들면 됩니다. 기반 소멸자는 <b>virtual</b>로 두고 컨테이너엔 포인터를 담습니다. 종류마다 다른 게 수치뿐이면 클래스를 나누지 않고 <b>데이터 테이블</b>로 처리하고, 행동이 조합되면 Strategy로 분리합니다.',
+   kw:['가상 함수 + override','vptr / vtable','virtual 소멸자','슬라이싱 주의','수치만 다르면 데이터 테이블'],
+   tail:'"상태에 따라 행동이 바뀌면요?" → State Pattern [[Q17]]. 관련 문항 → [[Q13]]'}
 ];
-var CATLABEL = {syn:'C++ 문법 심화',ds:'자료구조',pat:'디자인 패턴',mix:'판단형·종합'};
+var CATLABEL = {syn:'C++ 문법 심화',ds:'자료구조',pat:'디자인 패턴',mix:'판단형·종합',ai:'AI 면접 기출'};
 var STORE_KEY = 'cppbonus-check';
 
 /* ===== 꼬리질문 링크 ([[Q2]] → 해당 카드로 이동) ===== */
