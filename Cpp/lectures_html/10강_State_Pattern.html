@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10강 · State Pattern — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 상태 머신 시뮬레이터 */
+.msv{width:100%;height:auto;display:block;background:var(--bg2);border:1px solid var(--line);border-radius:12px;margin-top:6px}
+.msv text{font-family:Pretendard,system-ui,sans-serif}
+.msv .nd rect{fill:var(--card2);stroke:var(--line);stroke-width:2;transition:.2s}
+.msv .nd text{fill:var(--txt);font-size:14px;font-weight:800;text-anchor:middle;dominant-baseline:central}
+.msv .nd small{font-size:10px}
+.msv .nd.on rect{fill:rgba(168,85,247,.28);stroke:var(--pur);stroke-width:3}
+.msv .nd.dead.on rect{fill:rgba(248,113,113,.25);stroke:var(--red)}
+.msv .nd.dodge.on rect{fill:rgba(34,211,238,.22);stroke:var(--cyan)}
+.msv .ed{stroke:#3b4478;stroke-width:1.8;fill:none;transition:.2s}
+.msv .ed.on{stroke:var(--amber);stroke-width:3.5}
+.msv .ed.dash{stroke-dasharray:5 4}
+.msv .lb{fill:var(--faint);font-size:10.5px;text-anchor:middle}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:14px}
+.ctrl .btn{padding:9px 14px;font-size:13px}
+.hold{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--dim);background:var(--bg2);border:1px solid var(--line);border-radius:20px;padding:8px 14px;cursor:pointer;user-select:none}
+.hold input{accent-color:var(--acc)}
+.hold.on{border-color:var(--acc);color:var(--txt)}
+.hpbar{height:14px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-top:6px}
+.hpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.3s}
+.tlst{display:flex;gap:2px;margin-top:12px;height:24px}
+.tlst i{flex:1;border-radius:3px;background:var(--bg2);border:1px solid var(--line)}
+.tlst i.S0{background:#3b4478}.tlst i.S1{background:var(--pur)}.tlst i.S2{background:var(--amber)}.tlst i.S3{background:var(--red)}.tlst i.S4{background:var(--cyan)}
+.tllg{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;font-size:11px;color:var(--faint);margin-top:6px}
+.tllg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:middle}
+.logb{margin-top:12px;background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;height:170px;overflow:auto}
+.logb div{color:var(--dim)}.logb .en{color:var(--grn)}.logb .ex{color:var(--faint)}.logb .tk{color:#a5b4fc}.logb .wn{color:var(--amber)}.logb .er{color:var(--red)}
+.cmpg{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.cmp{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.cmp h4{font-size:13.5px;margin-bottom:8px}
+.cmp.a h4{color:var(--red)}.cmp.b h4{color:var(--grn)}
+.cmp .big{font-family:ui-monospace,monospace;font-size:30px;font-weight:800;color:var(--txt)}
+.cmp .big small{font-size:12px;color:var(--faint);font-weight:500}
+.cmp .chs{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+.cmp .chs span{font-size:11.5px;padding:3px 9px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--dim)}
+.cmp .chs span.edit{border-color:var(--amber);color:var(--amber);background:rgba(251,191,36,.08)}
+.cmp .chs span.new{border-color:var(--pur);color:#d8b4fe;background:rgba(168,85,247,.1)}
+.cmp .chs span.safe{border-color:rgba(52,211,153,.5);color:var(--grn)}
+.pill{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--bg2)}
+.pill button{font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 14px;border:none;background:none;color:var(--dim);cursor:pointer}
+.pill button.on{background:var(--acc);color:#fff}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>10강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#pattern">패턴</a>
+    <a class="chip" href="#sim">상태 시뮬</a>
+    <a class="chip" href="#ext">확장</a>
+    <a class="chip" href="#obs">Observer</a>
+    <a class="chip" href="#over">과한 설계</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 디자인 패턴 · 게임 특화</span>
+  <h1>State <span class="g">Pattern</span></h1>
+  <p class="sub">대기·이동·공격·사망 상태 분기가 200줄짜리 if-else로 뒤엉킨다. "캐릭터가 상태를 확인하며 분기"하는 대신 "각 상태가 자기 할 일과 다음 전환을 스스로 아는" 구조 — 직접 조작하며 상태를 오가고, 새 상태를 추가해 수정 범위를 재본다.</p>
+  <div class="meta">
+    <div class="m">🎭 상태가 곧 클래스</div>
+    <div class="m">🧩 선수지식 <b>8강 · 9강</b></div>
+    <div class="m">⏱️ 약 25분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>캐릭터 상태 분기가 200줄짜리 if-else가 된 사건</h2>
+  <p class="lead">Idle, Move, Attack, Dead 상태를 enum과 if-else로 짰다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">enum class</span> ECharacterState { Idle, Move, Attack, Dead };
+
+<span class="kw">void</span> ACharacter::Tick(<span class="kw">float</span> DeltaTime)
+{
+    <span class="kw">if</span> (CurrentState == ECharacterState::Idle)
+    {
+        <span class="kw">if</span> (InputVelocity.Size() &gt; 0)   CurrentState = ECharacterState::Move;
+        <span class="kw">else if</span> (bAttackPressed)          CurrentState = ECharacterState::Attack;
+        PlayAnimation(IdleAnim);
+    }
+    <span class="kw">else if</span> (CurrentState == ECharacterState::Move)
+    {
+        <span class="kw">if</span> (InputVelocity.Size() == 0)   CurrentState = ECharacterState::Idle;
+        <span class="kw">else if</span> (bAttackPressed)          CurrentState = ECharacterState::Attack;   <span class="cm">// "이동 중 공격 가능?" 로직이 여기 또</span>
+        MoveCharacter(InputVelocity, DeltaTime);
+        PlayAnimation(MoveAnim);
+    }
+    <span class="kw">else if</span> (CurrentState == ECharacterState::Attack)
+    {
+        <span class="cm">// 공격 진행 체크, 콤보 입력, 공격 중 이동 불가 처리... 상태가 늘수록 이 블록도 위 블록의 조건도 계속 늘어남</span>
+    }
+    <span class="kw">else if</span> (CurrentState == ECharacterState::Dead) { <span class="cm">/* ... */</span> }
+}</pre>
+    <p class="hint">상태가 4개일 때도 "다른 상태로 전환 가능한지"를 체크하는 조건이 <b>상태마다 흩어져 있다.</b> 여기에 구르기(Dodge), 스킬 시전, 기절이 추가되면 <b>각 상태 블록 안에 다른 모든 상태로의 전환 조건이 다 들어가야 해서</b> 기하급수적으로 꼬인다. "공격 중엔 이동 입력을 무시" 같은 상태 간 규칙도 여러 블록에 중복돼 하나 고치면 다른 곳도 같이 고쳐야 한다.</p>
+  </div>
+</div></section>
+
+<section id="pattern"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 발상의 전환</div>
+  <h2 class="sec"><span class="n">2</span>상태마다 자기가 할 일과 전환 규칙을 스스로 갖는다</h2>
+  <p class="lead"><b>"캐릭터가 상태를 확인하며 분기"</b>가 아니라 <b>"각 상태가 자기 할 일과 다음 상태로의 전환 조건을 안다."</b> 캐릭터는 현재 상태 객체 하나만 들고 <b>위임</b>한다.</p>
+  <div class="card">
+    <pre class="code">[if-else 방식]                          [State Pattern]
+
+Character                               Character ──→ 현재 CharacterState* 하나만 들고 있음
+  │ if CurrentState == Idle: ...              │
+  │ else if == Move: ...                      ▼
+  │ else if == Attack: ...              CharacterState (인터페이스)
+  │ else if == Dead: ...                  ├── IdleState::Tick()   → 자기 전환 조건도 자기가 앎
+  └─ 모든 상태 로직이 한 함수에 뒤섞임      ├── MoveState::Tick()
+                                          ├── AttackState::Tick()
+                                          └── DeadState::Tick()</pre>
+    <pre class="code" style="margin-top:12px"><span class="kw">class</span> FCharacterState
+{
+<span class="kw">public</span>:
+    <span class="kw">virtual</span> ~FCharacterState() = <span class="kw">default</span>;
+    <span class="kw">virtual void</span> Enter(ACharacter* Character) {}                    <span class="cm">// 이 상태로 들어올 때 한 번</span>
+    <span class="kw">virtual void</span> Tick(ACharacter* Character, <span class="kw">float</span> DeltaTime) = 0;  <span class="cm">// 이 상태인 동안 매 프레임</span>
+    <span class="kw">virtual void</span> Exit(ACharacter* Character) {}                     <span class="cm">// 이 상태를 떠날 때 한 번</span>
+};
+
+<span class="kw">class</span> FIdleState : <span class="kw">public</span> FCharacterState
+{
+<span class="kw">public</span>:
+    <span class="kw">virtual void</span> Enter(ACharacter* Character) <span class="kw">override</span> { Character-&gt;PlayAnimation(IdleAnim); }
+
+    <span class="kw">virtual void</span> Tick(ACharacter* Character, <span class="kw">float</span> DeltaTime) <span class="kw">override</span>
+    {
+        <span class="kw">if</span> (Character-&gt;IsAttackPressed())
+            Character-&gt;ChangeState(MakeUnique&lt;FAttackState&gt;());   <span class="cm">// 스마트 포인터로 상태 소유 (11강)</span>
+        <span class="kw">else if</span> (Character-&gt;GetInputVelocity().Size() &gt; 0)
+            Character-&gt;ChangeState(MakeUnique&lt;FMoveState&gt;());
+    }
+};
+
+<span class="kw">class</span> FAttackState : <span class="kw">public</span> FCharacterState
+{
+<span class="kw">public</span>:
+    <span class="kw">virtual void</span> Enter(ACharacter* Character) <span class="kw">override</span> { Character-&gt;PlayAnimation(AttackAnim); ElapsedTime = 0.0f; }
+
+    <span class="kw">virtual void</span> Tick(ACharacter* Character, <span class="kw">float</span> DeltaTime) <span class="kw">override</span>
+    {
+        <span class="cm">// 공격 중엔 이동 입력을 아예 검사조차 안 함 — 이 상태 밖에서 신경 쓸 필요가 없어짐</span>
+        ElapsedTime += DeltaTime;
+        <span class="kw">if</span> (ElapsedTime &gt;= AttackDuration) Character-&gt;ChangeState(MakeUnique&lt;FIdleState&gt;());
+    }
+<span class="kw">private</span>:
+    <span class="kw">float</span> ElapsedTime = 0.0f;
+    <span class="kw">static constexpr float</span> AttackDuration = 0.6f;
+};
+
+<span class="kw">class</span> ACharacter : <span class="kw">public</span> AActor
+{
+<span class="kw">public</span>:
+    <span class="kw">void</span> Tick(<span class="kw">float</span> DeltaTime) <span class="kw">override</span> { CurrentState-&gt;Tick(<span class="kw">this</span>, DeltaTime); }   <span class="cm">// 지금 상태에게 위임만</span>
+
+    <span class="kw">void</span> ChangeState(TUniquePtr&lt;FCharacterState&gt; NewState)
+    {
+        CurrentState-&gt;Exit(<span class="kw">this</span>);
+        CurrentState = MoveTemp(NewState);
+        CurrentState-&gt;Enter(<span class="kw">this</span>);
+    }
+<span class="kw">private</span>:
+    TUniquePtr&lt;FCharacterState&gt; CurrentState = MakeUnique&lt;FIdleState&gt;();
+};</pre>
+    <p class="hint"><code>ACharacter::Tick</code>은 이제 <b>"지금 상태 객체에게 물어봐"</b> 한 줄. <code>FAttackState</code> 안에는 이동 입력을 확인하는 코드 자체가 없으니 "공격 중 이동 불가" 규칙이 <b>검사할 필요조차 없이</b> 자연스럽게 지켜진다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>상태 머신 시뮬레이터 — Enter · Tick · Exit</h2>
+  <p class="lead">위 코드가 그대로 도는 캐릭터다. <b>1 Tick = 0.1초</b>. 이동 입력을 유지하고, 공격·피격을 눌러 상태가 어떻게 바뀌고 <b>Exit/Enter가 어떤 순서로 불리는지</b> 로그로 확인하자. <b>공격 상태에서 이동 입력을 눌러도 무시되는 것</b>이 핵심 관찰 포인트다.</p>
+  <div class="card">
+    <svg class="msv" id="msv" viewBox="0 0 640 250"></svg>
+    <div class="stats" id="mStats"></div>
+    <div class="hpbar"><i id="hpBar" style="width:100%"></i></div>
+    <div class="tlst" id="tlst"></div>
+    <div class="tllg"><span><i style="background:#3b4478"></i>Idle</span><span><i style="background:var(--pur)"></i>Move</span><span><i style="background:var(--amber)"></i>Attack</span><span><i style="background:var(--cyan)"></i>Dodge</span><span><i style="background:var(--red)"></i>Dead</span><span style="color:var(--faint)">← 최근 40 Tick</span></div>
+    <div class="ctrl">
+      <label class="hold" id="holdL"><input type="checkbox" id="mvIn"> 이동 입력 유지 (W)</label>
+      <button class="btn ghost" id="bAtk">⚔️ 공격 입력</button>
+      <button class="btn ghost" id="bDodge" style="display:none">🌀 구르기 입력</button>
+      <button class="btn ghost" id="bHit">💥 피격 (-30)</button>
+      <button class="btn ghost" id="bRev">✨ 부활</button>
+    </div>
+    <div class="ctrl"><button class="btn" id="bStep">▶ 1 Tick</button><button class="btn ghost" id="bAuto">⏯ 자동 진행</button><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <div class="logb" id="mLog"></div>
+    <p class="hint">해볼 것 ① <b>이동 입력 유지</b> 체크 후 Tick 몇 번 → Idle→Move 전환. ② <b>공격 입력 → Tick</b> → Move→Attack. 공격 중엔 이동 입력이 켜져 있어도 로그에 "이 상태 코드에 없음"이 찍히며 6 Tick(0.6초) 뒤 자동으로 Idle로 돌아간다. ③ <b>피격 3~4번</b>이면 HP 0 → 어느 상태에서든 Dead. Dead에선 아무 입력도 안 먹는다(부활로 되살림). ④ 아래 <b>"구르기 추가"</b>를 켠 뒤 다시 해보자.</p>
+  </div>
+</div></section>
+
+<section id="ext"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 확장 비교</div>
+  <h2 class="sec"><span class="n">4</span>구르기(Dodge)를 추가하면 몇 군데를 고치나</h2>
+  <p class="lead">위 시뮬레이터에 <b>구르기</b>를 추가해보자. 구르기 중엔 <b>무적</b>(Enter에서 켜고 Exit에서 끔), 0.4초 뒤 Idle로 복귀한다. 스위치를 켜면 시뮬레이터에 상태가 하나 늘어나고, 두 구조에서 <b>고쳐야 하는 곳</b>이 아래에 집계된다.</p>
+  <div class="card">
+    <div class="ctrl" style="margin-top:0"><span style="font-size:13px;color:var(--dim)">구르기 상태 <span class="pill" id="dgSw"><button data-v="0" class="on">추가 전</button><button data-v="1">추가함</button></span></span></div>
+    <div class="cmpg">
+      <div class="cmp a"><h4>if-else / enum 방식</h4><div class="big" id="cA">0<small> 곳 수정</small></div>
+        <div class="chs" id="cAch"></div>
+        <p class="hint" style="margin-top:10px">모든 상태 블록에 "구르기 입력 체크"를 넣고, 그러고 나서 "어 근데 공격 중엔 구르면 안 되지" 하며 <b>예외 조건을 다시 추가</b>하는 식으로 간다.</p></div>
+      <div class="cmp b"><h4>State Pattern</h4><div class="big" id="cB">0<small> 곳 수정</small></div>
+        <div class="chs" id="cBch"></div>
+        <p class="hint" style="margin-top:10px">새 클래스 하나 + <b>그 상태로 들어가는 조건이 필요한 상태에만</b> 한 줄씩. "구르기가 애초에 불가능한" 상태는 <b>손댈 필요가 전혀 없다.</b> "이 상태에 없는 코드는 실행되지 않는다"가 구조로 보장된다.</p></div>
+    </div>
+    <pre class="code" style="margin-top:14px"><span class="kw">class</span> FDodgeState : <span class="kw">public</span> FCharacterState
+{
+<span class="kw">public</span>:
+    <span class="kw">virtual void</span> Enter(ACharacter* Character) <span class="kw">override</span>
+    {
+        Character-&gt;PlayAnimation(DodgeAnim);
+        Character-&gt;SetInvincible(<span class="kw">true</span>);    <span class="cm">// 구르기 중 무적 — 이 상태만의 고유 로직</span>
+    }
+    <span class="kw">virtual void</span> Tick(ACharacter* Character, <span class="kw">float</span> DeltaTime) <span class="kw">override</span> { <span class="cm">/* ... */</span> }
+    <span class="kw">virtual void</span> Exit(ACharacter* Character) <span class="kw">override</span> { Character-&gt;SetInvincible(<span class="kw">false</span>); }
+};
+
+<span class="cm">// FIdleState::Tick, FMoveState::Tick 에만 전환 조건 한 줄씩 추가</span>
+<span class="kw">if</span> (Character-&gt;IsDodgePressed()) Character-&gt;ChangeState(MakeUnique&lt;FDodgeState&gt;());</pre>
+    <p class="hint">구르기를 켠 뒤 위 시뮬레이터로 돌아가 <b>구르기 입력 → Tick</b>을 눌러보자. 구르기 중 <b>피격</b>을 누르면 "무적"으로 무시되고(Enter/Exit로 무적을 관리), 공격 중에 구르기를 눌러도 <b>Attack 상태엔 그 코드가 없어서 무시</b>된다.</p>
+  </div>
+</div></section>
+
+<section id="obs"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · Observer 연결</div>
+  <h2 class="sec"><span class="n">5</span>상태 전환을 알림으로 (8강)</h2>
+  <p class="lead">상태가 바뀔 때 UI(상태 아이콘)나 사운드에 알려야 한다면, 8강의 Observer Pattern을 <code>ChangeState</code> 안에 얹는다.</p>
+  <div class="card">
+    <pre class="code">DECLARE_MULTICAST_DELEGATE_TwoParams(FOnStateChanged, FName <span class="cm">/*OldState*/</span>, FName <span class="cm">/*NewState*/</span>);
+
+<span class="kw">class</span> ACharacter : <span class="kw">public</span> AActor
+{
+<span class="kw">public</span>:
+    FOnStateChanged OnStateChanged;
+
+    <span class="kw">void</span> ChangeState(TUniquePtr&lt;FCharacterState&gt; NewState)
+    {
+        FName OldName = CurrentState-&gt;GetStateName();
+        CurrentState-&gt;Exit(<span class="kw">this</span>);
+        CurrentState = MoveTemp(NewState);
+        CurrentState-&gt;Enter(<span class="kw">this</span>);
+        OnStateChanged.Broadcast(OldName, CurrentState-&gt;GetStateName());   <span class="cm">// UI 등이 이걸 구독</span>
+    }
+<span class="kw">private</span>:
+    TUniquePtr&lt;FCharacterState&gt; CurrentState = MakeUnique&lt;FIdleState&gt;();
+};</pre>
+    <p class="hint">캐릭터는 여전히 "누가 이 이벤트를 듣는지" 모른다. State Pattern이 <b>"무슨 상태인가"</b>를, Observer Pattern이 <b>"그 변화를 누구에게 알릴까"</b>를 정리해주는 식으로 두 패턴이 자연스럽게 겹친다.</p>
+  </div>
+</div></section>
+
+<section id="over"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 판단</div>
+  <h2 class="sec"><span class="n">6</span>State Pattern이 항상 정답은 아니다</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// 상태가 딱 둘(문이 열림/닫힘)뿐이라면 이 정도로 충분 — 클래스 여러 개 만들 필요 없음</span>
+<span class="kw">enum class</span> EDoorState { Open, Closed };
+
+<span class="kw">void</span> ADoor::Interact()
+{
+    CurrentState = (CurrentState == EDoorState::Closed) ? EDoorState::Open : EDoorState::Closed;
+    PlayAnimation(CurrentState == EDoorState::Open ? OpenAnim : CloseAnim);
+}</pre>
+    <p class="hint"><b>판단 기준은 "상태 개수 × 상태별 고유 로직의 양"이다.</b> 상태가 4개 이상으로 늘거나, 상태마다 진입/유지/이탈 시 할 일이 복잡해지는 순간부터 if-else의 유지보수 비용이 클래스로 나누는 비용을 넘어선다.</p>
+    <table class="tbl" style="margin-top:14px">
+      <tr><th>강의</th><th>핵심 문제</th><th>해결 방식</th></tr>
+      <tr><td>7강 Object Pooling</td><td>매 프레임 new/delete 비용</td><td>미리 만들어두고 재사용</td></tr>
+      <tr><td>8강 Observer</td><td>상태 변화마다 관련 코드를 손으로 챙김</td><td>발행-구독으로 느슨한 결합</td></tr>
+      <tr><td>9강 Singleton/Factory</td><td>전역 인스턴스 난립, 생성 로직 중복</td><td>명확한 수명의 하나의 창구 + 생성 로직 집중</td></tr>
+      <tr><td>10강 State</td><td>상태별 분기가 뒤엉킨 if-else</td><td>상태마다 클래스로 로직/전환 조건 분리</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"지금까지 배운 패턴들(Pooling, Observer, Singleton/Factory, State) 중 두 개 이상을 같이 써야 하는 실제 시스템을 설계해볼 수 있나요?"</i> → 보너스 강의에서 종합형 질문에 답하는 연습을 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="09강_Singleton과_Factory.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 9강 — Singleton과 Factory</div></div></a>
+  <a class="nx" href="11강_스마트_포인터.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">11강 — 스마트 포인터 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 C++ 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 10강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"State Pattern은 상태가 몇 개든 항상 쓰는 게 좋다"','아니다. 상태가 2~3개고 로직이 단순하면 <span class="truth">enum + 간단한 분기가 더 읽기 쉽다.</span> State Pattern은 상태가 많고 상태별 로직/전환 규칙이 복잡할 때 이득이 커지는 패턴이다.'],
+ ['"상태 전환 조건은 캐릭터(Context) 클래스가 판단해야 한다"','State Pattern의 핵심은 정반대다. <span class="truth">각 상태 객체가 자기 다음 전환 조건을 스스로 판단</span>하고, 캐릭터는 그 결정을 받아 상태만 바꿔준다. 캐릭터 클래스에 다시 "지금 무슨 상태니까 다음은 뭐가 돼야 해"를 판단하는 로직을 넣으면 패턴을 쓰는 의미가 없어진다.'],
+ ['"State Pattern을 쓰면 상태 전환 버그가 아예 안 생긴다"','패턴 자체가 버그를 없애주진 않는다. "이 상태에서 저 상태로 못 가게 막는 걸 깜빡하는" 실수는 여전히 가능하다. 다만 그 실수를 찾고 고치는 범위가 <span class="truth">해당 상태 클래스 하나로 좁혀진다는 게</span> 이득이다.'],
+ ['"각 상태 클래스는 서로 참조하며 강하게 결합돼도 상관없다"','이상적으로는 상태끼리 서로를 직접 몰라도 되게 짜는 게 좋다. <code>FIdleState</code>가 <code>FMoveState</code>로 전환할 땐 "전환할 상태를 만들어서 넘겨준다"는 <span class="truth">최소한의 의존</span>만 있으면 되고 <code>FMoveState</code> 내부 구현까지 알 필요는 없다.'],
+ ['"State Pattern과 Observer Pattern은 서로 관계없는 별개 패턴이다"','실전에서는 자주 같이 쓰인다. 상태가 바뀔 때 그 사실을 다른 시스템(UI, 사운드, 애니메이션)에 알려야 하는 경우가 많아서 <span class="truth"><code>ChangeState</code> 안에서 Delegate를 <code>Broadcast</code></span>하는 조합이 흔하다.']
+];
+var QA=[
+ ['State Pattern이 뭔가요?','객체의 상태에 따라 달라지는 동작을 if-else로 한 곳에 몰아넣지 않고 <b>상태마다 별도의 클래스로 분리</b>하는 패턴입니다. 각 상태 클래스가 자기 할 일과 다음 상태로의 전환 조건을 스스로 가지고 있어서, Context 객체는 현재 상태 객체에게 위임만 하면 됩니다.'],
+ ['if-else나 switch로 상태를 관리하면 왜 문제가 되나요?','상태가 늘어날수록 각 상태 블록 안에 <b>다른 모든 상태로의 전환 조건이 중복</b>돼서 들어가야 하고 하나의 함수가 계속 커집니다. 상태 간 규칙(예: 공격 중엔 이동 불가)이 여러 블록에 흩어져서 하나 고치면 다른 곳도 같이 확인해야 하는 유지보수 문제가 생깁니다.'],
+ ['State Pattern으로 바꾸면 뭐가 좋아지나요?','새로운 상태를 추가할 때 <b>새 클래스 하나만 만들고</b>, 그 상태로 들어가는 조건이 있는 곳에만 코드를 추가하면 됩니다. 기존 상태 클래스들 중 그 새 상태와 무관한 것들은 전혀 건드릴 필요가 없어서 변경의 영향 범위가 좁아집니다.'],
+ ['캐릭터 상태 머신을 구현한다면 상태 전환 로직을 어디에 두시겠어요?','<b>각 상태 클래스 안에</b> 두겠습니다. 캐릭터(Context) 클래스가 다음 상태를 판단하게 하면 결국 캐릭터 쪽에 if-else가 다시 쌓이게 되어서 State Pattern을 쓰는 의미가 없어집니다. 상태 자신이 자기 전환 조건을 아는 게 이 패턴의 핵심입니다.'],
+ ['상태가 두세 개뿐인 문(Door) 같은 오브젝트에도 State Pattern을 쓰시겠어요?','아니요, 그런 경우엔 <b>enum과 간단한 분기</b>로 충분합니다. State Pattern은 상태 개수가 많고 상태별 로직이 복잡할 때 이득이 커지는 패턴이라, 단순한 경우에 클래스를 여러 개 만드는 건 과한 설계입니다.'],
+ ['State Pattern과 Observer Pattern을 같이 쓰는 경우를 설명해주세요.','상태가 바뀔 때 그 변화를 UI나 사운드 시스템에 알려야 하는 경우, 상태 전환 함수 안에서 <b>델리게이트를 Broadcast</b>하는 방식으로 두 패턴을 조합합니다. 캐릭터는 상태 전환만 처리하고, 그 결과를 누가 구독해서 어떻게 반응할지는 신경 쓰지 않아도 됩니다.'],
+ ['상태 객체를 스마트 포인터로 관리하는 이유는 뭔가요?','상태가 전환될 때마다 이전 상태 객체는 더 필요 없어지는데, <b>unique_ptr</b>을 쓰면 소유권이 명확하고 새 상태로 교체되는 순간 이전 상태 객체가 자동으로 소멸됩니다. delete를 직접 호출할 필요 없이 RAII로 안전하게 정리됩니다.']
+];
+var CK=['if-else 기반 상태 관리가 왜 상태 개수에 따라 유지보수가 어려워지는지 설명할 수 있다','State Pattern에서 "상태 전환 조건을 상태 자신이 갖는다"는 원칙을 코드로 설명할 수 있다','새 상태를 추가할 때 State Pattern이 왜 기존 코드에 영향을 최소화하는지 예시로 들 수 있다','State Pattern이 오히려 과한 설계가 되는 경우(상태 2~3개, 단순 로직)를 판단할 수 있다','State Pattern과 Observer Pattern을 함께 쓰는 구조를 설명할 수 있다'];
+var KEY='cpp10-check';
+
+/* 킬러: 상태 머신 시뮬레이터 */
+(function(){
+  var ATK=6,DGE=4,HP0=100;
+  var NM={idle:'Idle',move:'Move',atk:'Attack',dodge:'Dodge',dead:'Dead'};
+  var IX={idle:0,move:1,atk:2,dead:3,dodge:4};
+  var POS={idle:[110,80],move:[320,38],atk:[320,140],dead:[110,205],dodge:[530,88]};
+  var st,logs,hist,dodgeOn=false,timer=null,lastEdge='';
+  var mv=document.getElementById('mvIn');
+  function log(c,t){logs.unshift({c:c,t:t});if(logs.length>60)logs.pop();}
+  function reset(){stop();st={s:'idle',hp:HP0,el:0,inv:false,atk:false,dodge:false,tick:0,x:0};logs=[];hist=[];lastEdge='';log('en','FIdleState::Enter — PlayAnimation(IdleAnim)');draw();}
+  function change(to,why){
+    var from=st.s;
+    log('ex','F'+NM[from]+'State::Exit');
+    if(from==='dodge'){st.inv=false;log('ex','  └ SetInvincible(false) — 무적 해제(Exit)');}
+    st.s=to;st.el=0;
+    log('en','F'+NM[to]+'State::Enter'+(why?'  ('+why+')':''));
+    if(to==='dodge'){st.inv=true;log('en','  └ SetInvincible(true) — 무적(Enter)');}
+    lastEdge=(to==='dead'?'any>dead':from+'>'+to);
+  }
+  function tick(){
+    st.tick++;var s=st.s,move=mv.checked,atk=st.atk,dg=st.dodge;st.atk=false;st.dodge=false;
+    lastEdge='';
+    hist.push(s);if(hist.length>40)hist.shift();
+    if(s==='idle'){
+      log('tk','FIdleState::Tick'+(move?' — 이동 입력':'')+(atk?' — 공격 입력':'')+(dg&&dodgeOn?' — 구르기 입력':''));
+      if(atk)change('atk','공격 입력');else if(dodgeOn&&dg)change('dodge','구르기 입력');else if(move)change('move','이동 입력');
+    }else if(s==='move'){
+      st.x+=1;
+      log('tk','FMoveState::Tick — MoveCharacter()');
+      if(!move)change('idle','이동 입력 없음');else if(atk)change('atk','공격 입력');else if(dodgeOn&&dg)change('dodge','구르기 입력');
+    }else if(s==='atk'){
+      st.el++;
+      log('tk','FAttackState::Tick — 경과 '+(st.el/10).toFixed(1)+'s / 0.6s'+(move?'   (이동 입력이 있지만 이 상태 코드엔 검사가 없다 → 무시)':'')+(dodgeOn&&dg?'   (구르기 입력도 이 상태엔 코드가 없다 → 무시)':''));
+      if(st.el>=ATK)change('idle','공격 종료');
+    }else if(s==='dodge'){
+      st.el++;
+      log('tk','FDodgeState::Tick — 경과 '+(st.el/10).toFixed(1)+'s / 0.4s (무적)');
+      if(st.el>=DGE)change('idle','구르기 종료');
+    }else{
+      log('wn','FDeadState::Tick — 아무 입력도 처리하지 않는다'+(move||atk?'  (입력 무시)':''));
+    }
+    draw();
+  }
+  function hit(){
+    if(st.s==='dead'){log('wn','[피격] 이미 Dead — 무시');draw();return;}
+    if(st.inv){log('wn','[피격 -30] 구르기 중 무적! 피해 무시 (SetInvincible(true) 덕분)');draw();return;}
+    st.hp=Math.max(0,st.hp-30);log('er','[피격] HP -30 → '+st.hp);
+    if(st.hp<=0)change('dead','HP 0 — 어느 상태에서든');
+    draw();
+  }
+  function revive(){
+    if(st.s!=='dead'){log('wn','[부활] Dead가 아니다.');draw();return;}
+    st.hp=HP0;log('en','[부활] HP 회복');change('idle','부활');draw();
+  }
+  function edgeD(a,b,off,dash,id,label){
+    var A=POS[a],B=POS[b],dx=B[0]-A[0],dy=B[1]-A[1],L=Math.sqrt(dx*dx+dy*dy),ux=dx/L,uy=dy/L,px=-uy*off,py=ux*off,sh=Math.min(Math.abs(ux)>0.001?44/Math.abs(ux):1e9,Math.abs(uy)>0.001?19/Math.abs(uy):1e9)+6;
+    var x1=A[0]+ux*sh+px,y1=A[1]+uy*sh+py,x2=B[0]-ux*sh+px,y2=B[1]-uy*sh+py;
+    var on=lastEdge===id;
+    var s='<line class="ed'+(dash?' dash':'')+(on?' on':'')+'" x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" marker-end="url(#'+(on?'arOn':'ar')+')"/>';
+    if(label)s+='<text class="lb" x="'+((x1+x2)/2+px*1.6)+'" y="'+((y1+y2)/2+py*1.6)+'">'+label+'</text>';
+    return s;
+  }
+  function draw(){
+    var s='<defs><marker id="ar" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#3b4478"/></marker><marker id="arOn" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#fbbf24"/></marker></defs>';
+    s+=edgeD('idle','move',7,false,'idle>move','이동 입력')+edgeD('move','idle',7,false,'move>idle','입력 없음');
+    s+=edgeD('idle','atk',7,false,'idle>atk','')+edgeD('move','atk',7,false,'move>atk','공격 입력')+edgeD('atk','idle',7,false,'atk>idle','0.6s 후');
+    if(dodgeOn){s+=edgeD('idle','dodge',7,false,'idle>dodge','')+edgeD('move','dodge',7,false,'move>dodge','구르기 입력')+edgeD('dodge','idle',7,false,'dodge>idle','0.4s 후');}
+    s+=edgeD('idle','dead',0,true,'any>dead','HP≤0 (어느 상태에서든)');
+    ['idle','move','atk','dead'].concat(dodgeOn?['dodge']:[]).forEach(function(k){
+      var p=POS[k],on=st.s===k;
+      s+='<g class="nd '+k+(on?' on':'')+'"><rect x="'+(p[0]-44)+'" y="'+(p[1]-19)+'" width="88" height="38" rx="10"/><text x="'+p[0]+'" y="'+p[1]+'">'+NM[k]+'</text></g>';
+    });
+    document.getElementById('msv').innerHTML=s;
+    document.getElementById('mStats').innerHTML=
+      '<div class="s"><div class="v" style="font-size:18px;line-height:33px">F'+NM[st.s]+'State</div><div class="l">현재 상태 객체</div></div>'+
+      '<div class="s"><div class="v'+(st.hp<=30?' warn':'')+'">'+st.hp+'</div><div class="l">HP</div></div>'+
+      '<div class="s"><div class="v" style="color:'+(st.inv?'var(--cyan)':'var(--faint)')+';font-size:18px;line-height:33px">'+(st.inv?'무적 ON':'—')+'</div><div class="l">Invincible</div></div>'+
+      '<div class="s"><div class="v">'+st.tick+'</div><div class="l">Tick 수 ('+(st.tick/10).toFixed(1)+'s)</div></div>';
+    document.getElementById('hpBar').style.width=st.hp+'%';
+    var t='';for(var i=0;i<40;i++){var h=hist[i-(40-hist.length)];t+='<i class="'+(h?'S'+IX[h]:'')+'"></i>';}
+    document.getElementById('tlst').innerHTML=t;
+    document.getElementById('mLog').innerHTML=logs.map(function(l){return '<div class="'+l.c+'">'+l.t+'</div>';}).join('');
+    document.getElementById('holdL').classList.toggle('on',mv.checked);
+    document.getElementById('bDodge').style.display=dodgeOn?'':'none';
+  }
+  function stop(){if(timer){clearInterval(timer);timer=null;document.getElementById('bAuto').textContent='⏯ 자동 진행';}}
+  document.getElementById('bStep').addEventListener('click',tick);
+  document.getElementById('bAuto').addEventListener('click',function(){if(timer){stop();return;}this.textContent='⏸ 정지';timer=setInterval(tick,350);});
+  document.getElementById('bAtk').addEventListener('click',function(){st.atk=true;log('','[입력] 공격 버튼 — 다음 Tick에 반영');draw();});
+  document.getElementById('bDodge').addEventListener('click',function(){st.dodge=true;log('','[입력] 구르기 버튼 — 다음 Tick에 반영');draw();});
+  document.getElementById('bHit').addEventListener('click',hit);
+  document.getElementById('bRev').addEventListener('click',revive);
+  document.getElementById('bReset').addEventListener('click',reset);
+  mv.addEventListener('change',draw);
+  window.__setDodge=function(on){dodgeOn=on;draw();};
+  reset();
+})();
+
+/* 확장 비교 */
+(function(){
+  var sw=document.getElementById('dgSw');
+  function chips(list){return list.map(function(x){return '<span class="'+x[1]+'">'+x[0]+'</span>';}).join('');}
+  function show(on){
+    window.__setDodge(on);
+    if(!on){
+      document.getElementById('cA').innerHTML='0<small> 곳 수정</small>';document.getElementById('cB').innerHTML='0<small> 곳 수정</small>';
+      document.getElementById('cAch').innerHTML='<span>Idle 블록</span><span>Move 블록</span><span>Attack 블록</span><span>Dead 블록</span>';
+      document.getElementById('cBch').innerHTML='<span>FIdleState</span><span>FMoveState</span><span>FAttackState</span><span>FDeadState</span>';
+      return;
+    }
+    document.getElementById('cA').innerHTML='5<small> 곳 수정</small>';
+    document.getElementById('cAch').innerHTML=chips([['Idle 블록: 구르기 체크 추가','edit'],['Move 블록: 구르기 체크 추가','edit'],['Attack 블록: "공격 중 구르기 불가" 예외','edit'],['Dead 블록: 예외 처리','edit'],['새 Dodge 블록 + 무적 처리','new']]);
+    document.getElementById('cB').innerHTML='3<small> 곳 수정</small>';
+    document.getElementById('cBch').innerHTML=chips([['FDodgeState (새 클래스)','new'],['FIdleState: 전환 한 줄','edit'],['FMoveState: 전환 한 줄','edit'],['FAttackState — 손 안 댐','safe'],['FDeadState — 손 안 댐','safe']]);
+  }
+  sw.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){sw.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');show(b.dataset.v==='1');});});
+  show(false);
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11강 · HTTP와 HTTPS — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#34d399;--acc2:#6ee7b7;--accrgb:52,211,153;--acc3:#22d3ee}
+.btn{color:#04221a}
+nav a.chip.on{color:#04221a}
+.modetoggle button.on{color:#04221a}
+/* 킬러: HTTP 콘솔 */
+.rq{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.rq label{display:block;font-size:11.5px;color:var(--faint);margin-bottom:4px}
+.rq select{width:100%;font-family:ui-monospace,monospace;font-size:13px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:9px 8px}
+.rq select:focus{outline:none;border-color:var(--acc)}
+.io{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:16px}
+.io .pn{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.io .pn h4{font-size:12.5px;color:var(--dim);margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.io pre{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;color:var(--txt);min-height:110px}
+.io pre .h{color:var(--faint)}
+.badge{font-family:ui-monospace,monospace;font-size:13px;font-weight:800;padding:2px 12px;border-radius:14px;border:1px solid var(--line)}
+.badge.c2{color:var(--grn);border-color:var(--grn);background:rgba(52,211,153,.1)}
+.badge.c4{color:var(--amber);border-color:var(--amber);background:rgba(251,191,36,.1)}
+.badge.c5{color:var(--red);border-color:var(--red);background:rgba(248,113,113,.1)}
+.badge.c0{color:var(--faint)}
+.whobox{margin-top:12px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.whobox .w{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:13px;color:var(--dim)}
+.whobox .w b{display:block;color:var(--txt);font-size:12px;margin-bottom:3px}
+.whobox .w.cl b{color:var(--amber)}.whobox .w.sv b{color:var(--red)}.whobox .w.ok b{color:var(--grn)}
+.hist{display:flex;gap:5px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+.hist .badge{font-size:11px;padding:1px 8px}
+/* 상태코드 퀴즈 */
+.sq{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.sq .it{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.sq .it.ok{border-color:rgba(52,211,153,.6);background:rgba(52,211,153,.07)}
+.sq .it .tx{font-size:14px;margin-bottom:8px}
+.sq .opts{display:flex;gap:6px;flex-wrap:wrap}
+.sq .opts button{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer}
+.sq .opts button:hover{border-color:var(--acc)}
+.sq .opts button.right{background:var(--grn);border-color:var(--grn);color:#04221a}
+.sq .opts button.wrong{background:rgba(248,113,113,.15);border-color:var(--red);color:var(--red)}
+.sq .why{font-size:12.5px;color:var(--dim);margin-top:8px;display:none}
+.sq .it.ok .why{display:block}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>11강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#http">요청·응답</a>
+    <a class="chip" href="#sim">HTTP 콘솔</a>
+    <a class="chip" href="#status">상태 코드</a>
+    <a class="chip" href="#rest">REST</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#https">HTTPS</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 애플리케이션 계층 · 로그인·랭킹·상점</span>
+  <h1>HTTP와 <span class="g">HTTPS</span></h1>
+  <p class="sub">로그인·랭킹·상점 같은 부가 기능은 왜 커스텀 소켓이 아니라 HTTP인가. 요청을 직접 조립해 게임 서버에 던지고, 돌아오는 상태 코드로 "누구 잘못인지"를 판단하는 감각을 익힌다.</p>
+  <div class="meta">
+    <div class="m">🌐 HTTP 요청 콘솔</div>
+    <div class="m">🧩 선수지식 <b>3·4·10강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>로그인은 왜 커스텀 패킷으로 안 짤까</h2>
+  <p class="lead">10강에서 직접 패킷을 설계했다. 그럼 로그인도 그렇게 짜면 될까? 가능은 하다. 하지만 로그인·랭킹·상점·공지 같은 건 거의 다 <b>HTTP</b>로 짠다.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">// 직접 짠다면... 로그인 패킷 타입 만들고, 직렬화하고, 경계 처리하고...</span>
+EPacketType::Login, 직렬화, 길이접두사, 핸들러 분기, ...</pre>
+    <div class="two">
+      <div class="box good"><h4>이미 있는 표준</h4><p>서버 프레임워크·라이브러리·도구가 <b>다 있다</b>.</p></div>
+      <div class="box good"><h4>요청-응답이 명확</h4><p>"로그인 정보 줄게 → 토큰 받기" 한 번이면 끝. 실시간 스트림이 아니다.</p></div>
+      <div class="box good"><h4>인프라가 HTTP 기준</h4><p>웹 서버·CDN·로드밸런서가 HTTP에 맞춰져 있다.</p></div>
+      <div class="box good"><h4>디버깅이 쉽다</h4><p>브라우저·Postman으로 바로 테스트.</p></div>
+    </div>
+    <p class="hint"><b>실시간 게임 플레이는 커스텀 UDP/TCP, 그 외 부가 기능은 HTTP</b> — 이게 업계 표준 구도다. 그래서 HTTP를 알아야 한다.</p>
+  </div>
+</div></section>
+
+<section id="http"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 구조</div>
+  <h2 class="sec"><span class="n">2</span>요청과 응답, 그리고 메서드</h2>
+  <p class="lead">HTTP는 <b>요청(Request)을 보내면 응답(Response)이 오는</b> 단순한 약속이다. 응용 계층 프로토콜이고 아래는 TCP(신뢰성 필요)로 돈다. 기본 포트는 80(HTTP)/443(HTTPS).</p>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>요청의 생김새</h4>
+<pre class="code" style="margin-top:8px">POST /api/login HTTP/1.1
+Host: game.example.com
+Content-Type: application/json
+Content-Length: 24
+
+{"id":"Koo","pw":"1234"}</pre>
+        <p style="margin-top:8px">메서드 + 경로 + 버전 / 헤더(메타정보) / 몸통(Body)</p></div>
+      <div class="box"><h4>응답의 생김새</h4>
+<pre class="code" style="margin-top:8px">HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 39
+
+{"token":"abc123","nickname":"코딩전사"}</pre>
+        <p style="margin-top:8px">버전 + 상태 코드 / 헤더 / 몸통</p></div>
+    </div>
+    <p class="hint">10강에서 손으로 짠 "헤더 + 몸통" 구조를 HTTP가 <b>텍스트로 표준화</b>해놓은 거라고 보면 된다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">메서드 — 요청의 의도</p>
+    <table class="tbl">
+      <tr><th>메서드</th><th>의미</th><th>게임 예시</th></tr>
+      <tr><td><b>GET</b></td><td>조회</td><td>랭킹 조회, 공지 목록</td></tr>
+      <tr><td><b>POST</b></td><td>생성</td><td>로그인, 회원가입, 결제</td></tr>
+      <tr><td><b>PUT</b></td><td>전체 수정</td><td>프로필 통째로 교체</td></tr>
+      <tr><td><b>PATCH</b></td><td>부분 수정</td><td>닉네임만 변경</td></tr>
+      <tr><td><b>DELETE</b></td><td>삭제</td><td>계정·친구 삭제</td></tr>
+    </table>
+    <p class="hint"><b>GET은 데이터를 바꾸지 않는다(조회만).</b> GET은 정보를 URL에 담고 POST는 보통 몸통에 담는다. 비밀번호를 GET으로 보내면 URL과 로그에 남는다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>HTTP 요청 콘솔 — 게임 서버에 요청을 던져보자</h2>
+  <p class="lead">메서드·경로·토큰·본문·서버 상태를 골라 <b>[요청 보내기]</b>를 누르면 가상의 게임 백엔드가 응답한다. 같은 요청도 <b>토큰</b>이 없거나 남의 것이면 다르게 답한다. <b>[15번 연타]</b>는 초당 10회 제한(rate limit)을 시험한다.</p>
+  <div class="card">
+    <div class="rq">
+      <div><label>메서드</label><select id="qM"><option>GET</option><option selected>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option></select></div>
+      <div><label>경로</label><select id="qP"></select></div>
+      <div><label>토큰 (Authorization)</label><select id="qT"><option value="none">없음</option><option value="exp">만료된 토큰</option><option value="p3">3번 플레이어의 토큰</option><option value="p7">7번 플레이어의 토큰</option></select></div>
+      <div><label>몸통 (Body)</label><select id="qB"><option value="none">없음</option><option value="ok" selected>정상 JSON</option><option value="wrong">정상 JSON (비번 틀림)</option><option value="bad">깨진 JSON</option></select></div>
+      <div><label>서버 상태</label><select id="qS"><option value="ok">정상</option><option value="bug">버그 (예외 발생)</option><option value="down">과부하 (다운)</option></select></div>
+    </div>
+    <div class="btnrow"><button class="btn" id="bSend">▶ 요청 보내기</button><button class="btn ghost" id="bBurst">🔁 같은 요청 15번 연타</button><button class="btn ghost" id="bClr">↺ 기록 지우기</button></div>
+    <div class="io">
+      <div class="pn"><h4>📤 클라이언트 → 서버 (요청)</h4><pre id="rawQ"></pre></div>
+      <div class="pn"><h4><span>📥 서버 → 클라이언트 (응답)</span><span class="badge c0" id="rBadge">—</span></h4><pre id="rawR"></pre></div>
+    </div>
+    <div class="whobox" id="who"></div>
+    <div class="hist" id="hist"></div>
+    <div class="stats">
+      <div class="s"><div class="v" id="nAll">0</div><div class="l">보낸 요청</div></div>
+      <div class="s"><div class="v" id="n2">0</div><div class="l">2xx 성공</div></div>
+      <div class="s"><div class="v" id="n4">0</div><div class="l">4xx 클라 잘못</div></div>
+      <div class="s"><div class="v" id="n5">0</div><div class="l">5xx 서버 잘못</div></div>
+    </div>
+    <p class="hint">① 기본(POST /api/login + 정상 JSON) → <b>200</b>과 토큰. 비번을 틀리면 <b>401</b>, JSON을 깨면 <b>400</b>. ② <code>GET /api/players/7/inventory</code>: 토큰 없음·만료 → <b>401</b>, 3번 토큰 → <b>403</b>(로그인은 됐지만 남의 것), 7번 토큰 → 200. ③ 서버 상태를 "버그"로 바꾸면 <b>같은 요청이 500</b> — 클라가 아무리 고쳐도 소용없다. ④ 연타하면 11번째부터 <b>429</b>.</p>
+  </div>
+</div></section>
+
+<section id="status"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 상태 코드</div>
+  <h2 class="sec"><span class="n">4</span>상태 코드 — 결과가 어땠는지</h2>
+  <p class="lead">응답의 숫자 코드가 결과를 알려준다. 백 자리로 분류한다. <b>4xx면 내(클라) 요청이 잘못, 5xx면 서버가 잘못</b> — 이 한 줄이 디버깅 방향을 정한다.</p>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>범위</th><th>의미</th><th>대표</th></tr>
+      <tr><td><b>2xx</b></td><td>성공</td><td>200 OK, 201 Created</td></tr>
+      <tr><td><b>3xx</b></td><td>리다이렉트</td><td>301 이동, 304 안 바뀜</td></tr>
+      <tr><td><b>4xx</b></td><td>클라 잘못</td><td>400 잘못된 요청, <b>401</b> 인증 안 됨, <b>403</b> 권한 없음, <b>404</b> 없음, <b>429</b> 너무 많이 요청</td></tr>
+      <tr><td><b>5xx</b></td><td>서버 잘못</td><td>500 서버 에러, 503 서버 과부하</td></tr>
+    </table>
+    <p class="hint"><b>401 vs 403:</b> 401은 "너 누군지 모르겠어"(토큰 없음·만료 → 다시 로그인), 403은 "누군지는 아는데 넌 이거 못 해"(권한 없음 → 재시도해도 소용없음). <b>429</b>는 클라가 요청 폭주 → 호출 빈도를 줄여야 한다. 5xx는 클라가 <b>재시도 로직</b>으로 대응한다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">퀴즈 — 이 상황의 상태 코드는?</p>
+    <div class="sq" id="sqBox"></div>
+    <div class="stats"><div class="s"><div class="v" id="sqScore">0 / 5</div><div class="l">맞힌 문제</div></div><div class="s"><div class="v" id="sqMiss">0</div><div class="l">틀린 횟수</div></div></div>
+    <div class="simmsg" id="sqMsg"></div>
+  </div>
+</div></section>
+
+<section id="rest"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · REST</div>
+  <h2 class="sec"><span class="n">5</span>REST — API 설계 스타일</h2>
+  <p class="lead">게임 백엔드 API는 보통 REST 스타일이다. 핵심: <b>URL은 자원(명사), 메서드는 동작(동사).</b> 콘솔의 경로 목록이 이미 그렇게 생겼다.</p>
+  <div class="card">
+    <pre class="code"><span class="hl">GET</span>    /api/players/7/inventory      <span class="cm">→ 7번 플레이어의 인벤토리 조회</span>
+<span class="hl">POST</span>   /api/players/7/items          <span class="cm">→ 7번 플레이어에게 아이템 추가</span>
+<span class="hl">DELETE</span> /api/players/7/items/55       <span class="cm">→ 55번 아이템 삭제</span>
+<span class="hl">GET</span>    /api/rankings?season=3        <span class="cm">→ 시즌3 랭킹 조회</span>
+
+<span class="bad">GET /api/getPlayerInventory?id=7</span>     <span class="cm">← URL에 동사를 넣는 건 비REST (콘솔에서 보내면 404)</span></pre>
+    <p class="hint">URL만 봐도 "무엇을"이 보이고 메서드로 "어떻게"가 정해진다. "REST가 뭐냐" 물으면 <b>"자원을 URL로 표현하고 HTTP 메서드로 행위를 표현하는 API 설계 원칙"</b>이라고 답하면 된다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 코드</div>
+  <h2 class="sec"><span class="n">6</span>언리얼 FHttpModule로 로그인 요청</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> ULoginSubsystem::<span class="fn">RequestLogin</span>(<span class="kw">const</span> FString&amp; Id, <span class="kw">const</span> FString&amp; Pw)
+{
+    TSharedRef&lt;IHttpRequest&gt; Request = FHttpModule::<span class="fn">Get</span>().<span class="fn">CreateRequest</span>();
+
+    Request-&gt;<span class="fn">SetURL</span>(<span class="fn">TEXT</span>(<span class="str">"https://game.example.com/api/login"</span>));
+    Request-&gt;<span class="fn">SetVerb</span>(<span class="fn">TEXT</span>(<span class="str">"POST"</span>));                    <span class="cm">// 메서드</span>
+    Request-&gt;<span class="fn">SetHeader</span>(<span class="fn">TEXT</span>(<span class="str">"Content-Type"</span>), <span class="fn">TEXT</span>(<span class="str">"application/json"</span>));
+
+    FString Body = FString::<span class="fn">Printf</span>(<span class="fn">TEXT</span>(<span class="str">"{\"id\":\"%s\",\"pw\":\"%s\"}"</span>), *Id, *Pw);
+    Request-&gt;<span class="fn">SetContentAsString</span>(Body);
+
+    <span class="cm">// HTTP는 비동기다 — 게임 스레드를 멈추면 안 되니까 콜백으로</span>
+    Request-&gt;<span class="fn">OnProcessRequestComplete</span>().<span class="fn">BindUObject</span>(<span class="kw">this</span>, &amp;ULoginSubsystem::OnLoginResponse);
+    Request-&gt;<span class="fn">ProcessRequest</span>();
+}
+
+<span class="kw">void</span> ULoginSubsystem::<span class="fn">OnLoginResponse</span>(FHttpRequestPtr Req, FHttpResponsePtr Resp, <span class="kw">bool</span> bSuccess)
+{
+    <span class="kw">if</span> (!bSuccess || !Resp.<span class="fn">IsValid</span>()) { <span class="kw">return</span>; }   <span class="cm">// 네트워크 실패 (서버 다운, 끊김)</span>
+
+    int32 Code = Resp-&gt;<span class="fn">GetResponseCode</span>();
+    <span class="kw">if</span> (Code == 200)        { <span class="cm">/* 토큰 파싱해서 저장 */</span> }
+    <span class="kw">else if</span> (Code == 401)   { <span class="cm">/* "아이디/비번 확인" 안내 */</span> }
+    <span class="kw">else if</span> (Code &gt;= 500)   { <span class="cm">/* 서버 문제 → 잠시 후 재시도 */</span> }
+}</pre>
+    <p class="hint">콘솔의 "클라 코드의 반응" 칸이 바로 이 <code>if</code> 분기다. <b>HTTP 요청은 비동기</b>라 콜백으로 받고(9강의 논블로킹과 연결), <b>상태 코드로 분기하는 게 실무의 핵심</b>이다. 그리고 HTTP는 <b>무상태</b>라 서버가 "방금 그 사람"을 기억하지 않는다 — 그래서 로그인 후 받은 토큰을 매 요청 헤더에 실어 보내고, 만료되면 401이 돌아온다(콘솔에서 토큰을 바꿔보자).</p>
+  </div>
+</div></section>
+
+<section id="https"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 보안</div>
+  <h2 class="sec"><span class="n">7</span>HTTPS — HTTP에 자물쇠</h2>
+  <p class="lead">HTTP는 <b>평문</b>이다. 중간에서 가로채면 아이디·비번이 그대로 보인다. 그래서 실서비스는 전부 <b>HTTPS(HTTP + TLS)</b>를 쓴다. 포트는 443.</p>
+  <div class="card">
+    <pre class="code"><span class="bad">HTTP :  {"pw":"1234"}          ← 중간에서 그대로 읽힘 (위험)</span>
+<span class="good">HTTPS:  a8$#kf9@x...           ← 암호화돼서 못 읽음 (안전)</span></pre>
+    <p class="hint">TLS가 어떻게 암호화하고 "이 서버가 진짜 그 서버"임을 증명하는지는 <b>13강</b>에서 직접 재생해본다. 지금은 <b>"HTTPS = HTTP + 암호화, 로그인·결제는 무조건 HTTPS"</b>만 기억하자.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">8</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 면접 대비</div>
+  <h2 class="sec"><span class="n">9</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그 서버 주소를 IP가 아니라 도메인으로 쓰던데, 그건 어떻게 IP로 바뀌나요?"</i> → 12강(DNS)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 마무리</div>
+  <h2 class="sec"><span class="n">10</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="10강_패킷_설계와_직렬화.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 10강 — 패킷 설계와 직렬화</div></div></a>
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">강의 목차로</div></div></a>
+  <a class="nx" href="12강_DNS.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">12강 — DNS →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 11강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"게임은 다 커스텀 패킷으로 통신한다"','실시간 플레이(위치·입력)는 커스텀 UDP/TCP가 맞지만, <span class="truth">로그인·랭킹·상점·공지·결제</span> 같은 부가 기능은 거의 HTTP다. 표준이라 인프라와 도구가 다 갖춰져 있어서 굳이 직접 안 짠다.'],
+ ['"GET이랑 POST는 그냥 취향 차이다"','아니다. GET은 <span class="truth">조회(서버 상태를 안 바꿈)</span>이고 정보가 URL에 노출된다. POST는 생성·변경이고 몸통에 데이터를 담는다. 비밀번호를 GET으로 보내면 URL과 로그에 남아 위험하다. 의미가 정해진 규약이다.'],
+ ['"HTTP는 상태를 기억한다"','HTTP는 기본적으로 <span class="truth">무상태(stateless)</span>다. 요청 하나하나가 독립적이라 서버가 "방금 그 사람"을 기억 안 한다. 그래서 로그인 후 받은 <span class="truth">토큰</span>을 매 요청 헤더에 실어 "나 아까 로그인한 사람"임을 증명한다. 콘솔에서 토큰을 "없음"으로 바꾸면 401이 나는 이유다.'],
+ ['"HTTPS면 완전히 안전하다"','HTTPS는 <span class="truth">전송 구간</span>을 암호화할 뿐이다. 서버에 저장된 데이터가 털리거나 클라가 변조된 요청을 보내는 건 못 막는다. 그래서 서버는 항상 클라 요청을 검증해야 한다(13강). HTTPS는 보안의 일부지 전부가 아니다.']
+];
+var QA=[
+ ['HTTP가 뭔가요?','클라이언트가 요청을 보내면 서버가 응답하는 <b>응용 계층 프로토콜</b>입니다. 요청에는 메서드·경로·헤더·몸통이, 응답에는 상태 코드·헤더·몸통이 있습니다. 신뢰성이 필요해서 아래는 TCP로 동작하고, 기본 포트는 80번, HTTPS는 443번입니다.'],
+ ['GET과 POST의 차이는?','GET은 데이터를 <b>조회</b>하는 메서드로 서버 상태를 바꾸지 않고 정보를 URL에 담습니다. POST는 새 데이터를 <b>생성하거나 서버 상태를 바꾸는</b> 메서드로 데이터를 몸통에 담습니다. 그래서 비밀번호 같은 민감한 정보는 URL에 노출되는 GET이 아니라 POST로 보냅니다.'],
+ ['HTTP 상태 코드를 분류해서 설명해보세요.','백 자리로 나뉩니다. <b>2xx 성공, 3xx 리다이렉트, 4xx 클라이언트 잘못, 5xx 서버 잘못</b>입니다. 게임에선 인증 실패 401, 권한 없음 403, 요청 폭주 429, 서버 에러 500을 자주 보는데, 4xx면 요청을 고쳐야 하고 5xx면 재시도 로직으로 대응합니다.'],
+ ['REST가 뭔가요?','<b>URL로 자원을 표현하고 HTTP 메서드로 그 자원에 대한 행위를 표현</b>하는 API 설계 원칙입니다. 예를 들어 인벤토리 조회는 GET /players/7/inventory, 아이템 삭제는 DELETE /players/7/items/55처럼 URL은 명사, 메서드는 동사로 설계합니다.'],
+ ['게임에서 실시간 통신과 HTTP를 어떻게 나눠 쓰나요?','위치나 입력처럼 <b>실시간성이 중요한 건 커스텀 UDP/TCP</b>로, 로그인·랭킹·상점·공지처럼 요청-응답으로 충분하고 정확성이 중요한 부가 기능은 <b>HTTP</b>로 처리합니다. HTTP는 표준이라 서버 인프라와 도구가 잘 갖춰져 있어 개발과 운영이 편합니다.'],
+ ['HTTP는 무상태라는데 로그인 상태는 어떻게 유지하나요?','요청마다 독립적이라 서버가 이전 요청을 기억하지 않습니다. 그래서 로그인하면 서버가 <b>토큰을 발급</b>하고, 클라이언트가 이후 요청마다 그 토큰을 헤더에 실어 자신을 증명합니다. 토큰이 없거나 만료되면 401이 돌아옵니다.']
+];
+var CK=['게임에서 HTTP를 쓰는 기능과 커스텀 소켓을 쓰는 기능을 구분할 수 있다','HTTP 요청/응답 구조(메서드·경로·헤더·몸통 / 상태코드)를 그릴 수 있다','GET과 POST의 차이를 명확히 안다','4xx(클라 잘못)와 5xx(서버 잘못)를 구분하고 401·403·404·429·500을 설명할 수 있다','REST의 핵심(자원=URL, 행위=메서드)을 말할 수 있다','HTTP가 무상태라 토큰으로 인증을 유지한다는 걸 안다'];
+var KEY='net11-check';
+
+/* 킬러: HTTP 콘솔 */
+(function(){
+  var ROUTES={
+    '/api/login':{m:['POST'],auth:false,body:true},
+    '/api/rankings?season=3':{m:['GET'],auth:false},
+    '/api/players/7/inventory':{m:['GET'],auth:true},
+    '/api/players/7/items':{m:['POST'],auth:true,body:true,created:true},
+    '/api/players/7/items/55':{m:['DELETE'],auth:true},
+    '/api/players/7/items/99':{m:['DELETE'],auth:true,missing:true}
+  };
+  var PATHS=['/api/login','/api/rankings?season=3','/api/players/7/inventory','/api/players/7/items','/api/players/7/items/55','/api/players/7/items/99 (없는 아이템)','/api/getPlayerInventory?id=7 (동사 URL)'];
+  var PV=['/api/login','/api/rankings?season=3','/api/players/7/inventory','/api/players/7/items','/api/players/7/items/55','/api/players/7/items/99','/api/getPlayerInventory?id=7'];
+  var TXT={200:'OK',201:'Created',400:'Bad Request',401:'Unauthorized',403:'Forbidden',404:'Not Found',405:'Method Not Allowed',429:'Too Many Requests',500:'Internal Server Error',503:'Service Unavailable'};
+  var REACT={
+    200:['ok','성공','토큰·데이터를 파싱해서 저장/표시한다.'],
+    201:['ok','성공(생성됨)','새 자원이 만들어졌다. 응답의 ID를 저장한다.'],
+    400:['cl','클라 잘못','요청 형식(JSON·필수 값)이 잘못됐다. 같은 요청을 재시도해도 소용없다 — 코드를 고쳐야 한다.'],
+    401:['cl','클라 잘못(인증)','"아이디/비번 확인" 안내 또는 토큰 만료 → <b>다시 로그인</b>시킨다.'],
+    403:['cl','클라 잘못(권한)','로그인은 됐지만 권한이 없다. 재시도·재로그인해도 소용없다 — "권한 없음" 안내.'],
+    404:['cl','클라 잘못','URL 오타이거나 없는 자원. 경로·ID를 확인한다.'],
+    405:['cl','클라 잘못','이 경로에 쓸 수 없는 메서드다. 메서드를 바꿔야 한다.'],
+    429:['cl','클라 잘못(폭주)','호출 빈도를 줄인다. Retry-After만큼 기다린 뒤 재시도.'],
+    500:['sv','서버 잘못','서버 버그다. 클라가 고칠 건 없다 — <b>잠시 후 재시도</b>(백오프)하고 계속 실패하면 사과 안내.'],
+    503:['sv','서버 잘못(과부하)','서버가 지금 못 받는다. <b>잠시 후 재시도</b>(백오프). 즉시 재시도 폭주는 금물.']
+  };
+  var TOK={none:null,exp:'eyJ...EXPIRED',p3:'tok-p3-8f2a',p7:'tok-p7-c41d'};
+  var BODY={none:'',ok:'{"id":"Koo","pw":"1234"}',wrong:'{"id":"Koo","pw":"0000"}',bad:'{"id":"Koo","pw":"12'};
+  var qM=document.getElementById('qM'),qP=document.getElementById('qP'),qT=document.getElementById('qT'),qB=document.getElementById('qB'),qS=document.getElementById('qS');
+  PATHS.forEach(function(p,i){var o=document.createElement('option');o.value=PV[i];o.textContent=p;qP.appendChild(o);});
+  var cnt={all:0,c2:0,c4:0,c5:0},hist=[];
+  function R(c,body,extra){return {code:c,body:body,extra:extra||''};}
+  function handle(m,path,tok,body,srv){
+    if(srv==='down')return R(503,'{"error":"server overloaded"}');
+    var r=ROUTES[path];
+    if(!r)return R(404,'{"error":"no such route"}');
+    if(r.m.indexOf(m)<0)return R(405,'{"error":"method not allowed"}','Allow: '+r.m.join(', ')+'\n');
+    if(r.auth){
+      if(tok==='none')return R(401,'{"error":"token required"}','WWW-Authenticate: Bearer\n');
+      if(tok==='exp')return R(401,'{"error":"token expired"}','WWW-Authenticate: Bearer\n');
+      if(tok==='p3')return R(403,'{"error":"not your resource"}');
+    }
+    if(r.body){
+      if(body==='none')return R(400,'{"error":"body required"}');
+      if(body==='bad')return R(400,'{"error":"invalid json"}');
+      if(path==='/api/login'&&body==='wrong')return R(401,'{"error":"invalid id or password"}');
+    }
+    if(srv==='bug')return R(500,'{"error":"NullReferenceException at InventoryService"}');
+    if(r.missing)return R(404,'{"error":"item 99 not found"}');
+    if(path==='/api/login')return R(200,'{"token":"tok-p7-c41d","nickname":"코딩전사"}');
+    if(r.created)return R(201,'{"itemId":56}');
+    if(m==='DELETE')return R(200,'{"deleted":55}');
+    if(path==='/api/rankings?season=3')return R(200,'{"season":3,"top":[{"rank":1,"name":"Koo"}]}');
+    return R(200,'{"gold":1200,"items":[55,61,78]}');
+  }
+  function reqText(m,path,tok,body){
+    var b=BODY[body],s=m+' '+path+' HTTP/1.1\n<span class="h">Host: game.example.com\n';
+    if(b)s+='Content-Type: application/json\nContent-Length: '+b.length+'\n';
+    if(TOK[tok])s+='Authorization: Bearer '+TOK[tok]+'\n';
+    s+='</span>\n'+(b?esc(b):'');return s;
+  }
+  function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+  function respText(r){
+    var s='HTTP/1.1 <b>'+r.code+' '+TXT[r.code]+'</b>\n<span class="h">Content-Type: application/json\n'+r.extra+'Content-Length: '+r.body.length+'\n</span>\n'+esc(r.body);
+    return s;
+  }
+  function cls(c){return c>=500?'c5':c>=400?'c4':'c2';}
+  function count(c){cnt.all++;if(c>=500)cnt.c5++;else if(c>=400)cnt.c4++;else cnt.c2++;
+    document.getElementById('nAll').textContent=cnt.all;document.getElementById('n2').textContent=cnt.c2;document.getElementById('n4').textContent=cnt.c4;document.getElementById('n5').textContent=cnt.c5;
+    hist.push(c);if(hist.length>30)hist.shift();
+    document.getElementById('hist').innerHTML=hist.map(function(x){return '<span class="badge '+cls(x)+'">'+x+'</span>';}).join('');}
+  function show(r,extraNote){
+    document.getElementById('rawR').innerHTML=respText(r);
+    var b=document.getElementById('rBadge');b.textContent=r.code+' '+TXT[r.code];b.className='badge '+cls(r.code);
+    var rc=REACT[r.code];
+    document.getElementById('who').innerHTML='<div class="w '+rc[0]+'"><b>누구 잘못? → '+rc[1]+'</b>'+(r.code>=500?'서버 쪽 문제. 클라 요청은 정상일 수 있다.':r.code>=400?'클라 요청을 고쳐야 한다.':'정상 처리됐다.')+(extraNote?'<br>'+extraNote:'')+'</div><div class="w"><b>클라 코드의 반응 (OnLoginResponse의 분기)</b>'+rc[2]+'</div>';
+  }
+  function cur(){return {m:qM.value,p:qP.value,t:qT.value,b:qB.value,s:qS.value};}
+  function send(){
+    var c=cur();document.getElementById('rawQ').innerHTML=reqText(c.m,c.p,c.t,c.b);
+    var r=handle(c.m,c.p,c.t,c.b,c.s);count(r.code);show(r);
+    if(c.m==='GET'&&c.b!=='none'){document.getElementById('who').firstChild.innerHTML+='<br><i>(GET에 몸통을 실은 것 — 규약상 GET은 조회라 보통 몸통을 안 쓴다)</i>';}
+  }
+  function burst(){
+    var c=cur();document.getElementById('rawQ').innerHTML=reqText(c.m,c.p,c.t,c.b)+'\n\n<span class="h">… 이 요청을 1초 안에 15번 보냄</span>';
+    var first=handle(c.m,c.p,c.t,c.b,c.s),i,ok=0;
+    for(i=1;i<=15;i++){var code=i<=10?first.code:429;count(code);}
+    var r429={code:429,body:'{"error":"rate limit: 10 req/sec"}',extra:'Retry-After: 1\n'};
+    show(r429,'1~10번째는 <b>'+first.code+'</b>, 11~15번째 5개는 <b>429</b>. 서버가 초당 10회로 제한했다. 이 폭주를 클라 코드가 만들었다면 그 자체가 버그다.');
+  }
+  document.getElementById('bSend').addEventListener('click',send);
+  document.getElementById('bBurst').addEventListener('click',burst);
+  document.getElementById('bClr').addEventListener('click',function(){cnt={all:0,c2:0,c4:0,c5:0};hist=[];['nAll','n2','n4','n5'].forEach(function(id){document.getElementById(id).textContent=0;});document.getElementById('hist').innerHTML='';});
+  qP.value='/api/login';send();
+  window.__http={handle:handle};
+})();
+
+/* 상태 코드 퀴즈 */
+(function(){
+  var CODES=[200,401,403,404,429,500];
+  var IT=[
+    ['토큰이 만료된 채로 인벤토리를 조회했다',401,'"누군지 모르겠다" — 다시 로그인시킨다.'],
+    ['로그인은 됐는데 남의 인벤토리를 조회했다',403,'누군지는 안다. 하지만 권한이 없다 — 재로그인해도 소용없다.'],
+    ['존재하지 않는 API 주소를 호출했다',404,'경로 오타 또는 없는 자원.'],
+    ['클라가 버그로 1초에 100번 요청을 쐈다',429,'Too Many Requests — 호출 빈도를 줄인다.'],
+    ['서버 코드에서 null 참조 예외가 났다',500,'서버 잘못. 클라가 요청을 고쳐도 소용없다.']
+  ];
+  var box=document.getElementById('sqBox'),done=0,miss=0,msg=document.getElementById('sqMsg');
+  IT.forEach(function(it){
+    var row=document.createElement('div');row.className='it';
+    row.innerHTML='<div class="tx">'+it[0]+'</div><div class="opts"></div><div class="why">'+it[2]+'</div>';
+    var ob=row.querySelector('.opts'),solved=false;
+    CODES.forEach(function(cd){
+      var b=document.createElement('button');b.textContent=cd;
+      b.addEventListener('click',function(){
+        if(solved)return;
+        if(cd===it[1]){solved=true;b.className='right';row.classList.add('ok');[].slice.call(ob.children).forEach(function(x){x.disabled=true;});done++;}
+        else{b.className='wrong';miss++;}
+        document.getElementById('sqScore').textContent=done+' / '+IT.length;document.getElementById('sqMiss').textContent=miss;
+        if(done===IT.length){msg.textContent=miss===0?'🎉 전부 한 번에 맞혔다.':'✅ 전부 맞혔다. 401과 403의 차이만 다시 한 번 떠올려보자.';msg.className='simmsg good';}
+      });
+      ob.appendChild(b);
+    });
+    box.appendChild(row);
+  });
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

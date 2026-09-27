@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>13강 · TLS와 게임 보안 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#34d399;--acc2:#6ee7b7;--accrgb:52,211,153;--acc3:#22d3ee}
+.btn{color:#04221a}
+nav a.chip.on{color:#04221a}
+.modetoggle button.on{color:#04221a}
+/* 킬러: 핵 유저 vs 서버 */
+.cfg{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.cfg .g{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.cfg .g h4{font-size:12.5px;color:var(--dim);margin-bottom:8px}
+.seg2{display:flex;gap:6px}
+.seg2 button{flex:1;font-family:inherit;font-size:12.5px;font-weight:700;padding:8px 6px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.seg2 button.on{background:var(--acc);border-color:var(--acc);color:#04221a}
+.boss{margin-top:16px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px}
+.boss .top{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:6px;gap:8px;flex-wrap:wrap}
+.boss .top b{color:var(--txt);font-family:ui-monospace,monospace}
+.hpbar{height:14px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);overflow:hidden}
+.hpbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--grn),var(--amber));transition:width .4s}
+.hpbar i.dead{background:var(--red)}
+.atk{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:14px}
+.atk button{font-family:inherit;text-align:left;font-size:13px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;transition:.15s}
+.atk button:hover{border-color:var(--acc);transform:translateY(-1px)}
+.atk button small{display:block;color:var(--faint);font-size:11.5px;margin-top:2px}
+.atk button.cheat{border-color:rgba(248,113,113,.45)}
+.wire{margin-top:14px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.wire .pn{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.wire .pn h4{font-size:12px;color:var(--dim);margin-bottom:6px}
+.wire pre{font-family:ui-monospace,monospace;font-size:11.5px;line-height:1.55;white-space:pre-wrap;word-break:break-all;min-height:64px}
+.wire .plain{color:var(--red)}.wire .enc{color:var(--grn)}
+.ares{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:13.5px;border:1px solid var(--line);background:var(--card2);min-height:48px}
+.ares.pass{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.07)}
+.ares.block{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.07)}
+.ares b{color:var(--txt)}
+.mx{width:100%;border-collapse:collapse;margin-top:12px;font-size:12.5px}
+.mx th,.mx td{border:1px solid var(--line);padding:7px 6px;text-align:center}
+.mx th{background:var(--card2);color:var(--dim);font-size:11.5px}
+.mx td.r{text-align:left;color:var(--dim);white-space:nowrap}
+.mx td.empty{color:var(--faint)}
+.mx td.blk{background:rgba(52,211,153,.14);color:var(--grn);font-weight:700}
+.mx td.brk{background:rgba(248,113,113,.14);color:var(--red);font-weight:700}
+/* TLS 핸드셰이크 */
+.hs{margin-top:14px}
+.hsrow{display:grid;grid-template-columns:52px 1fr;gap:8px;align-items:center;padding:3px 0;animation:pop .3s both}
+.hsrow .n{font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);text-align:right}
+.hsrow .a{font-family:ui-monospace,monospace;font-size:12px;padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--txt)}
+.hsrow .a.cs{border-color:var(--acc);color:var(--acc2)}
+.hsrow .a.sc{border-color:var(--cyan);color:var(--cyan)}
+.hsrow .a.ck{border-color:var(--amber);color:var(--amber)}
+.hsrow .a.bad{border-color:var(--red);color:var(--red);background:rgba(248,113,113,.1)}
+.hsrow .a.ok{border-color:var(--grn);color:var(--grn)}
+.hsrow .nt{grid-column:2;font-size:12.5px;color:var(--dim);margin-top:1px}
+.know{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
+.know .k{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--dim);min-height:76px}
+.know .k h4{font-size:12px;margin-bottom:4px}
+.know .k.c h4{color:var(--acc2)}.know .k.s h4{color:var(--cyan)}.know .k.a h4{color:var(--red)}
+.know .k.danger{border-color:rgba(248,113,113,.6);background:rgba(248,113,113,.08)}
+.tgl{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
+.tgl label{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--dim);cursor:pointer;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:7px 14px}
+.tgl input{accent-color:var(--acc)}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>13강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#crypto">대칭·비대칭</a>
+    <a class="chip" href="#tls">TLS 핸드셰이크</a>
+    <a class="chip" href="#sim">핵 vs 서버</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 애플리케이션 계층 · 클라를 믿지 마라</span>
+  <h1>TLS와 <span class="g">게임 보안</span></h1>
+  <p class="sub">핵 문제는 사실 두 개다 — 전송 중 도청·변조(TLS)와 클라의 거짓말(서버 권한 검증). 핸드셰이크를 재생하고, 같은 공격이 두 방어선에서 각각 통과하고 막히는 걸 직접 확인한다.</p>
+  <div class="meta">
+    <div class="m">🛡️ 핵 유저 vs 서버</div>
+    <div class="m">🧩 선수지식 <b>11·12강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>"치트 좀 막아주세요"</h2>
+  <p class="lead">멀티플레이 게임을 냈더니 핵이 돈다.</p>
+  <div class="card">
+    <ul style="margin-left:20px;color:var(--dim)">
+      <li>누가 패킷을 가로채서 <b>비밀번호</b>를 빼간다.</li>
+      <li>누가 "내 데미지 9999" 패킷을 서버에 보내 <b>한 방에 보스</b>를 잡는다.</li>
+      <li>누가 "내 좌표 순간이동" 패킷을 조작해 <b>벽을 통과</b>한다.</li>
+    </ul>
+    <p style="margin-top:14px">이건 사실 <b style="color:var(--acc2)">두 개의 다른 문제</b>다.</p>
+    <div class="two">
+      <div class="box good"><h4>① 전송 중 도청·변조</h4><p><b>암호화(TLS, HTTPS)</b>로 막는다.</p></div>
+      <div class="box good"><h4>② 클라가 거짓말</h4><p><b>서버 권한 검증</b>으로 막는다 — "클라를 믿지 마라".</p></div>
+    </div>
+    <p class="hint">면접에서 게임 보안을 물으면 이 <b>두 축</b>으로 답하면 깔끔하다. 아래 시뮬레이터가 이 둘을 분리해서 보여준다.</p>
+  </div>
+</div></section>
+
+<section id="crypto"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 암호화</div>
+  <h2 class="sec"><span class="n">2</span>암호화의 두 종류 — 대칭과 비대칭</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>대칭키 — 같은 키로 잠그고 푼다</h4><p><b>빠르다.</b> 문제: 그 키를 상대에게 어떻게 안전하게 전달하지? 그냥 보내면 중간에서 가로챈다.</p>
+        <pre class="code" style="margin-top:8px">평문 ─[키 K 암호화]→ 암호문 ─[같은 K 복호화]→ 평문</pre></div>
+      <div class="box"><h4>비대칭키 — 키가 두 개 (공개키·개인키)</h4><p>공개키로 잠근 건 <b>개인키로만</b> 열린다. 공개키는 뿌려도 되고 개인키는 서버만 쥔다. <b>안전하지만 느리다.</b></p>
+        <pre class="code" style="margin-top:8px">공개키로 잠금 → 개인키로만 열림</pre></div>
+    </div>
+    <p class="hint"><b>TLS는 둘을 섞는다.</b> 비대칭은 안전하지만 느리니 "대칭키를 안전하게 주고받는 데만" 쓰고, 이후 실제 데이터는 빠른 대칭키로 암호화한다. 비유: 서버가 <b>자물쇠(공개키)</b>를 뿌리고, 클라는 그 자물쇠로 비밀(대칭키 재료)을 잠가 보낸다. <b>열쇠(개인키)는 서버만</b> 갖고 있으니 가로채도 못 연다.</p>
+  </div>
+</div></section>
+
+<section id="tls"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 직접 돌려보기 ①</div>
+  <h2 class="sec"><span class="n">3</span>TLS 핸드셰이크 재생기 — 중간자 공격이 끼면?</h2>
+  <p class="lead">핸드셰이크의 목적은 두 가지다. <b>인증</b>(이 서버가 진짜 그 서버인가 — 인증서, CA)과 <b>키 교환</b>(대칭키를 안전하게 합의). [다음 단계]로 재생하면서 아래 세 사람이 각각 뭘 아는지 보자. <b>공격자를 끼워넣고</b> "인증서 검증"을 켜고 끄면 결과가 어떻게 달라질까?</p>
+  <div class="card">
+    <div class="tgl">
+      <label><input type="checkbox" id="tMitm"> 🕵 중간자(MITM) 공격자가 끼어든다</label>
+      <label><input type="checkbox" id="tSkip"> ⚠ 클라가 인증서 검증을 끈다 (개발용 설정 방치)</label>
+    </div>
+    <div class="hs" id="hs"></div>
+    <div class="know">
+      <div class="k c"><h4>👤 클라이언트가 아는 것</h4><div id="kC">—</div></div>
+      <div class="k s"><h4>🖥 서버가 아는 것</h4><div id="kS">—</div></div>
+      <div class="k a" id="kAbox"><h4>🕵 도청자가 아는 것</h4><div id="kA">—</div></div>
+    </div>
+    <div class="simmsg" id="hsMsg"></div>
+    <div class="btnrow"><button class="btn" id="hNext">▶ 다음 단계</button><button class="btn ghost" id="hAll">⏩ 끝까지</button><button class="btn ghost" id="hRst">↺ 처음부터</button></div>
+    <p class="hint">① 기본(공격자 없음) 끝까지 → 도청자는 <b>공개된 것과 암호문만</b> 안다. 대칭키 K는 개인키를 가진 서버만 풀 수 있는 자물쇠 안에 들어 있었다. ② 공격자를 켜고 끝까지 → 클라가 <b>인증서 검증에서 연결을 끊는다.</b> 인증서의 진짜 목적이 "암호화"가 아니라 <b>신원 증명</b>인 이유다. ③ 공격자 + 검증 끄기 → 가짜 서버를 진짜로 믿어 <b>평문이 다 털린다.</b> (TLS 1.3은 키 교환에 (EC)DHE를 쓰지만 "비대칭으로 대칭키를 안전하게 합의한다"는 골격은 같다.)</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기 ②</div>
+  <h2 class="sec"><span class="n">4</span>핵 유저 vs 서버 — TLS와 서버 검증은 별개의 방어선</h2>
+  <p class="lead">"클라이언트를 믿지 마라" — 클라가 보내는 모든 것은 의심하고 <b>중요한 판정은 서버가</b> 한다. 두 방어선을 켰다 껐다 하며 <b>네 가지 공격</b>을 던져보자. 보스는 사거리 10m, 쿨다운 1초의 공격만 받아야 한다.</p>
+  <div class="card">
+    <div class="cfg">
+      <div class="g"><h4>① 전송 구간</h4><div class="seg2" id="segTls"><button data-v="0" class="on">평문 (HTTP)</button><button data-v="1">TLS 암호화</button></div></div>
+      <div class="g"><h4>② 서버 설계</h4><div class="seg2" id="segAuth"><button data-v="0" class="on">클라 통보를 믿음</button><button data-v="1">서버가 직접 판정</button></div></div>
+    </div>
+    <div class="boss"><div class="top"><span>👹 보스 HP <b id="hpTxt">500 / 500</b></span><span>통과한 공격 <b id="nPass">0</b> · 막은 공격 <b id="nBlock">0</b></span></div><div class="hpbar"><i id="hpBar"></i></div></div>
+    <div class="atk">
+      <button data-a="normal">✅ 정상 공격<small>거리 5m, 데미지 25</small></button>
+      <button data-a="forge" class="cheat">💥 데미지 9999로 위조<small>패킷의 Damage 필드를 조작</small></button>
+      <button data-a="range" class="cheat">🎯 사거리 밖에서 공격<small>거리 50m (사거리 10m)</small></button>
+      <button data-a="cool" class="cheat">⚡ 쿨다운 무시 10연타<small>0.1초 간격 (쿨다운 1초)</small></button>
+      <button data-a="sniff" class="cheat">🕵 로그인 패킷 도청<small>공용 와이파이의 공격자</small></button>
+    </div>
+    <div class="wire">
+      <div class="pn"><h4>📡 도청자가 회선에서 보는 것</h4><pre id="wireTxt">(공격을 하나 눌러보자)</pre></div>
+      <div class="pn"><h4>🖥 서버 코드가 한 일</h4><pre id="srvTxt"></pre></div>
+    </div>
+    <div class="ares" id="ares">위에서 방어선을 고르고 공격을 눌러보자.</div>
+    <p style="font-weight:700;margin-top:18px;font-size:14px">방어 매트릭스 — 4개 공격 × 4개 구성 (직접 눌러서 16칸을 채워보자)</p>
+    <table class="mx" id="mx"></table>
+    <p class="hint">① 평문 + 클라 믿음에서 <b>데미지 위조</b> → 보스 즉사. ② <b>TLS만 켜도</b> 위조는 그대로 통과한다 — 조작된 값을 정상적으로 암호화해서 보냈을 뿐이라 서버는 정상 요청으로 받는다. ③ <b>서버 판정만 켜면</b> 위조·사거리·쿨다운은 막히지만 도청은 못 막는다. ④ 그래서 <b>둘 다</b> 필요하다. 암호화만 말하면 절반짜리 답이다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 코드</div>
+  <h2 class="sec"><span class="n">5</span>나쁜 설계 vs 좋은 설계</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// ❌ 클라가 "나 데미지 9999 줬어"라고 통보 → 서버가 그대로 믿음</span>
+<span class="kw">void</span> <span class="fn">Server_DealDamage</span>(<span class="kw">float</span> Damage)   <span class="cm">// 클라가 Damage를 보냄</span>
+{
+    Enemy-&gt;HP -= Damage;   <span class="cm">// <span class="bad">9999가 와도 그대로 적용 → 핵 천국</span></span>
+}
+
+<span class="cm">// ✅ 클라는 "공격하겠다"는 의도만. 데미지 계산·검증은 서버가.</span>
+<span class="kw">void</span> <span class="fn">Server_RequestAttack</span>(int32 TargetId)
+{
+    AEnemy* Target = <span class="fn">FindEnemy</span>(TargetId);
+    <span class="kw">if</span> (!Target) <span class="kw">return</span>;
+
+    <span class="cm">// 서버가 직접 검증: 사거리 안인가? 쿨다운 됐나? 살아있나?</span>
+    <span class="kw">if</span> (!<span class="fn">IsInRange</span>(Target) || !<span class="fn">IsAttackReady</span>()) <span class="kw">return</span>;
+
+    <span class="cm">// 데미지도 서버가 가진 정확한 스탯으로 계산 (클라 값 안 씀)</span>
+    <span class="kw">float</span> Damage = <span class="fn">CalculateDamage</span>(MyStats, Target-&gt;Defense);
+    Target-&gt;HP -= Damage;
+}</pre>
+    <p class="hint">시뮬레이터의 "서버가 직접 판정" 모드가 두 번째 함수다. 클라는 의도만 보내고 <b>사거리·쿨다운·데미지는 전부 서버가 자기 데이터로 판정</b>한다. 이게 14강 <b>서버 권한(Server Authority)</b>으로 이어진다 — 언리얼이 서버 권위 구조를 기본으로 미는 이유가 이 보안 원칙이다.</p>
+  </div>
+  <div class="card">
+    <p style="font-weight:700">TLS는 언리얼에서 거의 자동이다</p>
+    <pre class="code"><span class="cm">// https 만 쓰면 TLS는 엔진이 알아서 처리한다 (11강의 HTTP 모듈)</span>
+Request-&gt;<span class="fn">SetURL</span>(<span class="fn">TEXT</span>(<span class="str">"https://game.example.com/api/login"</span>));   <span class="cm">// 자동 암호화</span>
+Request-&gt;<span class="fn">ProcessRequest</span>();</pre>
+    <p class="hint">클라 개발자가 TLS를 직접 구현할 일은 없다. 신경 쓸 건 <b>로그인·결제·개인정보는 반드시 https</b>라는 것, 그리고 RPC를 만들 때마다 <b>"이 판정을 클라가 하나, 서버가 하나"</b>를 따지는 습관이다. 그게 클라 개발자가 보안에 기여하는 지점이다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그 서버 권한 검증을 언리얼에서는 어떻게 구현하나요?"</i> → 14강(언리얼 네트워크 모델)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="12강_DNS.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 12강 — DNS</div></div></a>
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">강의 목차로</div></div></a>
+  <a class="nx" href="14강_언리얼_네트워크_모델.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">14강 — 언리얼 네트워크 모델 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 13강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"HTTPS 쓰면 핵을 막을 수 있다"','HTTPS는 <span class="truth">전송 구간 도청·변조</span>만 막는다. 클라가 조작된 값을 정상적으로 암호화해서 보내면 서버는 그걸 정상 요청으로 받는다(시뮬레이터에서 TLS를 켜도 9999가 통과한 것). 핵 방어의 핵심은 암호화가 아니라 <span class="truth">서버 측 검증</span>이다.'],
+ ['"대칭키가 비대칭키보다 약하다"','약한 게 아니라 <span class="truth">용도가 다르다.</span> 대칭키는 빠르지만 키 공유가 어렵고, 비대칭키는 키 공유가 안전하지만 느리다. TLS는 비대칭으로 키를 나누고 대칭으로 데이터를 암호화해 둘의 장점을 합친다.'],
+ ['"인증서는 암호화를 위한 것이다"','인증서의 1차 목적은 암호화가 아니라 <span class="truth">신원 증명</span>이다. "이 서버가 진짜 그 도메인의 주인인가"를 CA가 보증한다. 이게 없으면 가짜 서버가 중간에 끼는 <span class="truth">중간자 공격(MITM)</span>을 막을 수 없다(핸드셰이크 재생기의 ②·③).'],
+ ['"중요한 계산을 클라에서 하면 빠르고 좋다"','성능엔 좋아 보여도 보안엔 치명적이다. 클라에서 한 계산 결과는 조작될 수 있다. 데미지·재화·아이템 획득 같은 중요한 판정은 <span class="truth">반드시 서버에서</span> 해야 한다. 클라 계산은 어디까지나 <span class="truth">예측·표현용</span>이지 판정의 근거가 아니다(15강의 클라 예측과 연결).']
+];
+var QA=[
+ ['대칭키와 비대칭키 암호화의 차이는?','대칭키는 암호화와 복호화에 <b>같은 키</b>를 쓰고 빠르지만, 그 키를 안전하게 전달하기 어렵습니다. 비대칭키는 <b>공개키와 개인키</b> 두 개를 쓰는데, 공개키로 잠그면 개인키로만 풀 수 있어 키 공유가 안전하지만 느립니다. TLS는 둘을 섞어 비대칭으로 대칭키를 교환하고 이후엔 빠른 대칭키로 통신합니다.'],
+ ['TLS 핸드셰이크 과정을 설명해보세요.','클라이언트가 암호화 통신을 요청하면 서버가 <b>공개키가 담긴 인증서</b>를 보냅니다. 클라이언트는 그 인증서가 신뢰할 수 있는 <b>CA가 서명</b>한 건지 검증해 서버 신원을 확인하고, 공개키로 대칭키 재료를 암호화해 보냅니다. 그 재료는 개인키를 가진 서버만 풀 수 있어서 양쪽이 같은 대칭키를 안전하게 확보하고, 이후 그 대칭키로 빠르게 암호화 통신합니다.'],
+ ['HTTPS만 쓰면 게임 보안이 충분한가요?','아닙니다. HTTPS는 <b>전송 구간의 도청과 변조</b>를 막을 뿐, 클라이언트가 조작된 값을 정상적으로 암호화해 보내는 건 막지 못합니다. 그래서 데미지나 재화 같은 중요한 판정은 클라를 믿지 않고 <b>서버에서 검증</b>해야 합니다. 암호화와 서버 권한 검증은 별개의 방어선입니다.'],
+ ['"클라이언트를 믿지 마라"가 무슨 뜻인가요?','클라가 보내는 데이터는 조작될 수 있으니 중요한 판정을 클라의 통보에 맡기지 말고 <b>서버가 직접 검증</b>하라는 원칙입니다. 예를 들어 클라가 "데미지 9999 줬다"고 보내면 그대로 믿지 말고, 서버가 사거리·쿨다운·스탯을 확인해 데미지를 직접 계산해야 합니다. 클라는 "공격하겠다"는 <b>의도</b>만 보냅니다.'],
+ ['인증서는 왜 필요한가요?','접속한 서버가 <b>진짜 그 도메인의 주인인지 신원을 증명</b>하기 위해서입니다. CA라는 신뢰된 기관이 서명한 인증서를 통해 클라이언트는 중간에 가짜 서버가 끼어드는 <b>중간자 공격</b>을 걸러냅니다. 암호화 이전에 "상대가 진짜인가"를 보장하는 장치입니다.']
+];
+var CK=['대칭키와 비대칭키의 차이, 그리고 TLS가 둘을 섞는 이유를 안다','TLS 핸드셰이크의 두 목적(인증 + 키 교환)을 설명할 수 있다','인증서가 "신원 증명"이라는 걸 안다','"클라이언트를 믿지 마라" 원칙을 데미지 예시로 설명할 수 있다','HTTPS(전송 암호화)와 서버 검증(핵 방어)이 별개 방어선임을 안다'];
+var KEY='net13-check';
+
+/* TLS 핸드셰이크 재생기 */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var steps,idx,bad;
+  function build(){
+    var mitm=$('tMitm').checked,skip=$('tSkip').checked,s=[];
+    var N='—';
+    if(!mitm){
+      s.push({k:'cs',a:'ClientHello  ▶  "암호화 통신하자" (지원 암호 목록)',n:'평문으로 오간다 — 비밀이 아니다.',c:'요청을 보냈다',s:'요청을 받았다',x:'ClientHello를 볼 수 있다 (공개 정보)'});
+      s.push({k:'sc',a:'◀  Certificate  (공개키 + 도메인 + CA 서명)',n:'서버가 "내가 진짜 mygame.com"이라는 <b>인증서</b>를 보낸다.',c:'서버의 공개키 (인증서 안)',s:'내 공개키·개인키 (개인키는 서버만)',x:'인증서·공개키 (공개 정보라 문제없음)'});
+      s.push({k:'ck',a:'클라: 인증서 검증  ✔ CA 서명 · ✔ 도메인 일치 · ✔ 유효기간',n:'신뢰하는 CA가 서명했고 도메인이 맞다 → 진짜 서버.',c:'서버 신원 확인 ✔',s:N,x:'아직 비밀을 하나도 모른다'});
+      s.push({k:'cs',a:'▶  대칭키 재료를 <b>공개키로 잠가서</b> 전송',n:'자물쇠(공개키)로 잠갔으니 개인키 가진 서버만 열 수 있다.',c:'대칭키 재료 (직접 만들었다)',s:N,x:'잠긴 덩어리만 본다 — 열 수 없다'});
+      s.push({k:'sc',a:'서버: 개인키로 열어 대칭키 K 확보  ═  양쪽이 같은 K',n:'이제 둘만 아는 대칭키가 생겼다.',c:'대칭키 K ✔',s:'대칭키 K ✔',x:'K를 모른다'});
+      s.push({k:'ok',a:'Application Data  ◀▶  K로 암호화 (a8$#kf9@x…)',n:'이후 통신은 빠른 대칭키로. 비대칭은 K를 나누는 데만 썼다.',c:'K로 암호화·복호화',s:'K로 암호화·복호화',x:'암호문만 본다 (a8$#kf9@x…) — 의미를 모른다'});
+    }else if(!skip){
+      s.push({k:'cs',a:'ClientHello  ▶  (공격자가 가로챔)',n:'공격자가 클라와 서버 사이에 끼어들었다.',c:'요청을 보냈다',s:'아무 요청도 못 받았다',x:'ClientHello를 가로챘다'});
+      s.push({k:'sc',a:'◀  Certificate  (공격자가 만든 가짜: evil-mygame.net)',n:'공격자는 진짜 mygame.com의 개인키가 없다. 자기 인증서(신뢰받지 못하는 CA·다른 도메인)를 내민다.',c:'가짜 인증서를 받았다',s:N,x:'가짜 인증서를 만들어 보냈다'});
+      s.push({k:'bad',a:'클라: 인증서 검증  ✘ 도메인 불일치 · ✘ 신뢰하는 CA 아님',n:'🛑 <b>연결 중단.</b> 인증서가 "이 서버가 진짜인지"를 증명하지 못하면 클라는 거부한다.',c:'가짜 서버임을 알아챘다 ✔',s:'연결 요청 자체가 안 왔다',x:'연결이 끊겨 얻은 게 없다',end:true});
+    }else{
+      s.push({k:'cs',a:'ClientHello  ▶  (공격자가 가로챔)',n:'공격자가 클라와 서버 사이에 끼어들었다.',c:'요청을 보냈다',s:'아직 아무것도 모른다',x:'ClientHello를 가로챘다'});
+      s.push({k:'sc',a:'◀  Certificate  (공격자가 만든 가짜: evil-mygame.net)',n:'가짜 인증서다. 정상이라면 여기서 걸러진다.',c:'가짜 인증서를 받았다',s:N,x:'가짜 인증서를 만들어 보냈다'});
+      s.push({k:'bad',a:'클라: 인증서 검증  ⏭ <b>건너뜀</b> (검증 옵션 OFF)',n:'⚠ "개발 중이라 꺼뒀는데 그대로 출시" — 가짜 서버를 <b>진짜로 믿는다.</b>',c:'가짜를 진짜로 착각 ✘',s:N,x:'검증이 없으니 통과했다'});
+      s.push({k:'cs',a:'▶  대칭키 재료를 <b>공격자의 공개키</b>로 잠가서 전송',n:'클라는 진짜 서버의 자물쇠라고 믿고 잠갔지만 실은 공격자의 자물쇠다.',c:'대칭키 K1 (공격자와 공유 중인 줄 모름)',s:N,x:'자기 개인키로 열어 K1 확보'});
+      s.push({k:'bad',a:'공격자: 진짜 서버와도 따로 TLS를 맺는다  (K2)',n:'공격자는 클라와 K1, 서버와 K2 — 양쪽을 다 복호화·재암호화하며 <b>중간에서 다 읽는다.</b>',c:'K1로 통신 중 (안전한 줄 안다)',s:'K2로 통신 중 (클라와 직접인 줄 안다)',x:'K1과 K2를 다 가졌다'});
+      s.push({k:'bad',a:'Application Data  ◀▶  공격자가 읽고 바꿈  {"pw":"1234"}',n:'🚨 자물쇠 표시가 떠도 소용없다. <b>비밀번호가 평문으로 열람·변조된다.</b>',c:'암호화된 줄 안다',s:'정상 요청인 줄 안다',x:'{"id":"Koo","pw":"1234"} 평문 열람 · 변조 가능 ⚠',end:true,danger:true});
+    }
+    return s;
+  }
+  function reset(){steps=build();idx=0;bad=false;$('hs').innerHTML='';$('kC').textContent='—';$('kS').textContent='—';$('kA').textContent='—';$('kAbox').className='k a';$('hsMsg').textContent='▶ 다음 단계를 눌러 재생하자.';$('hsMsg').className='simmsg';$('hNext').disabled=false;}
+  function next(){
+    if(idx>=steps.length)return;
+    var s=steps[idx],row=document.createElement('div');row.className='hsrow';
+    row.innerHTML='<div class="n">'+(idx+1)+'단계</div><div class="a '+s.k+'">'+s.a+'</div><div class="nt">'+s.n+'</div>';
+    $('hs').appendChild(row);
+    $('kC').textContent=s.c;$('kS').textContent=s.s;$('kA').textContent=s.x;
+    $('kAbox').className='k a'+(s.danger?' danger':'');
+    idx++;
+    var fin=idx>=steps.length;
+    if(fin){
+      $('hNext').disabled=true;
+      var mitm=$('tMitm').checked,skip=$('tSkip').checked;
+      if(!mitm){$('hsMsg').textContent='✅ 핸드셰이크 완료 — 도청자는 암호문만 본다. 인증(인증서)과 키 교환(비대칭→대칭) 두 가지가 다 이뤄졌다.';$('hsMsg').className='simmsg good';}
+      else if(!skip){$('hsMsg').textContent='🛑 연결 중단 — 인증서 검증이 중간자 공격을 걸러냈다.';$('hsMsg').className='simmsg good';}
+      else{$('hsMsg').textContent='🚨 검증을 끄면 TLS 자물쇠가 있어도 중간자에게 다 털린다.';$('hsMsg').className='simmsg bad';}
+    }else{$('hsMsg').textContent='';}
+  }
+  $('hNext').addEventListener('click',next);
+  $('hAll').addEventListener('click',function(){while(idx<steps.length)next();});
+  $('hRst').addEventListener('click',reset);
+  $('tMitm').addEventListener('change',reset);$('tSkip').addEventListener('change',reset);
+  reset();
+})();
+
+/* 킬러: 핵 유저 vs 서버 */
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var HP=500,hp,pass,block,tls=0,auth=0;
+  var AT=['forge','range','cool','sniff'],AN={forge:'데미지 위조',range:'사거리 밖',cool:'쿨다운 무시',sniff:'도청'};
+  var CFG=['평문+믿음','평문+서버판정','TLS+믿음','TLS+서버판정'];
+  var mat={};
+  function ci(){return tls*2+auth;}
+  function seed(str){var h=2166136261;for(var i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+  function cipher(str){var h=seed(str),o=[],n=Math.min(24,str.length);for(var i=0;i<n;i++){h=(Math.imul(h,1664525)+1013904223)>>>0;o.push(('0'+(h>>>24).toString(16)).slice(-2));}return '17 03 03 '+o.join(' ')+' …';}
+  function reset(){hp=HP;pass=0;block=0;$('wireTxt').textContent='(공격을 하나 눌러보자)';$('wireTxt').className='';$('srvTxt').textContent='';$('ares').className='ares';$('ares').textContent='위에서 방어선을 고르고 공격을 눌러보자.';hpRender();stat();}
+  function hpRender(){$('hpTxt').textContent=hp+' / '+HP;var b=$('hpBar');b.style.width=(hp/HP*100)+'%';b.className=hp<=0?'dead':'';}
+  function stat(){$('nPass').textContent=pass;$('nBlock').textContent=block;}
+  function wire(pkt){var w=$('wireTxt');if(tls){w.className='enc';w.textContent=cipher(pkt);}else{w.className='plain';w.textContent=pkt;}}
+  function hit(d){hp=Math.max(0,hp-d);hpRender();}
+  function mark(a,blocked){var k=a+'|'+ci();mat[k]=blocked;matRender();}
+  function matRender(){
+    var h='<tr><th>공격</th>'+CFG.map(function(c){return '<th>'+c.replace('+','<br>+')+'</th>';}).join('')+'</tr>';
+    AT.forEach(function(a){
+      h+='<tr><td class="r">'+AN[a]+'</td>';
+      for(var c=0;c<4;c++){var v=mat[a+'|'+c];h+=v===undefined?'<td class="empty">·</td>':(v?'<td class="blk">막힘</td>':'<td class="brk">뚫림</td>');}
+      h+='</tr>';
+    });
+    $('mx').innerHTML=h;
+  }
+  function atk(a){
+    var res,blocked,srv='',pkt;
+    if(hp<=0&&a!=='sniff'){$('ares').className='ares';$('ares').textContent='보스는 이미 죽었다. ↺ 보스 부활을 눌러 다시 하자.';return;}
+    if(a==='normal'){
+      pkt='POST /Server_RequestAttack {target:7, dmg:25}';wire(pkt);
+      hit(25);pass++;
+      srv=auth?'IsInRange ✔ (5m)  IsAttackReady ✔\nDamage = CalculateDamage(서버 스탯) = 25\nHP -= 25':'Enemy->HP -= Damage(25)   // 클라가 준 값';
+      res={c:'block',t:'✅ 정상 공격이 적용됐다 (데미지 25). 어느 설계든 정상 요청은 통과해야 한다.'};
+    }else if(a==='forge'){
+      pkt='POST /Server_DealDamage {target:7, dmg:9999}';wire(pkt);
+      if(auth){blocked=true;block++;srv='클라의 Damage는 쓰지 않는다\nDamage = CalculateDamage(서버 스탯) = 25\n→ 25만 적용 (9999 무시)';hit(25);
+        res={c:'block',t:'🛡 <b>서버 판정이 막았다.</b> 클라가 9999를 보내도 서버는 자기 스탯으로 25만 계산한다.'+(tls?' (TLS는 관여하지 않았다 — 암호화돼 있어도 내용이 거짓이면 소용없다.)':'')};}
+      else{blocked=false;pass++;srv='Enemy->HP -= Damage;   // Damage == 9999\n→ 그대로 적용';hit(9999);
+        res={c:'pass',t:'💥 <b>뚫렸다!</b> 보스 즉사.'+(tls?' TLS를 켰지만 <b>조작된 값을 정상적으로 암호화해서 보냈을 뿐</b>이라 서버는 정상 요청으로 받았다. 핵 방어는 암호화가 아니다.':' 서버가 클라의 통보를 그대로 믿었다.')};}
+      mark('forge',blocked);
+    }else if(a==='range'){
+      pkt='POST /Server_DealDamage {target:7, dmg:25, dist:5}   // 실제 거리 50m, 클라가 5m라고 거짓말';wire(pkt);
+      if(auth){blocked=true;block++;srv='IsInRange(Target)?  서버가 잰 거리 50m > 사거리 10m\n→ return (무시)';
+        res={c:'block',t:'🛡 <b>서버 판정이 막았다.</b> 서버가 자기가 아는 위치로 거리를 직접 쟀다. 클라가 말한 거리는 믿지 않는다.'};}
+      else{blocked=false;pass++;hit(25);srv='Enemy->HP -= Damage;   // 사거리? 클라가 알아서 검사했겠지...\n→ 50m 밖에서 맞음';
+        res={c:'pass',t:'🎯 <b>뚫렸다.</b> 사거리 밖인데 공격이 들어갔다(벽 뒤에서도 때릴 수 있다).'+(tls?' TLS는 이걸 못 본다.':'')};}
+      mark('range',blocked);
+    }else if(a==='cool'){
+      pkt='×10  POST /Server_DealDamage {target:7, dmg:25}   // 0.1초 간격';wire(pkt);
+      if(auth){blocked=true;block+=9;pass++;hit(25);srv='t=0.0s  IsAttackReady ✔ → 25 적용\nt=0.1s~0.9s  쿨다운 1초 미경과 ✘ ×9 → 무시\n(9번 막힘)';
+        res={c:'block',t:'🛡 <b>서버 판정이 막았다.</b> 서버가 쿨다운 타이머를 쥐고 있어서 첫 발만 통과했다(250 → 25).'};}
+      else{blocked=false;pass+=10;hit(250);srv='10번 다 Enemy->HP -= 25;   // 쿨다운은 클라 UI에서만 막았다\n→ 250 적용';
+        res={c:'pass',t:'⚡ <b>뚫렸다.</b> 쿨다운을 클라 UI에서만 막아놨으면 패킷을 직접 보내는 순간 무의미하다. 250 데미지가 들어갔다.'+(tls?' (TLS와 무관)':'')};}
+      mark('cool',blocked);
+    }else if(a==='sniff'){
+      pkt='POST /api/login\n{"id":"Koo","pw":"1234"}';wire(pkt);
+      srv='(이 공격은 서버 코드와 무관 — 전송 구간의 문제)';
+      if(tls){blocked=true;res={c:'block',t:'🔒 <b>TLS가 막았다.</b> 도청자에게는 의미 없는 바이트만 보인다. 대칭키 K를 모르기 때문이다.'+(auth?' (서버 판정은 이 공격에 관여하지 않는다.)':'')};}
+      else{blocked=false;res={c:'pass',t:'🕵 <b>뚫렸다.</b> 공용 와이파이의 공격자에게 아이디·비번이 그대로 보인다.'+(auth?' 서버 판정을 아무리 철저히 해도 회선에서 새는 건 못 막는다.':'')};}
+      mark('sniff',blocked);
+    }
+    $('srvTxt').textContent=srv;
+    var r=$('ares');r.className='ares '+res.c;r.innerHTML=res.t;stat();
+  }
+  [].forEach.call(document.querySelectorAll('#segTls button'),function(b){b.addEventListener('click',function(){tls=+b.getAttribute('data-v');[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('on',x===b);});});});
+  [].forEach.call(document.querySelectorAll('#segAuth button'),function(b){b.addEventListener('click',function(){auth=+b.getAttribute('data-v');[].forEach.call(b.parentNode.children,function(x){x.classList.toggle('on',x===b);});});});
+  [].forEach.call(document.querySelectorAll('.atk button'),function(b){b.addEventListener('click',function(){atk(b.getAttribute('data-a'));});});
+  var rb=document.createElement('button');rb.className='btn ghost';rb.textContent='↺ 보스 부활';rb.addEventListener('click',reset);
+  var br=document.createElement('div');br.className='btnrow';br.appendChild(rb);$('mx').parentNode.insertBefore(br,$('mx').previousElementSibling.nextSibling);
+  matRender();reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

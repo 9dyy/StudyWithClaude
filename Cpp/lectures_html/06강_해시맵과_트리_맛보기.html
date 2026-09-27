@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>6강 · 해시맵과 트리 맛보기 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 해시 버킷 시각화 */
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:8px;font-size:13px;color:var(--dim)}
+.ctl input[type=number]{width:96px;font-family:ui-monospace,monospace;font-size:14px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.ctl input:focus{outline:none;border-color:var(--acc)}
+.ctl .btn{padding:9px 14px;font-size:13px}
+.bkgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:16px}
+.bk{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 8px 8px 34px;min-height:44px;position:relative;display:flex;flex-wrap:wrap;gap:4px;align-content:center;transition:.15s}
+.bk .ix{position:absolute;left:0;top:0;bottom:0;width:26px;border-right:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);background:var(--bg2);border-radius:10px 0 0 10px}
+.bk .nd{font-family:ui-monospace,monospace;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:6px;background:rgba(168,85,247,.16);border:1px solid rgba(168,85,247,.5);color:#d8b4fe}
+.bk .nd.c2{background:rgba(251,191,36,.16);border-color:var(--amber);color:var(--amber)}
+.bk .nd.c3{background:rgba(248,113,113,.16);border-color:var(--red);color:var(--red)}
+.bk .nd.hit{background:var(--grn);border-color:var(--grn);color:#04221a}
+.bk.hl{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(34,211,238,.35)}
+.bk.hl .ix{color:var(--cyan)}
+.bk.rh{animation:rh .7s}
+@keyframes rh{0%{background:rgba(251,191,36,.35)}100%{background:var(--card2)}}
+.barrow{display:grid;grid-template-columns:110px 1fr 70px;gap:10px;align-items:center;margin-top:10px;font-size:12.5px;color:var(--dim)}
+.barrow .track{height:18px;background:var(--bg2);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.barrow .track i{display:block;height:100%;border-radius:9px;transition:.4s}
+.barrow b{font-family:ui-monospace,monospace;color:var(--txt);text-align:right}
+.tsv{width:100%;height:auto;display:block;background:var(--bg2);border:1px solid var(--line);border-radius:12px;margin-top:12px}
+.tsv text{font-family:ui-monospace,monospace}
+.tsv .nd circle{fill:var(--card2);stroke:var(--line);stroke-width:2;transition:.2s;cursor:pointer}
+.tsv .nd text{fill:var(--txt);font-size:14px;font-weight:800;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.tsv .nd.on circle{fill:rgba(34,211,238,.2);stroke:var(--cyan)}
+.tsv .nd.found circle{fill:var(--grn);stroke:var(--grn)}
+.tsv .nd.found text{fill:#04221a}
+.tsv .ed{stroke:var(--line);stroke-width:2}
+.tsv .ed.on{stroke:var(--cyan);stroke-width:3}
+.tsv .nil{fill:none;stroke:var(--red);stroke-width:2;stroke-dasharray:4 3}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>6강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#hash">해시</a>
+    <a class="chip" href="#sim">버킷 시뮬</a>
+    <a class="chip" href="#bench">측정</a>
+    <a class="chip" href="#when">배열 vs 맵</a>
+    <a class="chip" href="#tree">트리</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 자료구조 기본기</span>
+  <h1>해시맵과 <span class="g">트리 맛보기</span></h1>
+  <p class="sub">플레이어 ID로 찾는데 매 프레임이 느려졌다. TMap이 배열을 순회하지 않고 위치를 "계산해서" 찾는 원리를 버킷 위에서 직접 확인하고, 정렬이 필요할 땐 왜 트리인지 탐색 경로로 본다.</p>
+  <div class="meta">
+    <div class="m">🗂️ 평균 O(1), 최악 O(n)</div>
+    <div class="m">🧩 선수지식 <b>4·5강</b></div>
+    <div class="m">⏱️ 약 25분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>플레이어 ID로 찾다가 매 프레임이 느려진 코드</h2>
+  <div class="card">
+    <pre class="code">TArray&lt;FPlayerInfo&gt; Players;
+
+FPlayerInfo* FindPlayer(int32 PlayerID)
+{
+    <span class="kw">for</span> (FPlayerInfo&amp; Player : Players)   <span class="bad">// 매번 처음부터 끝까지 순회</span>
+    {
+        <span class="kw">if</span> (Player.ID == PlayerID) <span class="kw">return</span> &amp;Player;
+    }
+    <span class="kw">return</span> <span class="kw">nullptr</span>;
+}</pre>
+    <p class="hint">10명일 땐 문제없었는데, 100명이 넘는 서버에서 매 프레임 여러 시스템이 호출하니 눈에 띄게 느려졌다. 배열에서 값으로 찾는 건 <b>O(n)</b> — 4강에서 본 "탐색은 배열도 LinkedList도 O(n)"이 바로 이 상황이다. "탐색을 거의 안 하고 바로 찾는" 방식이 필요하다. 그게 <b>해시맵(<code>TMap</code>)</b>이다.</p>
+  </div>
+</div></section>
+
+<section id="hash"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 원리</div>
+  <h2 class="sec"><span class="n">2</span>TMap이 O(1)에 가까운 이유 — 위치를 계산해버린다</h2>
+  <p class="lead">배열은 "값이 몇 번째에 있는지 몰라서" 순회한다. 해시맵의 아이디어는 <b>"키를 계산해서 바로 위치를 알아내자"</b>다.</p>
+  <div class="card">
+    <pre class="code">TMap&lt;int32, FPlayerInfo&gt; Players;
+
+키(PlayerID) ──→ <span class="hl">해시 함수</span> ──→ 버킷 인덱스 ──→ 그 버킷에 값 저장
+
+PlayerID=1001 → Hash(1001) = 37 → 버킷[37]에 저장
+PlayerID=2002 → Hash(2002) = 12 → 버킷[12]에 저장
+PlayerID=3003 → Hash(3003) = 37 → 버킷[37]에 저장  <span class="cm">(충돌! 아래에서)</span></pre>
+    <p class="hint">조회할 땐 같은 해시 함수로 <b>어느 버킷을 봐야 하는지 계산으로 바로</b> 안다. 배열을 순회하지 않고 "37번 버킷만 확인하면 된다"는 걸 계산으로 아는 것 — 이게 평균 O(1)의 근거다. 버킷 배열 자체가 <code>TArray</code>라는 점도 눈여겨보자. 결국 배열의 "인덱스로 접근하면 O(1)"(4강)을 해시 함수로 <b>"아무 키나 인덱스로 바꿔서"</b> 활용하는 게 해시맵의 본질이다.</p>
+    <pre class="code" style="margin-top:12px">Players.Add(1001, PlayerInfoA);
+Players.Add(2002, PlayerInfoB);
+
+FPlayerInfo* Found = Players.Find(1001);   <span class="cm">// Hash(1001) 계산 → 바로 그 버킷 확인. 평균 O(1)</span></pre>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>해시 버킷 시각화 — 충돌과 Rehashing을 눈으로</h2>
+  <p class="lead">아래 해시맵은 <b>버킷 8개</b>로 시작하고, 해시 함수는 <code>키 % 버킷 수</code>(설명용 단순 모델), 충돌은 <b>체이닝</b>(같은 버킷에 줄줄이 매달기), 로드 팩터가 <b>0.75</b>를 넘으면 버킷을 2배로 늘려 전부 재배치한다. 키를 넣고, 충돌을 만들고, 찾아보자. (실제 <code>TMap</code>의 내부 구현 세부는 다르지만 원리는 같다.)</p>
+  <div class="card">
+    <div class="stats" id="hStats"></div>
+    <div class="ctl">키 <input type="number" id="kIn" value="1001" min="0"><button class="btn" id="bAdd">➕ 추가</button><button class="btn ghost" id="bFind">🔍 Find</button><button class="btn ghost" id="bRand">🎲 랜덤 ID</button><button class="btn ghost" id="bCol">💥 충돌 만들기</button></div>
+    <div class="ctl"><button class="btn ghost" id="b10">+10개</button><button class="btn ghost" id="b100">+100개</button><button class="btn ghost" id="bRes">🧷 Reserve(64)</button><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <div class="bkgrid" id="bkgrid"></div>
+    <div class="simmsg" id="hMsg">키를 추가해보자. 버킷 인덱스 = 키 % 버킷 수.</div>
+    <p class="hint">① <b>1001</b>과 <b>1009</b>를 넣어보자 — 둘 다 8로 나눈 나머지가 1이라 <b>같은 버킷에 충돌</b>한다(노랑 → 빨강으로 체인이 길어짐). 충돌은 버그가 아니라 <b>필연</b>이다. ② 원소를 계속 넣으면 7번째(7/8 = 0.88로 기준 0.75 초과)에 <b>Rehashing</b>이 일어난다 — 버킷 수가 바뀌니 <b>모든 키의 인덱스가 다시 계산</b>돼 버킷이 재배치된다. 그 순간만 O(n)이다. ③ <b>🧷 Reserve(64)</b>를 누른 뒤 100개를 넣어보면 재배치가 (거의) 안 일어난다 — <code>TArray::Reserve</code>와 같은 이유(4강). ④ <b>Find</b>는 해시로 버킷을 바로 찾은 뒤 그 <b>버킷 안의 체인만</b> 훑는다(초록 = 찾은 노드).</p>
+  </div>
+</div></section>
+
+<section id="bench"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 측정</div>
+  <h2 class="sec"><span class="n">4</span>배열 순회 vs 해시 조회 — 비교 횟수를 재본다</h2>
+  <p class="lead">원소 N개에서 랜덤한 키 1000개를 찾는 데 필요한 <b>평균 비교 횟수</b>를 실제로 센다. 배열은 앞에서부터 대조, 해시맵은 버킷 하나의 체인만 대조한다.</p>
+  <div class="card">
+    <div class="slrow">원소 수 N <input type="range" id="nSl" min="10" max="5000" step="10" value="1000"><b id="nV" style="color:var(--txt);font-family:ui-monospace,monospace">1000</b>
+      &nbsp;&nbsp;<label style="cursor:pointer"><input type="checkbox" id="badH" style="accent-color:var(--acc)"> 나쁜 해시 함수 (모든 키가 같은 버킷)</label></div>
+    <div id="benchOut"></div>
+    <div class="simmsg" id="benchMsg"></div>
+    <p class="hint">① N을 키워보자 — 배열은 <b>N/2</b>씩 늘어나지만 해시맵은 거의 <b>1~2번</b>에서 고정이다. ② <b>나쁜 해시 함수</b>를 켜면 모든 키가 한 버킷에 몰려 <b>체인 = 배열 순회</b>가 된다 — 해시맵의 최악 O(n)이 이것이다. 그래서 "평균 O(1), 최악 O(n)"이라고 답해야 정확하다. ③ 원소가 수십 개 이하면 차이가 무의미하다(해시 계산 비용, 배열의 캐시 지역성).</p>
+  </div>
+</div></section>
+
+<section id="when"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 선택 기준</div>
+  <h2 class="sec"><span class="n">5</span>배열 대신 맵을 언제 쓰나</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>상황</th><th>추천</th><th>이유</th></tr>
+      <tr><td>인덱스(0, 1, 2…)로 순서대로 접근</td><td><code>TArray</code></td><td>배열의 O(1) 인덱스 접근을 그대로 활용</td></tr>
+      <tr><td>ID/이름처럼 임의의 키로 빠르게 찾기</td><td><code>TMap</code></td><td>순회 없이 평균 O(1) 조회</td></tr>
+      <tr><td>순서가 중요(입력 순서, 정렬 유지)</td><td><code>TArray</code></td><td><code>TMap</code>은 내부 저장 순서를 보장 안 함</td></tr>
+      <tr><td>"이 키가 존재하는지"를 자주 확인</td><td><code>TMap</code>/<code>TSet</code></td><td>존재 여부 확인도 평균 O(1)</td></tr>
+      <tr><td>원소 개수가 매우 적음(수십 개 이하)</td><td><code>TArray</code>도 충분</td><td>해시 계산 오버헤드가 순회 비용보다 클 수 있음</td></tr>
+    </table>
+    <p class="hint"><b>핵심 판단 기준은 "접근하는 방식이 인덱스냐, 키냐"다.</b> ID로 찾을 거면 <code>TMap</code>, 스폰된 순서대로 순회할 거면 <code>TArray</code>. 둘 다 필요하면 둘 다 유지하며 동기화하는 것도 흔한 패턴이다.</p>
+    <pre class="code" style="margin-top:12px"><span class="cm">// ID로 찾을 일이 많다 → TMap이 자연스럽다</span>
+TMap&lt;int32, FPlayerInfo&gt; PlayerByID;
+
+FPlayerInfo* FindPlayer(int32 PlayerID)
+{
+    <span class="kw">return</span> PlayerByID.Find(PlayerID);   <span class="cm">// 평균 O(1) — 도입 문제 해결</span>
+}</pre>
+  </div>
+</div></section>
+
+<section id="tree"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 트리 맛보기</div>
+  <h2 class="sec"><span class="n">6</span>정렬을 유지하면서 탐색하고 싶을 때 — 트리</h2>
+  <p class="lead">해시맵은 "정확히 이 키"에는 최고지만 <b>"이 값보다 작은 것 중 가장 큰 것", "정렬된 순서대로 순회"</b>에는 약하다(순서 개념이 없다). 이럴 때 <b>이진 탐색 트리(BST)</b>를 쓴다 — 왼쪽 자식은 나보다 작고, 오른쪽 자식은 나보다 크다. 값을 골라 <b>탐색 경로</b>를 따라가 보자.</p>
+  <div class="card">
+    <div class="ctl">찾을 값 <input type="number" id="tIn" value="40"><button class="btn" id="tGo">🔍 탐색</button><span style="font-size:12px;color:var(--faint)">또는 노드를 클릭</span></div>
+    <svg class="tsv" id="tSvg" viewBox="0 0 640 230"></svg>
+    <div class="simmsg" id="tMsg">트리에 있는 값(20, 30, 40, 50, 60, 70, 80)이나 없는 값(예: 65)을 찾아보자.</div>
+    <p class="hint">매번 비교할 때마다 <b>후보가 절반으로</b> 줄어든다. 균형 잡힌 트리라면 탐색이 <b>O(log n)</b> — 원소가 100만 개여도 약 <b>20번</b> 비교면 찾는다(배열 순회는 100만 번). 없는 값(65)도 경로 끝(빈 자리)까지 가보면 "없음"을 확정한다.</p>
+  </div>
+  <div class="card">
+    <p style="font-size:14.5px;margin-bottom:6px"><b>게임에서 트리가 쓰이는 실제 예</b></p>
+    <div class="two">
+      <div class="box"><h4>우선순위 큐 (힙)</h4><p>스킬 쿨다운/타이머를 "가장 빨리 끝날 것부터" 꺼낸다.</p></div>
+      <div class="box"><h4>랭킹 보드</h4><p>정렬 순서를 유지하며 삽입/삭제/순회.</p></div>
+      <div class="box"><h4>공간 분할 (쿼드/옥트리)</h4><p>"이 근처 오브젝트만" 빠르게 찾는 충돌 판정 최적화.</p></div>
+    </div>
+    <pre class="code" style="margin-top:14px"><span class="cm">// 우선순위 큐 예 — 가장 먼저 끝나는 쿨다운을 항상 O(log n)에 꺼냄</span>
+<span class="kw">struct</span> FCooldownEntry
+{
+    <span class="kw">float</span> EndTime;
+    FName SkillName;
+    <span class="kw">bool operator</span>&lt;(<span class="kw">const</span> FCooldownEntry&amp; Other) <span class="kw">const</span> { <span class="kw">return</span> EndTime &lt; Other.EndTime; }
+};
+
+TArray&lt;FCooldownEntry&gt; CooldownHeap;
+
+<span class="kw">void</span> AddCooldown(FName SkillName, <span class="kw">float</span> Duration)
+{
+    CooldownHeap.HeapPush(FCooldownEntry{ GetWorld()-&gt;GetTimeSeconds() + Duration, SkillName });
+}
+
+<span class="kw">void</span> TickCooldowns()
+{
+    <span class="kw">while</span> (CooldownHeap.Num() &gt; 0 &amp;&amp; CooldownHeap.HeapTop().EndTime &lt;= GetWorld()-&gt;GetTimeSeconds())
+    {
+        FCooldownEntry Entry;
+        CooldownHeap.HeapPop(Entry);   <span class="cm">// 가장 빨리 끝나는 것부터 O(log n)에 꺼냄</span>
+        OnCooldownFinished(Entry.SkillName);
+    }
+}</pre>
+    <p class="hint"><code>TArray</code>의 <code>HeapPush</code>/<code>HeapPop</code>이 트리(힙) 구조를 <b>배열 위에</b> 구현해둔 것이다 — 트리는 항상 포인터로 연결된 노드라는 생각과 달리, <b>i번째 노드의 자식은 2i+1, 2i+2</b>처럼 인덱스 계산으로도 트리를 표현할 수 있다.</p>
+  </div>
+  <div class="card">
+    <p style="font-size:14.5px;margin-bottom:6px"><b>Part 2 정리 — 자료구조 기본기</b></p>
+    <table class="tbl">
+      <tr><th>강의</th><th>핵심</th><th>언제 쓰나</th></tr>
+      <tr><td>4강 배열 vs LinkedList</td><td>캐시 지역성이 시간복잡도 표를 뒤집을 수 있다</td><td>순회가 잦으면 배열, 이미 위치를 아는 삽입/삭제가 잦으면 LinkedList</td></tr>
+      <tr><td>5강 Stack과 Queue</td><td>LIFO/FIFO는 접근 규칙일 뿐</td><td>되돌리기는 Stack, 순서 보장 처리는 Queue</td></tr>
+      <tr><td>6강 해시맵과 트리</td><td>해시로 위치를 계산하거나, 절반씩 후보를 줄인다</td><td>키로 빠른 조회는 TMap, 정렬 유지·우선순위는 트리</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 6가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"매 프레임 정렬된 랭킹을 유지해야 하는데 삽입도 잦다면, TMap과 트리 중 뭘 고르겠어요?"</i> → 정렬 유지가 필수면 TMap은 애초에 후보가 안 되고 트리 기반(정렬된 자료구조)으로 판단해야 한다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="05강_Stack과_Queue.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 5강 — Stack과 Queue</div></div></a>
+  <a class="nx" href="07강_Object_Pooling.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">7강 — Object Pooling →</div></div></a>
+  <div class="cap">게임 개발자를 위한 C++ 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 6강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"TMap은 항상 O(1)이 보장된다"','아니다. <span class="truth">평균</span> O(1)이고, 해시 충돌이 심하면 최악의 경우 O(n)까지 나빠질 수 있다. "평균/최악"을 구분 안 하고 "무조건 빠르다"고 답하면 면접에서 감점 포인트다.'],
+ ['"TMap은 넣은 순서대로 순회된다"','아니다. 해시값 기반 버킷에 저장되기 때문에 <span class="truth">순회 순서를 보장하지 않는다.</span> 입력 순서가 중요하면 <code>TArray</code>를 쓰거나, 순서와 빠른 조회가 둘 다 필요하면 두 자료구조를 같이 관리해야 한다.'],
+ ['"원소가 적어도 TMap이 TArray보다 항상 빠르다"','아니다. 해시 계산 자체에도 비용이 있어서 원소가 아주 적으면(수십 개 이하) <span class="truth">배열 순회가 캐시 지역성 덕에 오히려 더 빠를 수 있다.</span> "데이터 크기가 작을 땐 단순한 구조가 이긴다"는 4강의 교훈과 같은 맥락이다.'],
+ ['"트리는 항상 포인터로 연결된 노드로만 구현된다"','아니다. 힙처럼 부모-자식 관계를 <span class="truth">배열 인덱스 계산</span>(i번째 노드의 자식은 2i+1, 2i+2)으로 표현하는 트리도 흔하다. <code>TArray::HeapPush</code>/<code>HeapPop</code>이 정확히 이 방식이다.'],
+ ['"해시 충돌은 해시 함수를 잘못 짜서 생기는 버그다"','아니다. 버킷 개수가 유한한 이상 충돌은 <span class="truth">필연적으로</span> 생긴다. 좋은 해시 함수는 충돌을 "없애는" 게 아니라 "고르게 분산시켜서 최소화하는" 것뿐이다.'],
+ ['"TMap에 원소를 넣는 연산은 항상 O(1)이다"','대부분은 맞지만, 로드 팩터를 넘어서 <span class="truth">Rehashing</span>이 일어나는 그 순간만큼은 O(n)이다. <code>TArray</code>의 재할당과 같은 이치로 "평균/상각으로는 O(1), 가끔 한 번씩 O(n)"이 정확한 설명이다.']
+];
+var QA=[
+ ['TMap이 내부적으로 어떻게 O(1) 조회를 하나요?','키를 <b>해시 함수에 넣어서 버킷 인덱스를 계산</b>하고, 그 버킷만 확인합니다. 배열을 처음부터 순회하지 않고 계산으로 바로 위치를 알아내는 게 핵심이라, 평균적으로 원소 개수와 무관하게 O(1)에 가깝게 동작합니다.'],
+ ['TMap은 항상 O(1)인가요?','아닙니다. <b>평균 O(1)이고 최악의 경우 O(n)</b>까지 나빠질 수 있습니다. 서로 다른 키가 같은 버킷으로 계산되는 해시 충돌이 심해지면 한 버킷 안에서 다시 순회해야 하기 때문입니다.'],
+ ['배열 대신 TMap을 쓰는 게 나은 경우는 언제인가요?','ID나 이름처럼 <b>임의의 키로 빠르게 조회</b>해야 하는 경우입니다. 반대로 순서가 중요하거나 인덱스로 순회할 일이 많으면 TArray가 더 낫습니다. TMap은 저장 순서를 보장하지 않는다는 점도 고려해야 합니다.'],
+ ['해시 충돌이 뭐고 어떻게 처리하나요?','서로 다른 키가 같은 해시값(버킷)으로 계산되는 걸 말합니다. TMap은 같은 버킷에 여러 값을 <b>체이닝</b> 방식으로 저장해서 처리하는데, 충돌이 많아지면 조회 성능이 떨어지기 때문에 좋은 해시 함수와 충분한 버킷 크기로 충돌을 최소화하는 게 중요합니다.'],
+ ['매 프레임 100명이 넘는 플레이어를 ID로 조회해야 한다면 TArray와 TMap 중 뭘 쓰시겠어요?','<b>TMap</b>을 쓰겠습니다. TArray로 매번 순회하면 O(n)이라 플레이어 수가 늘수록 매 프레임 비용이 커지지만, TMap은 평균 O(1)이라 인원수와 거의 무관하게 일정한 성능을 냅니다.'],
+ ['정렬된 순서를 유지하면서 삽입/탐색을 빠르게 하고 싶다면 TMap으로 충분한가요?','충분하지 않습니다. TMap은 <b>순서 개념이 없어서</b> 정렬 유지에는 안 맞고, 이런 경우엔 이진 탐색 트리나 정렬된 자료구조가 필요합니다. 랭킹 보드처럼 순위 순서를 유지해야 하는 경우가 대표적입니다.'],
+ ['트리 기반 자료구조가 게임에서 실제로 쓰이는 예를 들어주세요.','스킬 쿨다운을 가장 빨리 끝나는 것부터 꺼내는 <b>우선순위 큐</b>가 대표적입니다. 내부적으로 힙이라는 트리 구조로 구현돼서 삽입과 최솟값 조회가 O(log n)입니다. 공간을 분할해서 근처 오브젝트만 빠르게 찾는 쿼드트리도 충돌 판정 최적화에 자주 쓰입니다.'],
+ ['TMap에 원소를 계속 추가하면 내부적으로 무슨 일이 일어나나요?','버킷 대비 원소 비율인 <b>로드 팩터</b>가 일정 기준을 넘으면 버킷 개수를 더 크게 만들고 기존 원소를 전부 새 버킷 기준으로 다시 배치하는 <b>Rehashing</b>이 일어납니다. TArray의 재할당과 같은 원리로 이 순간은 O(n)이지만, 여유 있게 늘리기 때문에 평균적으로는 O(1)이 유지됩니다.']
+];
+var CK=['TMap이 해시 함수로 버킷을 계산해서 O(1)에 가까운 조회를 하는 원리를 설명할 수 있다','TMap이 "평균 O(1), 최악 O(n)"인 이유(해시 충돌)를 안다','배열과 TMap 중 뭘 쓸지 "인덱스 접근이냐 키 접근이냐" 기준으로 판단할 수 있다','TMap이 저장 순서를 보장하지 않는다는 걸 안다','트리(힙)가 게임에서 우선순위 큐 같은 형태로 실제로 쓰이는 예를 하나 이상 들 수 있다','TMap의 Rehashing이 TArray의 재할당과 같은 원리라는 걸 설명할 수 있다'];
+var KEY='cpp06-check';
+
+/* 킬러: 해시 버킷 시각화 */
+(function(){
+  var M0=8,LF=0.75,M,items,rehashes,moved,reserved,seed,lastHit;
+  var grid=document.getElementById('bkgrid'),msg=document.getElementById('hMsg');
+  function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  function reset(){M=M0;items=[];rehashes=0;moved=0;reserved=false;seed=42;lastHit=null;
+    document.getElementById('bRes').textContent='🧷 Reserve(64)';document.getElementById('kIn').value=1001;
+    say('','키를 추가해보자. 버킷 인덱스 = 키 % 버킷 수.');draw(null,false);}
+  function say(cls,t){msg.className='simmsg '+cls;msg.innerHTML=t;}
+  function has(k){return items.indexOf(k)>=0;}
+  function addKey(k){
+    if(has(k))return false;
+    items.push(k);
+    var re=false;
+    if(!reserved&&items.length/M>LF){var old=M;M*=2;rehashes++;moved+=items.length;re=true;lastHit={re:true,old:old};}
+    return re;
+  }
+  function buckets(){var b=[],i;for(i=0;i<M;i++)b.push([]);items.forEach(function(k){b[k%M].push(k);});return b;}
+  function draw(hl,flash){
+    var b=buckets(),mx=0,h='';
+    b.forEach(function(c){if(c.length>mx)mx=c.length;});
+    b.forEach(function(c,i){
+      var cls='bk'+(hl&&hl.idx===i?' hl':'')+(flash?' rh':'');
+      h+='<div class="'+cls+'"><span class="ix">'+i+'</span>'+c.map(function(k,j){
+        var cc=(j>=2?' c3':(j===1?' c2':''))+(hl&&hl.idx===i&&hl.key===k?' hit':'');
+        return '<span class="nd'+cc+'">'+k+'</span>';}).join('')+'</div>';
+    });
+    grid.innerHTML=h;
+    var lf=items.length/M;
+    document.getElementById('hStats').innerHTML=
+      '<div class="s"><div class="v">'+items.length+'</div><div class="l">원소 수 N</div></div>'+
+      '<div class="s"><div class="v">'+M+'</div><div class="l">버킷 수'+(reserved?' (Reserve)':'')+'</div></div>'+
+      '<div class="s"><div class="v'+(lf>LF?' warn':'')+'">'+lf.toFixed(2)+'</div><div class="l">로드 팩터 (기준 '+LF+')</div></div>'+
+      '<div class="s"><div class="v'+(mx>=3?' warn':'')+'">'+mx+'</div><div class="l">가장 긴 체인</div></div>'+
+      '<div class="s"><div class="v">'+rehashes+'</div><div class="l">Rehash 횟수 (누적 재배치 '+moved+')</div></div>';
+  }
+  function doAdd(k){
+    if(!(k>=0)||k!==Math.floor(k)){say('bad','0 이상의 정수 키를 넣어보자.');return;}
+    var idx=k%M;
+    if(has(k)){say('bad','키 '+k+'는 이미 있다. (TMap::Add는 같은 키를 덮어쓴다 — 원소는 늘지 않는다.)');draw({idx:idx,key:k},false);return;}
+    var before=buckets()[idx].length;
+    var re=addKey(k);
+    if(re){say('bad','⚠️ Rehashing! 로드 팩터가 '+LF+'을 넘어서 버킷 '+lastHit.old+'→'+M+'개로 늘리고 <b>원소 '+items.length+'개를 전부 재배치</b>했다(O(n)). 버킷 수가 바뀌어 같은 키의 인덱스도 달라졌다.');draw(null,true);}
+    else{var ni=k%M;say(before?'bad':'good','Hash('+k+') = '+k+' % '+M+' = <b>'+ni+'</b> → 버킷['+ni+']에 저장'+(before?'. 이미 '+before+'개가 있어서 <b>충돌 → 체이닝</b>으로 뒤에 매달았다.':'.'));draw({idx:ni,key:k},false);}
+    document.getElementById('kIn').value=k+1;
+  }
+  function doFind(k){
+    if(!(k>=0)||k!==Math.floor(k)){say('bad','0 이상의 정수 키를 넣어보자.');return;}
+    var idx=k%M,c=buckets()[idx],p=c.indexOf(k);
+    var cmp=p>=0?p+1:c.length;
+    if(p>=0)say('good','Find('+k+'): Hash = '+k+' % '+M+' = <b>'+idx+'</b> → 버킷['+idx+']의 체인('+c.length+'개)에서 '+(p+1)+'번째에 발견 → <b>비교 '+cmp+'번</b>. (배열이었다면 최대 '+items.length+'번)');
+    else say('bad','Find('+k+'): Hash = '+k+' % '+M+' = <b>'+idx+'</b> → 버킷['+idx+']의 체인 '+c.length+'개를 다 봐도 없다 → <b>비교 '+cmp+'번</b>으로 "없음" 확정. (다른 버킷은 볼 필요 없다)');
+    draw({idx:idx,key:p>=0?k:null},false);
+  }
+  function collide(){
+    if(!items.length){doAdd(1001);}
+    var pick=items[Math.floor(rnd()*items.length)],b=pick%M,j=1,k;
+    do{k=pick+M*j;j++;}while(has(k));
+    doAdd(k);
+  }
+  function randId(){var k,g=0;do{k=1000+Math.floor(rnd()*9000);}while(has(k)&&g++<50);doAdd(k);}
+  function many(n){var re=0,g=0,c=0;while(c<n&&g++<n*20){var k=1000+Math.floor(rnd()*9000);if(!has(k)){if(addKey(k))re++;c++;}}
+    say(re?'bad':'good','+'+c+'개 추가 — 그 사이 Rehashing이 <b>'+re+'번</b> 일어났다'+(reserved?' (Reserve 덕에 재배치 없음).':'. 버킷이 '+M+'개까지 커졌다.'));draw(null,re>0);}
+  document.getElementById('bAdd').addEventListener('click',function(){doAdd(parseInt(document.getElementById('kIn').value,10));});
+  document.getElementById('bFind').addEventListener('click',function(){doFind(parseInt(document.getElementById('kIn').value,10));});
+  document.getElementById('bRand').addEventListener('click',randId);
+  document.getElementById('bCol').addEventListener('click',collide);
+  document.getElementById('b10').addEventListener('click',function(){many(10);});
+  document.getElementById('b100').addEventListener('click',function(){many(100);});
+  document.getElementById('bRes').addEventListener('click',function(){
+    if(reserved){return;}
+    reserved=true;if(M<64)M=64;this.textContent='🧷 Reserve 적용됨';
+    say('good','Reserve(64) — 버킷을 미리 64개로 늘려두었다. 이제 로드 팩터를 넘기 전까지 재배치가 없다(넣을 개수를 알면 유용, TArray::Reserve와 같은 이유).');draw(null,true);});
+  document.getElementById('bReset').addEventListener('click',reset);
+  document.getElementById('kIn').addEventListener('keydown',function(e){if(e.key==='Enter')doAdd(parseInt(this.value,10));});
+  reset();
+})();
+
+/* 측정: 배열 순회 vs 해시 조회 */
+(function(){
+  function rndG(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+  function run(){
+    var N=+document.getElementById('nSl').value,bad=document.getElementById('badH').checked;
+    document.getElementById('nV').textContent=N;
+    var rnd=rndG(N*13+1),keys=[],i;
+    for(i=0;i<N;i++)keys.push(1000+i*7);
+    var M=8;while(N/M>0.75)M*=2;
+    var bk=[];for(i=0;i<M;i++)bk.push([]);
+    keys.forEach(function(k){bk[bad?0:k%M].push(k);});
+    var Q=1000,aSum=0,hSum=0,aMax=0,hMax=0;
+    for(i=0;i<Q;i++){
+      var p=Math.floor(rnd()*N),k=keys[p];
+      var a=p+1,c=bk[bad?0:k%M],h=c.indexOf(k)+1;
+      aSum+=a;hSum+=h;if(a>aMax)aMax=a;if(h>hMax)hMax=h;
+    }
+    var aAvg=aSum/Q,hAvg=hSum/Q,mx=0;bk.forEach(function(c){if(c.length>mx)mx=c.length;});
+    function row(lab,avg,mxv,col,ref){var w=Math.max(1.5,avg/ref*100);return '<div class="barrow"><span>'+lab+'</span><div class="track"><i style="width:'+w+'%;background:'+col+'"></i></div><b>'+avg.toFixed(1)+'</b></div>';}
+    var ref=Math.max(aAvg,hAvg);
+    document.getElementById('benchOut').innerHTML=row('TArray 순회',aAvg,aMax,'var(--red)',ref)+row('TMap 조회',hAvg,hMax,'var(--grn)',ref);
+    var m=document.getElementById('benchMsg');
+    m.className='simmsg '+(bad?'bad':'good');
+    m.textContent='N='+N+' · 1000번 조회 평균 비교 — 배열 '+aAvg.toFixed(1)+'번(최악 '+aMax+') vs 해시맵 '+hAvg.toFixed(1)+'번(최악 '+hMax+') · 버킷 '+M+'개, 가장 긴 체인 '+mx+(bad?'  ← 모든 키가 한 버킷: 해시맵이 사실상 배열이 됨':'');
+  }
+  document.getElementById('nSl').addEventListener('input',run);
+  document.getElementById('badH').addEventListener('change',run);
+  run();
+})();
+
+/* 트리 탐색 */
+(function(){
+  var N={50:{x:320,y:34,l:30,r:70},30:{x:180,y:94,l:20,r:40},70:{x:460,y:94,l:60,r:80},20:{x:110,y:154},40:{x:250,y:154},60:{x:390,y:154},80:{x:530,y:154}};
+  var P={30:50,70:50,20:30,40:30,60:70,80:70};
+  var svg=document.getElementById('tSvg');
+  function draw(path,found,nilAt){
+    var s='';
+    Object.keys(P).forEach(function(k){var a=N[P[k]],b=N[k],on=path.indexOf(+k)>=0&&path.indexOf(P[k])>=0;
+      s+='<line class="ed'+(on?' on':'')+'" x1="'+a.x+'" y1="'+a.y+'" x2="'+b.x+'" y2="'+b.y+'"/>';});
+    if(nilAt){var n=N[nilAt.parent],dx=nilAt.side==='l'?-46:46;
+      s+='<line class="ed on" x1="'+n.x+'" y1="'+n.y+'" x2="'+(n.x+dx)+'" y2="'+(n.y+60)+'"/><circle class="nil" cx="'+(n.x+dx)+'" cy="'+(n.y+60)+'" r="17"/><text x="'+(n.x+dx)+'" y="'+(n.y+60)+'" fill="#f87171" font-size="12" text-anchor="middle" dominant-baseline="central">없음</text>';}
+    Object.keys(N).forEach(function(k){var n=N[k],cls='nd'+(path.indexOf(+k)>=0?' on':'')+(found===+k?' found':'');
+      s+='<g class="'+cls+'" data-v="'+k+'"><circle cx="'+n.x+'" cy="'+n.y+'" r="21"/><text x="'+n.x+'" y="'+n.y+'">'+k+'</text></g>';});
+    svg.innerHTML=s;
+    svg.querySelectorAll('.nd').forEach(function(g){g.addEventListener('click',function(){document.getElementById('tIn').value=g.dataset.v;search(+g.dataset.v);});});
+  }
+  function search(v){
+    var cur=50,path=[],steps=[],nilAt=null,found=null,msg=document.getElementById('tMsg');
+    while(cur){
+      path.push(cur);
+      if(v===cur){found=cur;steps.push(cur+' = '+v+' ✔ 발견');break;}
+      var goLeft=v<cur,nx=goLeft?N[cur].l:N[cur].r;
+      steps.push(v+(goLeft?' < ':' > ')+cur+' → '+(goLeft?'왼쪽':'오른쪽'));
+      if(!nx){nilAt={parent:cur,side:goLeft?'l':'r'};break;}
+      cur=nx;
+    }
+    draw(path,found,nilAt);
+    msg.className='simmsg '+(found?'good':'bad');
+    msg.innerHTML='<b>비교 '+path.length+'번</b>'+(found?' 만에 발견':' 끝에 "없음" 확정')+' — '+steps.join(' → ')+'<br><span style="color:var(--faint);font-size:12px">7개짜리 트리라 최대 3번. 100만 개여도 균형만 맞으면 약 20번.</span>';
+  }
+  document.getElementById('tGo').addEventListener('click',function(){var v=parseInt(document.getElementById('tIn').value,10);if(isNaN(v)){document.getElementById('tMsg').textContent='숫자를 입력해보자.';return;}search(v);});
+  document.getElementById('tIn').addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('tGo').click();});
+  draw([],null,null);
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

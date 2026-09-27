@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7강 · Object Pooling — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 힙 vs 풀 */
+.memgrid{display:grid;gap:4px;margin-top:6px}
+.memgrid .c{height:30px;border-radius:5px;background:var(--bg2);border:1px solid var(--line);transition:background .2s}
+.memgrid .c.pool{height:44px}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>7강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#why">new가 비싼 이유</a>
+    <a class="chip" href="#sim">풀링 시뮬</a>
+    <a class="chip" href="#code">구현</a>
+    <a class="chip" href="#raii">RAII</a>
+    <a class="chip" href="#grow">확장 전략</a>
+    <a class="chip" href="#thread">스레드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 디자인 패턴 · 게임 특화 단골</span>
+  <h1>Object <span class="g">Pooling</span></h1>
+  <p class="sub">총알 하나 쏠 때마다 프레임이 살짝 끊긴다? new/delete가 힙을 어떻게 조각내는지 직접 보고, 풀로 비용을 로딩 시점으로 옮겨본다.</p>
+  <div class="meta">
+    <div class="m">♻️ 미리 만들고 재사용</div>
+    <div class="m">🧩 선수지식 <b>3강 · 4강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>총알 하나 쏠 때마다 게임이 살짝 끊긴다</h2>
+  <p class="lead">기관총을 쏘는 무기를 만들었다. 총알을 쏠 때마다 스폰하고, 맞거나 수명이 다하면 파괴한다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> AWeapon::Fire()
+{
+    ABullet* NewBullet = GetWorld()-&gt;SpawnActor&lt;ABullet&gt;(BulletClass, GetMuzzleLocation(), GetMuzzleRotation());
+    NewBullet-&gt;Init(Damage, Speed);
+}
+
+<span class="kw">void</span> ABullet::OnLifetimeExpired()
+{
+    <span class="bad">Destroy();</span>   <span class="cm">// 매번 액터를 파괴 — 내부적으로 메모리 해제 발생</span>
+}</pre>
+    <p style="margin-top:16px">초당 10발씩 쏘는 무기 몇 개가 화면에 있으면 프레임이 미세하게 끊긴다. 프로파일러엔 <code>SpawnActor</code>와 <code>Destroy</code> 근처가 시뻘겋다. <b style="color:var(--red)">총알 하나 만들고 없애는 게 왜 이렇게 비쌀까?</b></p>
+  </div>
+</div></section>
+
+<section id="why"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 원인</div>
+  <h2 class="sec"><span class="n">2</span>new/delete가 매 프레임 비싼 이유</h2>
+  <p class="lead"><code>new</code>는 "메모리 한 칸 떼주는" 게 아니라, 할당자에게 <b>"이만한 빈 공간 어디 없나"를 찾아달라고 요청</b>하는 과정이다.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">// 총알을 만들고 부수기를 반복한 뒤의 힙</span>
+┌────┬──────┬────┬────────┬──┬───────┬────┐
+│사용중│  빈공간 │사용중│  빈공간   │사용│  빈공간 │사용중│
+└────┴──────┴────┴────────┴──┴───────┴────┘
+  ↑ 사용중/빈공간이 조각조각 흩어진 상태 = <span class="hl">메모리 단편화(Fragmentation)</span></pre>
+    <div class="two">
+      <div class="box bad"><h4>탐색 비용</h4><p>조각난 빈 공간 중 딱 맞는 자리를 찾느라 매번 탐색한다.</p></div>
+      <div class="box bad"><h4>단편화</h4><p>빈 공간을 다 합치면 충분한데 "연속된 큰 블록"이 없어서 할당이 실패할 수 있다.</p></div>
+      <div class="box bad"><h4>Destroy는 더 무겁다</h4><p>소멸자 + 메모리 반납 + 월드에서 액터 등록 해제까지 얹힌다.</p></div>
+      <div class="box bad"><h4>캐시 지역성</h4><p>새로 할당된 총알은 힙의 예측 불가능한 위치 → 100개를 순회해도 캐시 미스 반복 (4강).</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>풀링 시뮬레이터 — 힙 조각화 vs 고정 풀</h2>
+  <p class="lead">같은 발사 패턴을 <b>매번 new/delete</b> 하는 힙과 <b>미리 만들어둔 풀</b>에 각각 돌려보자. 색깔 칸 하나가 메모리 한 칸이다.</p>
+  <div class="card">
+    <div class="modetoggle"><button class="on" data-m="heap">🗑️ 매번 new / delete</button><button data-m="pool">♻️ Object Pool</button></div>
+    <div class="memgrid" id="memgrid"></div>
+    <div class="stats">
+      <div class="s"><div class="v" id="stFree">0</div><div class="l" id="lbFree">빈 칸 합계</div></div>
+      <div class="s"><div class="v" id="stRun">0</div><div class="l" id="lbRun">가장 큰 연속 빈 블록</div></div>
+      <div class="s"><div class="v" id="stCost">0</div><div class="l">누적 할당·해제 비용</div></div>
+      <div class="s"><div class="v" id="stOk">0</div><div class="l">발사 성공</div></div>
+      <div class="s"><div class="v" id="stFail">0</div><div class="l">발사 실패</div></div>
+    </div>
+    <div class="slrow">발사 속도 <input type="range" id="rate" min="1" max="5" value="2"><b id="rateV" style="color:var(--txt)">2발/틱</b></div>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow"><button class="btn" id="bStep">▶ 1틱 진행</button><button class="btn" id="bMany">⏩ 20틱 진행</button><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <p class="hint">힙 모드에서 <b>발사 속도를 3으로 올리고 20틱을 몇 번 돌려보면</b> 빈 칸 합계는 남는데 연속 블록이 없어 실패하는 순간이 나온다. 풀 모드는 누적 비용이 훨씬 낮다. 발사 속도를 5로 올리면 풀도 바닥나는데 — 그래서 풀 크기는 <b>실측</b>으로 정해야 한다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 구현</div>
+  <h2 class="sec"><span class="n">4</span>풀의 핵심 — "미리 만들고, 숨기고, 깨운다"</h2>
+  <p class="lead">게임 시작할 때 넉넉히 만들어두고, 안 쓸 땐 숨겨서 재우고, 필요할 때 깨워서 재사용한다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> ABulletPool
+{
+<span class="kw">public</span>:
+    <span class="kw">void</span> Initialize(UWorld* World, TSubclassOf&lt;ABullet&gt; BulletClass, int32 PoolSize)
+    {
+        <span class="kw">for</span> (int32 i = 0; i &lt; PoolSize; ++i)
+        {
+            ABullet* Bullet = World-&gt;SpawnActor&lt;ABullet&gt;(BulletClass);
+            Bullet-&gt;SetActorHiddenInGame(<span class="kw">true</span>);
+            Bullet-&gt;SetActorTickEnabled(<span class="kw">false</span>);
+            InactiveBullets.Push(Bullet);   <span class="cm">// 5강의 Stack — 순서 무관, O(1)이면 충분</span>
+        }
+    }
+
+    ABullet* AcquireBullet()
+    {
+        <span class="kw">if</span> (InactiveBullets.Num() == 0) { <span class="kw">return</span> <span class="kw">nullptr</span>; }   <span class="cm">// 풀이 바닥남</span>
+        ABullet* Bullet = InactiveBullets.Pop();
+        Bullet-&gt;SetActorHiddenInGame(<span class="kw">false</span>);
+        Bullet-&gt;SetActorTickEnabled(<span class="kw">true</span>);
+        <span class="kw">return</span> Bullet;
+    }
+
+    <span class="kw">void</span> ReleaseBullet(ABullet* Bullet)
+    {
+        Bullet-&gt;SetActorHiddenInGame(<span class="kw">true</span>);
+        Bullet-&gt;SetActorTickEnabled(<span class="kw">false</span>);
+        <span class="hl">Bullet-&gt;ResetState();</span>   <span class="cm">// 데미지, 속도 등 이전 사용 흔적 초기화 — 빠뜨리면 버그</span>
+        InactiveBullets.Push(Bullet);
+    }
+
+<span class="kw">private</span>:
+    TArray&lt;ABullet*&gt; InactiveBullets;   <span class="cm">// 4강 — 배열이라 캐시 지역성도 챙김</span>
+};</pre>
+    <p class="hint">핵심은 <b>"객체 생성 비용을 게임플레이 도중이 아니라 로딩 시점으로 옮기는 것"</b>이다. 로딩 화면에서 몇 초 더 걸리는 건 못 느끼지만, 전투 중 프레임 드랍은 바로 느낀다.</p>
+  </div>
+</div></section>
+
+<section id="raii"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 3강 연결</div>
+  <h2 class="sec"><span class="n">5</span>RAII로 반납 깜빡임 막기</h2>
+  <p class="lead">임시로 잠깐 쓰고 돌려줄 오브젝트(파티클 한 번 재생 등)는 소멸자에서 자동 반납하게 감싸면 된다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FScopedPooledBullet
+{
+<span class="kw">public</span>:
+    FScopedPooledBullet(ABulletPool* InPool) : Pool(InPool) { Bullet = Pool-&gt;AcquireBullet(); }
+    ~FScopedPooledBullet()
+    {
+        <span class="kw">if</span> (Bullet) { Pool-&gt;ReleaseBullet(Bullet); }   <span class="cm">// 소멸자에서 자동 반납</span>
+    }
+    ABullet* Get() <span class="kw">const</span> { <span class="kw">return</span> Bullet; }
+<span class="kw">private</span>:
+    ABulletPool* Pool;
+    ABullet*     Bullet;
+};</pre>
+    <p class="hint">발사 후 한동안 살아있다 알아서 끝나는 총알은 <code>OnLifetimeExpired</code>에서 명시적으로 반납하는 쪽이 자연스럽다. RAII 래퍼는 "이 함수 안에서만 잠깐" 쓰는 경우에 유용하다.</p>
+  </div>
+</div></section>
+
+<section id="grow"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 바닥나면</div>
+  <h2 class="sec"><span class="n">6</span>풀이 바닥나면 — 확장 전략</h2>
+  <p class="lead">풀 크기를 고정하면 "동시에 그 이상 필요한 순간"이 온다.</p>
+  <div class="card">
+    <div class="two">
+      <div class="box good"><h4>전략 1 · 동적 확장</h4><p>필요한 순간 추가로 만든다. 스파이크는 처리되지만 그 순간 new 비용을 다시 치른다.</p></div>
+      <div class="box good"><h4>전략 2 · 강제 회수</h4><p>가장 오래전 활성화된 것(화면 밖으로 나간 지 오래된 총알 등)을 회수해 재사용한다.</p></div>
+    </div>
+    <p class="hint"><b>어느 쪽이든 풀 크기를 처음부터 실측 기반으로 넉넉히 잡는 게 먼저다.</b> 확장 전략은 예외용 안전망이지, 크기 설계를 대충 해도 되는 핑계가 아니다.</p>
+  </div>
+</div></section>
+
+<section id="thread"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · OS 7강 연결</div>
+  <h2 class="sec"><span class="n">7</span>여러 스레드가 같은 풀을 공유한다면</h2>
+  <p class="lead">물리 콜백·비동기 로딩 콜백 등 다른 스레드에서 같은 풀에 <code>Acquire/Release</code>를 부르면 <code>TArray</code>의 <code>Pop/Push</code>가 겹쳐 <b>Race Condition</b>이 난다.</p>
+  <div class="card">
+    <pre class="code">ABullet* AcquireBullet()
+{
+    <span class="good">FScopeLock Lock(&amp;PoolCriticalSection);</span>   <span class="cm">// RAII 락 — 스코프 벗어나면 자동 해제</span>
+    <span class="kw">if</span> (InactiveBullets.Num() == 0) <span class="kw">return</span> <span class="kw">nullptr</span>;
+    <span class="kw">return</span> InactiveBullets.Pop();
+}</pre>
+    <p class="hint">대부분의 게임플레이는 게임 스레드 하나에서만 돈다. <b>"이 함수를 어느 스레드에서 부를 수 있는가"를 먼저 확인</b>하고, 필요할 때만 락을 넣자. 항상 걸면 단일 스레드에서도 불필요한 비용이다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">8</span>흔한 오해 6가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 면접 대비</div>
+  <h2 class="sec"><span class="n">9</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"풀링된 오브젝트가 활성화될 때 UI·사운드에 이 변화를 알려야 한다면 어떻게 설계하겠어요?"</i> → 8강(Observer Pattern)으로 이어지는 질문이다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 마무리</div>
+  <h2 class="sec"><span class="n">10</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="06강_해시맵과_트리_맛보기.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 6강 — 해시맵과 트리 맛보기</div></div></a>
+  <a class="nx" href="08강_Observer_Pattern.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">8강 — Observer Pattern →</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 7강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"Object Pooling은 총알처럼 자주 생성되는 것에만 쓴다"','총알/이펙트는 가장 흔한 예일 뿐이다. <span class="truth">생성 빈도가 높고 생명주기가 짧은 모든 것</span>(파티클, 사운드 큐, UI 위젯, 임시 투사체)이 후보다.'],
+ ['"풀링하면 메모리를 절약할 수 있다"','오히려 반대다. 풀은 최대로 필요할 만한 개수를 <span class="truth">미리 다 잡아두는 것</span>이라 평소엔 안 쓰는 메모리도 점유한다. 목적은 절약이 아니라 런타임 할당/해제 비용과 단편화 제거다.'],
+ ['"풀에서 꺼낸 오브젝트는 상태 초기화를 신경 안 써도 된다"','이전 사용 흔적(데미지, 속도, 타이머)이 남으면 재사용 시 버그가 난다. <span class="truth"><code>ResetState()</code> 같은 리셋</span>을 Acquire/Release 어딘가에서 반드시 해야 한다.'],
+ ['"GC가 있는 환경은 Object Pooling이 필요 없다"','UObject도 GC가 관리하지만 할당 비용이 사라지진 않고, 짧은 수명 객체를 반복 생성하면 <span class="truth">GC 부하 자체</span>가 프레임 드랍 원인이 된다. GC 유무와 무관하게 유효하다.'],
+ ['"풀 크기는 일단 크게 잡아두면 안전하다"','너무 크면 안 쓰는 메모리 낭비 + 로딩 시 미리 스폰하는 시간도 늘어난다. <span class="truth">실측(최대 동시 활성 개수) + 약간의 여유</span>가 적절하다.'],
+ ['"풀은 게임 스레드에서만 쓰니까 동시 접근 걱정은 항상 없다"','대부분 맞지만 비동기 콜백(물리, 로딩 완료)에서 접근하는 구조라면 다르다. <span class="truth">한 스레드에서만 실행되는지 확인 없이 가정</span>하면 Race Condition을 놓친다.']
+];
+var QA=[
+ ['Object Pooling에 대해 설명해주세요.','자주 생성되고 짧게 살다 파괴되는 오브젝트를 매번 new/delete 하지 않고, <b>미리 만들어둔 풀에서 꺼내 쓰고 다시 반납</b>하는 패턴입니다. 시작 시 필요한 만큼 생성해두고 필요할 때 활성화, 다 쓰면 비활성화해서 재사용합니다.'],
+ ['매 프레임 new/delete를 반복하면 왜 성능 문제가 생기나요?','new는 할당자가 적절한 빈 공간을 찾는 탐색 비용이 있고, 반복하면 사용/빈 블록이 조각나는 <b>메모리 단편화</b>가 생겨 할당이 점점 비싸집니다. 매번 위치가 제각각이라 캐시 지역성도 나빠집니다.'],
+ ['Object Pooling이 메모리를 절약해주나요?','아닙니다. 최대로 필요할 개수를 미리 확보하기 때문에 평소엔 안 쓰는 메모리도 점유합니다. 목적은 절약이 아니라 <b>런타임 할당/해제 비용과 단편화 제거</b>입니다.'],
+ ['풀에서 꺼낸 오브젝트를 재사용할 때 놓치기 쉬운 부분은요?','<b>이전 사용 흔적 초기화</b>입니다. 데미지 값이나 타이머가 남아있으면 예상 밖 동작으로 이어지니 반납하거나 꺼낼 때 반드시 상태를 리셋해야 합니다.'],
+ ['풀이 바닥나면 어떻게 처리하시겠어요?','동시에 필요한 최대 개수를 <b>실측해서 처음부터 넉넉히</b> 잡는 게 먼저입니다. 그래도 부족하면 그 순간만 추가 생성하거나(동적 확장), 가장 오래된 활성 오브젝트를 강제 회수합니다.'],
+ ['게임 시작 때 딱 한 번 만드는 오브젝트에도 풀링이 필요할까요?','필요 없습니다. 생성 빈도가 높고 수명이 짧은 오브젝트에 의미 있는 최적화입니다. 한 번 만들고 계속 쓰면 할당 비용이 반복되지 않습니다.'],
+ ['언리얼은 UObject를 GC로 관리하는데도 풀링이 필요한가요?','필요합니다. GC가 해제를 자동화해도 <b>반복 생성 자체의 비용과 GC 처리 대상 증가</b>는 그대로입니다. 반복 생성/파괴 패턴을 줄이는 게 목적입니다.'],
+ ['여러 스레드가 같은 풀을 쓰면 어떤 문제가 생기고 어떻게 막나요?','내부 컨테이너를 동시에 Pop/Push하면 <b>Race Condition</b>으로 같은 오브젝트를 두 스레드가 소유하거나 컨테이너가 깨질 수 있습니다. FScopeLock 같은 RAII 락으로 보호하되, 실제로 여러 스레드에서 호출될 때만 넣습니다.']
+];
+var CK=['new/delete 반복이 왜 비싼지 메모리 단편화와 캐시 지역성 관점에서 설명할 수 있다','Object Pooling의 동작 흐름(미리 생성 → 활성화/비활성화 → 재사용)을 코드로 설명할 수 있다','풀링의 목적이 메모리 절약이 아니라 할당/해제 비용 제거라는 걸 안다','꺼낸 오브젝트의 상태 초기화를 왜 반드시 챙겨야 하는지 안다','풀이 바닥났을 때의 대응 전략(동적 확장, 강제 회수)을 설명할 수 있다','여러 스레드가 같은 풀을 공유할 때 Race Condition이 왜 생기고 어떻게 막는지 설명할 수 있다'];
+var KEY='cpp07-check';
+
+/* 킬러: new/delete vs Object Pool 시뮬레이터 */
+(function(){
+  var mode='heap',HEAP=48,POOL=16,seed,cells,bullets,pool,cost,ok,failFrag,failFull,ticks,nextId,msg;
+  function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  function ri(a,b){return a+Math.floor(rnd()*(b-a+1));}
+  var grid=document.getElementById('memgrid'),msgEl=document.getElementById('simMsg'),rate=document.getElementById('rate'),rateV=document.getElementById('rateV');
+  function reset(){
+    seed=7;cost=0;ok=0;failFrag=0;failFull=0;ticks=0;nextId=1;bullets=[];msg='';
+    cells=[];pool=[];
+    if(mode==='heap'){for(var i=0;i<HEAP;i++)cells.push(0);}
+    else{for(var j=0;j<POOL;j++){cells.push(0);pool.push(j);}}
+    draw();
+  }
+  function allocHeap(size){
+    var run=0,i;
+    for(i=0;i<HEAP;i++){cost++;if(cells[i]===0)run++;else run=0;if(run===size)return i-size+1;}
+    return -1;
+  }
+  function freeCount(){var n=0;cells.forEach(function(c){if(c===0)n++;});return n;}
+  function maxRun(){var m=0,r=0;cells.forEach(function(c){if(c===0){r++;if(r>m)m=r;}else r=0;});return m;}
+  function fire(){
+    var life=ri(3,8),id=nextId++;
+    if(mode==='heap'){
+      var size=ri(1,4),st=allocHeap(size);
+      if(st<0){
+        if(freeCount()>=size){failFrag++;msg='⚠ 빈 칸 합계는 '+freeCount()+'칸인데 연속 '+size+'칸이 없어서 할당 실패 (단편화!)';}
+        else{failFull++;msg='⚠ 힙이 가득 참';}
+        return;
+      }
+      for(var k=0;k<size;k++)cells[st+k]=id;
+      bullets.push({id:id,size:size,st:st,life:life});ok++;
+    }else{
+      if(pool.length===0){failFull++;msg='⚠ 풀이 바닥남 — 풀 크기를 실측해서 늘려야 한다';return;}
+      var s=pool.pop();cost++;cells[s]=id;bullets.push({id:id,size:1,st:s,life:life});ok++;
+    }
+  }
+  function tick(){
+    msg='';ticks++;
+    var keep=[];
+    bullets.forEach(function(b){
+      b.life--;
+      if(b.life<=0){
+        for(var k=0;k<b.size;k++)cells[b.st+k]=0;
+        if(mode==='heap'){cost+=2;}else{cost++;pool.push(b.st);}
+      }else keep.push(b);
+    });
+    bullets=keep;
+    var n=+rate.value;for(var i=0;i<n;i++)fire();
+    draw();
+  }
+  function draw(){
+    grid.innerHTML='';
+    grid.style.gridTemplateColumns='repeat('+(mode==='heap'?24:8)+',1fr)';
+    cells.forEach(function(c){
+      var d=document.createElement('div');d.className='c'+(mode==='pool'?' pool':'');
+      if(c){d.style.background='hsl('+((c*47)%360)+',65%,62%)';}
+      grid.appendChild(d);
+    });
+    var free=mode==='heap'?freeCount():pool.length;
+    document.getElementById('stFree').textContent=free;
+    document.getElementById('stRun').textContent=mode==='heap'?maxRun():free;
+    document.getElementById('lbFree').textContent=mode==='heap'?'빈 칸 합계':'풀에 남은 오브젝트';
+    document.getElementById('lbRun').textContent=mode==='heap'?'가장 큰 연속 빈 블록':'꺼낼 수 있는 개수';
+    document.getElementById('stCost').textContent=cost;
+    document.getElementById('stOk').textContent=ok;
+    var f=document.getElementById('stFail');f.textContent=failFrag+failFull;f.className='v'+(failFrag+failFull>0?' warn':'');
+    msgEl.textContent=msg||(ticks===0?'▶ 버튼을 눌러 발사를 시작해보자. 힙은 1~4칸짜리 블록(총알·이펙트·사운드큐 섞임), 풀은 고정 크기 오브젝트 16개다.':ticks+'틱 경과');
+    msgEl.className='simmsg'+(msg?' bad':'');
+  }
+  document.querySelectorAll('.modetoggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');mode=b.dataset.m;reset();
+    });
+  });
+  document.getElementById('bStep').addEventListener('click',tick);
+  document.getElementById('bMany').addEventListener('click',function(){for(var i=0;i<20;i++)tick();});
+  document.getElementById('bReset').addEventListener('click',reset);
+  rate.addEventListener('input',function(){rateV.textContent=rate.value+'발/틱';});
+  reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

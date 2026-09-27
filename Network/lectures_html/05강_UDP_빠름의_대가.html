@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5강 · UDP, 빠름의 대가 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#6366f1;--acc2:#818cf8;--accrgb:99,102,241;--acc3:#22d3ee}
+/* 킬러: 신뢰성 비교 표 */
+.cmp{width:100%;border-collapse:separate;border-spacing:0 8px;margin-top:8px}
+.cmp th{font-size:12px;font-weight:700;color:var(--dim);text-align:center;padding:4px 6px;vertical-align:bottom}
+.cmp th small{display:block;font-weight:500;color:var(--faint);font-size:10.5px}
+.cmp td.lab{font-size:13px;font-weight:700;padding-right:8px;width:24%}
+.cmp td.lab small{display:block;font-weight:500;color:var(--faint);font-size:11px}
+.cmp td.c{background:var(--card2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 10px}
+.cmp td.c:nth-child(2){border-left:1px solid var(--line);border-radius:10px 0 0 10px}
+.cmp td.c:last-child{border-right:1px solid var(--line);border-radius:0 10px 10px 0}
+.cmp .val{font-family:ui-monospace,monospace;font-size:14px;font-weight:800;text-align:center}
+.cmp .bar{height:7px;background:var(--bg2);border-radius:5px;margin-top:5px;overflow:hidden}
+.cmp .bar i{display:block;height:100%;background:var(--acc2);border-radius:5px;transition:width .4s}
+.cmp td.best .val{color:var(--grn)}
+.cmp td.best .bar i{background:var(--grn)}
+.cmp td.worst .val{color:var(--red)}
+.cmp td.worst .bar i{background:var(--red)}
+@media(max-width:640px){.cmp td.lab{width:auto;font-size:11.5px}.cmp .val{font-size:12px}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>5강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#philo">UDP 철학</a>
+    <a class="chip" href="#fit">게임에 맞는 이유</a>
+    <a class="chip" href="#sim">신뢰성 실험</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 전송 계층 · 면접 최빈출</span>
+  <h1>UDP, <span class="g">빠름의 대가</span></h1>
+  <p class="sub">신뢰성을 버리고 속도를 택한 UDP가 왜 FPS의 선택인가. 그리고 "막 유실돼도 되나?"에 대한 답 — 필요한 것만 골라 신뢰성을 얹는 방식을 직접 실험한다.</p>
+  <div class="meta">
+    <div class="m">📮 던지고 신경 안 쓴다</div>
+    <div class="m">🧩 선수지식 <b>4강</b></div>
+    <div class="m">⏱️ 약 15분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>TCP로 FPS를 만들면 생기는 일</h2>
+  <p class="lead">4강 문제를 다시 보자. 내 캐릭터 위치를 TCP로 1초에 60번 보내는데 중간에 패킷 하나가 유실된다.</p>
+  <div class="card">
+    <pre class="code">위치1(0ms) → 위치2(16ms) <span class="bad">유실!</span> → 위치3(32ms) 도착 but 대기 → 위치4(48ms) 도착 but 대기
+                  └ TCP: "위치2 재전송될 때까지 위치3,4 못 줘" (순서 보장 때문)
+
+내 화면: 캐릭터가 16ms 지점에서 멈춤 → 위치2 재전송 도착 → 갑자기 48ms로 <span class="bad">순간이동</span></pre>
+    <p style="margin-top:16px">잘 생각해보자. <b style="color:var(--acc2)">위치2는 이미 쓸모없다.</b> 32ms, 48ms 위치가 이미 와 있는데 굳이 16ms 전 위치를 기다릴 이유가 없다. TCP는 "다 도착해야 하고 순서대로여야 한다"는 신념 때문에 이걸 못 한다. 그래서 다른 도구가 필요하다 — <b>UDP</b>.</p>
+  </div>
+</div></section>
+
+<section id="philo"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 철학</div>
+  <h2 class="sec"><span class="n">2</span>"일단 던지고 신경 안 쓴다"</h2>
+  <p class="lead">UDP는 TCP와 정반대다. <b>그냥 보낸다. 도착 여부는 신경 안 쓴다.</b> 데이터를 서로 모르는 독립 덩어리(<b>데이터그램</b>)로 던진다.</p>
+  <div class="card">
+    <table class="tbl">
+      <tr><th></th><th>TCP</th><th>UDP</th></tr>
+      <tr><td><b>연결</b></td><td>맺음 (handshake)</td><td>안 맺음</td></tr>
+      <tr><td><b>신뢰성</b></td><td>보장 (재전송)</td><td>보장 안 함 (유실돼도 끝)</td></tr>
+      <tr><td><b>순서</b></td><td>보장</td><td>보장 안 함</td></tr>
+      <tr><td><b>속도</b></td><td>느림</td><td>빠름</td></tr>
+      <tr><td><b>헤더 크기</b></td><td>20바이트+</td><td><b>8바이트</b></td></tr>
+    </table>
+    <div class="two">
+      <div class="box"><h4>📬 TCP = 등기우편</h4><p>받았다는 사인을 받고, 안 오면 다시 보낸다. 느리지만 확실.</p></div>
+      <div class="box"><h4>📄 UDP = 전단지 뿌리기</h4><p>그냥 뿌린다. 몇 장이 날아가도 신경 안 쓴다. 빠르다.</p></div>
+    </div>
+    <pre class="code"><span class="cm">UDP 헤더 (8바이트)</span>
+┌────────────┬────────────┬────────┬────────┐
+│ 출발지포트 │ 목적지포트 │  길이  │ 체크섬 │
+└────────────┴────────────┴────────┴────────┘
+<span class="hl">신뢰성 관련 필드가 아예 없다 = 가볍고 빠르다</span></pre>
+  </div>
+</div></section>
+
+<section id="fit"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 게임과의 궁합</div>
+  <h2 class="sec"><span class="n">3</span>실시간 게임은 "최신성 &gt; 완전성"</h2>
+  <div class="card">
+    <pre class="code">위치1 → 위치2 <span class="bad">유실</span> → 위치3 도착(바로 표시) → 위치4 도착(바로 표시)
+              └ 그냥 버림. 어차피 위치3이 더 최신이라 상관없음
+
+내 화면: 위치2만 살짝 건너뛰고 위치3,4로 <span class="good">부드럽게 진행 (멈춤 없음)</span></pre>
+    <p class="hint">0.1초 전 위치를 정확히 받느니 지금 위치를 대충 받는 게 낫다. FPS·레이싱·액션이 위치/입력 동기화에 UDP를 쓰는 이유 — <b>유실을 감수하는 대신 지연을 없앤다.</b></p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>"그럼 막 유실돼도 되나?" — 신뢰성을 어디에 얹을까</h2>
+  <p class="lead">매 틱 <b>위치 패킷</b>을 보내고 8틱마다 <b>"플레이어 사망" 이벤트</b>도 보낸다. 유실률을 바꿔가며 세 전략을 비교해보자. 초록이 가장 좋은 값, 빨강이 가장 나쁜 값이다.</p>
+  <div class="card">
+    <div class="slrow">패킷 유실률 <input type="range" id="pSl" min="0" max="50" step="5" value="20"><b id="pV" style="color:var(--txt);font-family:ui-monospace,monospace">20%</b></div>
+    <table class="cmp" id="cmp"></table>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow"><button class="btn" id="bRe">🎲 다른 시드로 다시</button></div>
+    <p class="hint">전제: 편도 2틱, 재전송 타임아웃 6틱, 300틱 × 8회 평균. ① 유실률 20~30%에서 <b>순수 UDP</b>는 이벤트가 그만큼 사라진다. ② <b>신뢰성 UDP</b>는 이벤트만 ACK/재전송해서 100% 도착, 위치는 그대로 매끈하다. ③ <b>TCP처럼</b> 전부 신뢰성+순서로 하면 이벤트는 되지만 화면 정지가 확 늘고 트래픽도 커진다. → <b>"필요한 것만 골라서 신뢰성"</b>이 게임의 답이다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 코드</div>
+  <h2 class="sec"><span class="n">5</span>언리얼 UDP 소켓 — Connect()가 없다</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// NAME_DGram = UDP. (TCP는 NAME_Stream)</span>
+FSocket* UdpSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)-&gt;CreateSocket(NAME_DGram, TEXT(<span class="str">"UdpSocket"</span>), <span class="kw">true</span>);
+
+<span class="cm">// 주목: Connect()가 없다! 연결을 안 맺으니 handshake도 없다. 그냥 "이 주소로 보내"</span>
+int32 BytesSent = 0;
+FVector MyLocation = GetActorLocation();
+UdpSocket-&gt;<span class="hl">SendTo</span>((uint8*)&amp;MyLocation, <span class="kw">sizeof</span>(FVector), BytesSent, *ServerAddr);   <span class="cm">// 도착 보장 없음. ACK도 재전송도 없음</span>
+
+<span class="cm">// 받기 — 온 게 있으면 받고, 없으면 그냥 없는 것</span>
+<span class="kw">if</span> (UdpSocket-&gt;RecvFrom(Buffer, <span class="kw">sizeof</span>(Buffer), BytesRead, *Sender)) { <span class="cm">/* 순서/유실은 내가 알아서 */</span> }</pre>
+    <table class="tbl">
+      <tr><th>TCP</th><th>UDP</th></tr>
+      <tr><td><code>Connect()</code>로 연결을 먼저 맺음</td><td>연결 없음</td></tr>
+      <tr><td><code>Send()</code></td><td><code>SendTo()</code>로 <b>매번 목적지 지정</b> (연결이 없으니)</td></tr>
+      <tr><td>"도착하겠지" 믿어도 됨</td><td>도착 여부는 <b>내가</b> 챙겨야 함</td></tr>
+    </table>
+    <p class="hint">면접 포인트: <b>"게임은 UDP를 쓰되, 중요한 데이터엔 애플리케이션 레벨에서 신뢰성을 직접 구현한다"</b>고 답하면 깊이가 있다. "UDP라서 다 유실돼도 됨"은 얕은 답이다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 게임에서 TCP랑 UDP를 어떤 기준으로 골라 쓰나요?"</i> → 6강(TCP vs UDP, 게임은 뭘 쓰나)에서 정리한다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_TCP_신뢰성의_대가.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 4강 — TCP 신뢰성의 대가</div></div></a>
+  <a class="nx" href="06강_TCP_vs_UDP_게임은_뭘쓰나.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">6강 — TCP vs UDP →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 5강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"UDP는 신뢰성이 없으니 게임에 위험하다"','위치·입력 같은 실시간 데이터는 유실돼도 <span class="truth">다음 패킷이 곧 와서 메운다.</span> 오히려 TCP의 HOL 블로킹이 더 위험하다. 중요한 데이터는 UDP 위에 신뢰성을 직접 얹어 처리한다.'],
+ ['"UDP는 순서가 보장된다"','전혀 아니다. <span class="truth">먼저 보낸 데이터그램이 나중에 도착할 수 있다.</span> 순서가 필요하면 패킷에 직접 번호를 붙여 받는 쪽이 정렬해야 한다.'],
+ ['"UDP가 TCP보다 항상 빠르다"','UDP 자체는 오버헤드가 적지만 그 위에 신뢰성 로직을 얹으면 비용이 추가된다. 실험에서 봤듯 <span class="truth">전부 신뢰성을 얹으면 TCP와 다를 게 없어진다.</span> "UDP = 무조건 빠름"은 절반만 맞다.'],
+ ['"UDP는 연결을 안 맺으니 상대가 누군지 모른다"','데이터그램마다 <span class="truth">출발지 IP·포트</span>가 들어 있어 누가 보냈는지 안다. 다만 TCP처럼 "연결 상태"를 유지하지 않을 뿐이고, 서버는 보통 IP·포트로 플레이어를 매핑해 관리한다.']
+];
+var QA=[
+ ['UDP가 뭔가요?','<b>비연결형</b> 전송 계층 프로토콜입니다. 연결을 맺지 않고 데이터그램을 그냥 보내며 도착 여부나 순서를 보장하지 않습니다. 대신 헤더가 8바이트로 가볍고 재전송 대기가 없어 빠릅니다. 실시간 게임이나 스트리밍에 씁니다.'],
+ ['UDP는 신뢰성이 없는데 왜 게임에서 쓰나요?','실시간 게임에선 <b>완전성보다 최신성</b>이 중요하기 때문입니다. 위치 패킷 하나가 유실돼도 곧 다음 위치가 오니, 옛날 위치를 재전송받느라 화면이 멈추는 것보다 버리고 최신 위치를 쓰는 게 낫습니다. TCP의 HOL 블로킹을 피하려는 겁니다.'],
+ ['UDP로 보낸 데이터가 꼭 도착해야 한다면요?','<b>애플리케이션 레벨에서 신뢰성을 직접 구현</b>합니다. 중요한 패킷에만 시퀀스 번호와 ACK를 붙이고 응답이 없으면 재전송하는 로직을 게임 코드에 얹습니다. 이걸 신뢰성 UDP라 하고 언리얼을 포함한 대부분의 엔진이 씁니다.'],
+ ['TCP 헤더와 UDP 헤더의 차이는?','TCP 헤더는 시퀀스 번호, ACK 번호, 윈도우 크기 등 신뢰성 정보로 최소 <b>20바이트</b>, UDP는 출발지/목적지 포트, 길이, 체크섬 네 개뿐이라 <b>8바이트</b>입니다.'],
+ ['UDP는 순서를 보장하나요?','<b>보장하지 않습니다.</b> 먼저 보낸 데이터그램이 늦게 도착할 수 있어 순서가 필요하면 번호를 붙여 받는 쪽에서 정렬해야 합니다. 다만 실시간 위치는 최신 것만 쓰면 되니 순서가 큰 의미 없는 경우도 많습니다.']
+];
+var CK=['UDP가 TCP와 다른 점(비연결, 무보장, 가벼움)을 표로 말할 수 있다','실시간 게임에서 "최신성 > 완전성"인 이유를 위치 동기화 예로 설명할 수 있다','UDP 헤더가 왜 8바이트로 가벼운지 안다','신뢰성 UDP(Reliable UDP)가 뭔지, 왜 필요한지 설명할 수 있다','UDP는 순서도 도착도 보장하지 않는다는 걸 명확히 안다'];
+var KEY='net05-check';
+
+/* 킬러: 신뢰성 전략 비교 실험 */
+(function(){
+  var T=300,L=2,RTO=6,RUNS=8,base=1,p=0.2,seed;
+  function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  function xmit(sendT,reliable){
+    var t=sendT,tx=0,acks=0,arrive=null,k,max=reliable?25:1;
+    for(k=0;k<max;k++){
+      tx++;
+      if(rnd()>=p){ if(arrive===null)arrive=t+L; if(reliable){acks++; if(rnd()>=p)break;} }
+      t+=RTO;
+    }
+    return {arrive:arrive,tx:tx,acks:acks};
+  }
+  function run(mode){
+    var pk=[],traffic=0,i,r;
+    for(i=0;i<T;i++){
+      pk.push({t:i,ev:false});
+      if(i>0&&i%8===0)pk.push({t:i,ev:true});
+    }
+    pk.forEach(function(x){
+      var rel=(mode==='tcp')||(mode==='rudp'&&x.ev);
+      r=xmit(x.t,rel);x.arr=r.arrive;traffic+=r.tx+r.acks;
+    });
+    if(mode==='tcp'){var prev=0;pk.forEach(function(x){if(x.arr===null){x.del=null;return;}x.del=Math.max(x.arr,prev);prev=x.del;});}
+    else pk.forEach(function(x){x.del=x.arr;});
+    var pos=pk.filter(function(x){return !x.ev;}),ev=pk.filter(function(x){return x.ev;});
+    var pd=pos.filter(function(x){return x.del!==null;}),ed=ev.filter(function(x){return x.del!==null;});
+    var avg=function(a,f){return a.length?a.reduce(function(s,x){return s+f(x);},0)/a.length:0;};
+    var times=pd.map(function(x){return x.del;}).sort(function(a,b){return a-b;}),maxGap=0;
+    for(i=1;i<times.length;i++)maxGap=Math.max(maxGap,times[i]-times[i-1]);
+    return {posRate:pd.length/pos.length*100,evRate:ed.length/ev.length*100,posDelay:avg(pd,function(x){return x.del-x.t;}),
+            evDelay:avg(ed,function(x){return x.del-x.t;}),stall:maxGap,traffic:traffic};
+  }
+  var MODES=[['udp','순수 UDP','다 던지고 끝'],['rudp','신뢰성 UDP','이벤트만 ACK·재전송'],['tcp','TCP처럼','전부 신뢰성 + 순서']];
+  var METRICS=[
+    ['evRate','이벤트 도착률','"사망" 같은 중요 패킷','%',true,function(v){return v.toFixed(0)+'%';}],
+    ['posRate','위치 패킷 수신률','유실은 다음 패킷이 메움','%',true,function(v){return v.toFixed(0)+'%';}],
+    ['posDelay','위치 평균 지연','낮을수록 최신','틱',false,function(v){return v.toFixed(1)+'틱';}],
+    ['stall','화면 최장 정지','위치 갱신이 끊긴 최대 틱','틱',false,function(v){return v.toFixed(1)+'틱';}],
+    ['evDelay','이벤트 평균 지연','도착까지 걸린 틱','틱',false,function(v){return v.toFixed(1)+'틱';}],
+    ['traffic','총 전송 패킷 수','데이터+ACK, 재전송 포함','개',false,function(v){return Math.round(v)+'개';}]
+  ];
+  var tbl=document.getElementById('cmp'),msgEl=document.getElementById('simMsg');
+  function calc(){
+    var acc={};MODES.forEach(function(m){acc[m[0]]={};METRICS.forEach(function(x){acc[m[0]][x[0]]=0;});});
+    for(var r=0;r<RUNS;r++)MODES.forEach(function(m){seed=base*1000+r*7+1;var v=run(m[0]);METRICS.forEach(function(x){acc[m[0]][x[0]]+=v[x[0]]/RUNS;});});
+    return acc;
+  }
+  function draw(){
+    var acc=calc(),h='<tr><th></th>'+MODES.map(function(m){return '<th>'+m[1]+'<small>'+m[2]+'</small></th>';}).join('')+'</tr>';
+    METRICS.forEach(function(x){
+      var vals=MODES.map(function(m){return acc[m[0]][x[0]];}),mx=Math.max.apply(null,vals),mn=Math.min.apply(null,vals);
+      h+='<tr><td class="lab">'+x[1]+'<small>'+x[2]+'</small></td>'+MODES.map(function(m,i){
+        var v=vals[i],cls='c';
+        if(mx-mn>0.05){
+          var isBest=x[4]?(v===mx):(v===mn),isWorst=x[4]?(v===mn):(v===mx);
+          if(isBest)cls+=' best';else if(isWorst)cls+=' worst';
+        }
+        var w=x[3]==='%'?v:(mx?v/mx*100:0);
+        return '<td class="'+cls+'"><div class="val">'+x[5](v)+'</div><div class="bar"><i style="width:'+Math.max(2,w)+'%"></i></div></td>';
+      }).join('')+'</tr>';
+    });
+    tbl.innerHTML=h;
+    var u=acc.udp,ru=acc.rudp,tc=acc.tcp,m='';
+    if(p===0){m='유실이 없으면 세 전략이 거의 같다 — 신뢰성의 대가는 유실이 생겨야 드러난다.';msgEl.className='simmsg';}
+    else{m='유실 '+Math.round(p*100)+'%: 이벤트 도착률 UDP '+u.evRate.toFixed(0)+'% → 신뢰성 UDP '+ru.evRate.toFixed(0)+'%. 화면 최장 정지는 UDP '+u.stall.toFixed(1)+'틱 vs TCP처럼 '+tc.stall.toFixed(1)+'틱. 트래픽은 '+Math.round(ru.traffic)+'개 vs '+Math.round(tc.traffic)+'개.';msgEl.className='simmsg good';}
+    msgEl.textContent=m;
+  }
+  document.getElementById('pSl').addEventListener('input',function(){p=this.value/100;document.getElementById('pV').textContent=this.value+'%';draw();});
+  document.getElementById('bRe').addEventListener('click',function(){base++;draw();});
+  draw();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

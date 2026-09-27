@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>7강 · 흐름 제어·혼잡 제어와 Nagle — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#6366f1;--acc2:#818cf8;--accrgb:99,102,241;--acc3:#22d3ee}
+/* 킬러: Nagle 타임라인 비교 */
+.tl2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-top:18px}
+.tlp{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.tlp h4{font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.tlp h4 small{font-weight:500;color:var(--faint);font-size:11.5px}
+.tlp.nagle h4{color:var(--amber)}.tlp.nod h4{color:var(--grn)}
+.lane{position:relative;height:34px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;margin-top:6px}
+.lane .lb{position:absolute;left:6px;top:-9px;font-size:10.5px;color:var(--faint);background:var(--card2);padding:0 4px}
+.lane .k{position:absolute;top:50%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:var(--cyan)}
+.lane .p{position:absolute;top:4px;bottom:4px;min-width:24px;margin-left:-2px;border-radius:6px;background:rgba(251,191,36,.18);border:1px solid var(--amber);color:var(--amber);font-family:ui-monospace,monospace;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.tlp.nod .lane .p{background:rgba(52,211,153,.16);border-color:var(--grn);color:var(--grn)}
+.bars{display:flex;gap:4px;align-items:flex-end;height:62px;margin-top:14px;border-bottom:1px solid var(--line)}
+.bars .b{flex:1;background:var(--acc);border-radius:4px 4px 0 0;position:relative;min-height:2px}
+.bars .b span{position:absolute;top:-15px;left:0;right:0;text-align:center;font-size:10px;color:var(--dim);font-family:ui-monospace,monospace}
+.tlp.nagle .bars .b{background:var(--amber)}.tlp.nod .bars .b{background:var(--grn)}
+.barcap{font-size:10.5px;color:var(--faint);text-align:center;margin-top:4px}
+.tst{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;font-size:12px;color:var(--dim)}
+.tst b{color:var(--txt);font-family:ui-monospace,monospace}
+.selrow select{font-family:inherit;font-size:13px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+/* 혼잡 윈도우 */
+.cw svg{width:100%;height:auto;display:block;background:var(--bg2);border:1px solid var(--line);border-radius:12px;margin-top:12px}
+.cw .lg{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;font-size:11.5px;color:var(--faint);margin-top:8px}
+.cw .lg i{display:inline-block;width:12px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>7강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#flow">흐름 제어</a>
+    <a class="chip" href="#cong">혼잡 제어</a>
+    <a class="chip" href="#nagle">Nagle</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 전송 계층 · TCP의 배려</span>
+  <h1>흐름 제어·혼잡 제어와 <span class="g">Nagle</span></h1>
+  <p class="sub">TCP는 "혼자 빨리 가는" 프로토콜이 아니라 상대와 네트워크를 배려하는 프로토콜이다. 그 배려가 게임에선 왜 독이 되는지, 키 입력이 뭉쳐 늦게 도착하는 현장을 타임라인으로 직접 본다.</p>
+  <div class="meta">
+    <div class="m">🍚 상대 그릇, 그리고 도로 사정</div>
+    <div class="m">🧩 선수지식 <b>4강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>"분명 즉시 보냈는데 왜 늦게, 뭉쳐서 도착하지?"</h2>
+  <p class="lead">TCP로 키 입력을 1바이트씩 서버에 보내는 게임을 만들었다. 테스트해보니 입력이 <b>뭉쳐서 늦게</b> 처리된다.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">// 키 누를 때마다 작은 패킷 전송</span>
+TcpSocket-&gt;Send((uint8*)&amp;KeyCode, <span class="hl">1</span>, BytesSent);   <span class="cm">// 1바이트</span></pre>
+    <p class="hint">내 코드는 분명 즉시 보냈는데 서버는 한참 뒤에 여러 개를 한꺼번에 받는다. 버그일까? <b>TCP가 일부러 모아서 보내고 있다.</b> 범인은 <b>Nagle 알고리즘</b>. 이걸 이해하려면 TCP가 상대와 네트워크를 <b>배려</b>한다는 걸 알아야 한다 — 흐름 제어, 혼잡 제어, 그리고 Nagle.</p>
+  </div>
+</div></section>
+
+<section id="flow"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 흐름 제어</div>
+  <h2 class="sec"><span class="n">2</span>받는 쪽이 감당 못 하면 천천히</h2>
+  <p class="lead">빠른 서버가 느린 클라이언트한테 데이터를 쏟아부으면 수신 버퍼가 넘쳐 데이터가 버려진다. <b>흐름 제어(Flow Control)</b>는 받는 쪽이 "나 이만큼 받을 수 있어"라고 <b>수신 윈도우(남은 버퍼)</b>를 알려주고, 보내는 쪽이 그만큼만 보내게 한다.</p>
+  <div class="card">
+    <pre class="code">받는 쪽:   "내 버퍼 8KB 남았어" (Window = 8KB)
+보내는 쪽: 8KB까지만 보내고 ACK 기다림
+받는 쪽:   처리해서 비움. "이제 16KB 남았어"
+보내는 쪽: 더 보냄</pre>
+    <div class="two">
+      <div class="box bad"><h4>한 개 보내고 ACK 기다리기</h4><p>왕복(RTT)마다 딱 한 개. 100ms 핑이면 초당 10개 — 너무 느리다.</p></div>
+      <div class="box good"><h4>슬라이딩 윈도우</h4><p>ACK 없이도 <b>윈도우만큼 미리 여러 개</b> 보낸다. ACK가 오는 만큼 윈도우가 앞으로 미끄러진다.</p></div>
+    </div>
+    <p class="hint"><b>비유:</b> 흐름 제어는 <b>상대 그릇 크기에 맞춰 음식 덜어주기</b>. 그릇이 작으면 조금씩, 크면 많이. 상대가 감당할 만큼만 준다.</p>
+  </div>
+</div></section>
+
+<section id="cong"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 혼잡 제어 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>네트워크가 막히면 양보 — 혼잡 윈도우 톱니</h2>
+  <p class="lead">흐름 제어가 <b>받는 쪽</b>을 배려한다면 혼잡 제어는 <b>네트워크 전체</b>를 배려한다. TCP는 <b>패킷 유실을 "길 막힘 신호"로 해석</b>하고 스스로 속도(혼잡 윈도우 cwnd)를 줄인다. RTT를 한 바퀴씩 진행하며 cwnd가 어떻게 움직이는지 보자.</p>
+  <div class="card cw">
+    <div class="stats" id="cwStats"></div>
+    <svg id="cwSvg" viewBox="0 0 640 220" preserveAspectRatio="none"></svg>
+    <div class="lg"><span><i style="background:var(--acc)"></i>cwnd (혼잡 윈도우)</span><span><i style="background:var(--grn)"></i>실제 전송량 = min(cwnd, rwnd)</span><span><i style="background:var(--faint)"></i>rwnd 상한(흐름 제어)</span><span><i style="background:var(--red)"></i>● 3 dup ACK 유실</span><span><i style="background:var(--orange)"></i>● 타임아웃 유실</span></div>
+    <div class="slrow">수신 윈도우 rwnd <input type="range" id="rw" min="8" max="64" step="4" value="64"><b id="rwV" style="color:var(--txt);font-family:ui-monospace,monospace">64</b> 세그먼트</div>
+    <div class="btnrow"><button class="btn" id="cStep">▶ 1 RTT</button><button class="btn" id="cRun">⏩ 10 RTT</button><button class="btn ghost" id="cLoss3">💥 유실(3 dup ACK)</button><button class="btn ghost" id="cLossT">⏱ 유실(타임아웃)</button><button class="btn ghost" id="cReset">↺ 초기화</button></div>
+    <div class="simmsg" id="cwMsg">▶ 를 눌러 cwnd가 1, 2, 4, 8… 늘어나는 걸 보자.</div>
+    <p class="hint">① 처음엔 1, 2, 4, 8… <b>Slow Start</b>(이름과 달리 지수 증가)로 치솟다가 ssthresh에 닿으면 +1씩 <b>혼잡 회피</b>로 조심스럽게 늘어난다. ② <b>3 dup ACK</b> 유실은 cwnd를 절반으로만 줄인다. ③ <b>타임아웃</b> 유실은 cwnd를 1로 떨어뜨려 처음부터 다시 — 훨씬 큰 타격. ④ rwnd를 낮추면 cwnd가 아무리 커도 <b>전송량은 rwnd에서 잘린다</b>(흐름 제어). 실제 TCP는 CUBIC 등으로 더 복잡하지만 뼈대는 같다.</p>
+    <p class="hint" style="margin-top:8px">⚠️ 무선 환경에선 신호 간섭으로 유실이 나도 TCP는 "길이 막혔다"고 오해하고 속도를 줄인다. 와이파이에서 TCP 성능이 들쭉날쭉한 이유 중 하나다.</p>
+  </div>
+</div></section>
+
+<section id="nagle"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · Nagle</div>
+  <h2 class="sec"><span class="n">4</span>Nagle 알고리즘 — 게임이 끄는 이유를 눈으로</h2>
+  <p class="lead">1바이트를 보내려고 TCP/IP 헤더 40바이트를 붙이면 <b>내용보다 포장이 더 크다</b>. Nagle의 해법: <b>"아직 ACK 안 받은 데이터가 있으면, 작은 데이터는 모았다가 ACK가 오면 한 번에 보내자."</b> 대역폭은 아끼지만 입력이 그만큼 늦는다. 같은 키 입력 8번을 두 설정으로 보내 비교해보자.</p>
+  <div class="card">
+    <div class="slrow">RTT <input type="range" id="nRtt" min="20" max="300" step="10" value="100"><b id="nRttV" style="color:var(--txt);font-family:ui-monospace,monospace">100ms</b>
+      &nbsp;&nbsp;키 입력 간격 <input type="range" id="nGap" min="10" max="100" step="10" value="30"><b id="nGapV" style="color:var(--txt);font-family:ui-monospace,monospace">30ms</b></div>
+    <div class="slrow selrow">수신 측 Delayed ACK
+      <select id="nDack"><option value="0">끔 (즉시 ACK)</option><option value="40">40ms 모았다 ACK</option><option value="200">200ms 모았다 ACK</option></select></div>
+    <div class="tl2">
+      <div class="tlp nagle" id="pNagle"></div>
+      <div class="tlp nod" id="pNod"></div>
+    </div>
+    <div class="simmsg" id="nMsg"></div>
+    <p class="hint">● 청록 점 = 키 입력 시각, 사각형 = 실제로 전송된 패킷(안의 숫자 = 그 패킷에 실린 키 입력 수). 아래 막대 = 각 키 입력이 서버에 도착하기까지 걸린 시간. ① 기본값에서 Nagle은 <b>패킷 수는 줄지만 입력마다 지연이 들쭉날쭉</b>이다. ② <b>Delayed ACK를 200ms로</b> 올려보자 — ACK가 늦게 오니 Nagle이 그만큼 더 오래 모으고 지연이 폭발한다. <b>Nagle + Delayed ACK = 최악의 궁합</b>이다. ③ <code>TCP_NODELAY</code>는 RTT/2 그대로 — 대신 패킷이 8개.</p>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="cm">// 언리얼 소켓에서 Nagle 끄기 = 작은 패킷 즉시 전송</span>
+TcpSocket-&gt;<span class="fn">SetNoDelay</span>(<span class="kw">true</span>);
+<span class="cm">//        ↑ TCP_NODELAY 옵션. "모으지 말고 바로 보내"</span></pre>
+    <p class="hint"><b>면접 포인트:</b> "게임은 반응성이 중요해서 <code>TCP_NODELAY</code>로 Nagle을 끈다. 대역폭 효율을 약간 포기하는 대신 지연을 없앤다." — 이렇게 말하면 실무를 아는 답이다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 코드</div>
+  <h2 class="sec"><span class="n">5</span>게임 클라이언트 소켓 설정의 전형</h2>
+  <div class="card">
+    <pre class="code">FSocket* TcpSocket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)
+    -&gt;CreateSocket(NAME_Stream, TEXT(<span class="str">"GameTcp"</span>), <span class="kw">false</span>);
+
+TcpSocket-&gt;Connect(*ServerAddr);
+
+<span class="cm">// (1) Nagle 끄기 — 작은 입력 패킷을 즉시 보낸다</span>
+TcpSocket-&gt;SetNoDelay(<span class="kw">true</span>);
+
+<span class="cm">// (2) 송수신 버퍼 크기 조절 — 흐름 제어 윈도우에 영향</span>
+int32 NewSize = 0;
+TcpSocket-&gt;SetSendBufferSize(64 * 1024, NewSize);
+TcpSocket-&gt;SetReceiveBufferSize(64 * 1024, NewSize);
+
+<span class="cm">// 이제 작은 패킷을 보내면 모으지 않고 바로 나간다</span>
+TcpSocket-&gt;Send((uint8*)&amp;KeyCode, 1, BytesSent);   <span class="cm">// 즉시 전송됨</span></pre>
+    <p class="hint"><code>SetNoDelay(true)</code> 한 줄이 도입의 "입력이 뭉쳐서 늦게 오던" 문제를 해결한다. 게임 네트워크 코드에 관용구처럼 들어간다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 이제 소켓을 직접 만들어서 통신한다면 어떤 함수들이 필요한가요?"</i> → 8강(소켓 프로그래밍 기초)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="06강_TCP_vs_UDP_게임은_뭘쓰나.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 6강 — TCP vs UDP</div></div></a>
+  <a class="nx" href="08강_소켓_프로그래밍_기초.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">8강 — 소켓 프로그래밍 기초 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 7강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"흐름 제어랑 혼잡 제어는 같은 거다"','다르다. <span class="truth">흐름 제어는 받는 쪽(상대)을 배려</span>하는 거고, <span class="truth">혼잡 제어는 네트워크 전체를 배려</span>하는 거다. 흐름 제어는 상대 버퍼가 넘치지 않게, 혼잡 제어는 길이 막히지 않게. 면접에서 자주 구분을 물어본다.'],
+ ['"Nagle 알고리즘은 버그라서 꺼야 한다"','Nagle은 버그가 아니라 <span class="truth">대역폭을 아끼는 정상 최적화</span>다. 파일 전송 같은 큰 데이터엔 도움이 된다. 다만 작은 패킷을 빠르게 보내야 하는 게임엔 안 맞아서 끄는 것뿐이다. 용도에 따른 선택이다.'],
+ ['"TCP_NODELAY를 켜면 무조건 빨라진다"','지연은 줄지만 작은 패킷이 많아져 <span class="truth">대역폭 효율과 패킷 수는 나빠진다.</span> 대량 전송에선 오히려 손해다. "반응성을 위해 효율을 약간 포기하는 트레이드오프"지 공짜 가속이 아니다. (참고: 이름이 헷갈리는데 TCP_NODELAY를 "켠다" = Nagle을 "끈다".)'],
+ ['"UDP도 혼잡 제어를 한다"','UDP는 혼잡 제어가 <span class="truth">없다.</span> 네트워크가 막혀도 보내던 속도로 계속 던진다. 그래서 UDP를 막 쓰면 네트워크를 망가뜨릴 수 있어서, 게임은 신뢰성 UDP 위에 직접 전송량을 조절하는 로직을 넣기도 한다.']
+];
+var QA=[
+ ['흐름 제어가 뭔가요?','받는 쪽이 처리할 수 있는 양에 맞춰 <b>보내는 속도를 조절</b>하는 기법입니다. 수신 측이 남은 버퍼 크기를 수신 윈도우로 알려주고 송신 측은 그만큼만 보냅니다. 슬라이딩 윈도우로 구현해서, ACK를 받기 전에도 윈도우 크기만큼 미리 보내 효율을 높입니다.'],
+ ['혼잡 제어가 뭔가요?','<b>네트워크 전체가 막히지 않도록</b> 전송량을 조절하는 기법입니다. TCP는 패킷 유실을 혼잡 신호로 해석해서, 처음엔 천천히 보내다 점점 늘리고, 유실이 감지되면 전송 속도를 확 줄입니다. 흐름 제어가 상대를 배려하는 거라면 혼잡 제어는 네트워크 전체를 배려하는 겁니다.'],
+ ['흐름 제어와 혼잡 제어의 차이는?','둘 다 전송 속도를 조절하지만 대상이 다릅니다. 흐름 제어는 <b>수신자의 버퍼</b>가 넘치지 않게 상대를 배려하는 거고, 혼잡 제어는 <b>중간 네트워크</b>가 마비되지 않게 전체를 배려하는 겁니다.'],
+ ['Nagle 알고리즘이 뭔가요? 게임에서 왜 끄나요?','작은 패킷을 <b>모아서 한 번에 보내</b> 대역폭을 아끼는 TCP 최적화입니다. ACK를 못 받았으면 작은 데이터를 버퍼에 모았다가 묶어 보냅니다. 그런데 게임은 키 입력·스킬 같은 작은 패킷을 즉시 보내야 반응성이 좋아서 <b>TCP_NODELAY</b>로 끕니다. 대역폭 효율을 약간 포기하고 지연을 없애는 선택입니다.'],
+ ['슬라이딩 윈도우가 뭔가요?','ACK를 받기 전에도 <b>미리 보낼 수 있는 데이터의 양</b>을 윈도우로 정해두고, ACK가 오는 만큼 윈도우를 앞으로 이동시키는 방식입니다. 한 개 보내고 ACK를 기다리는 대신 윈도우 크기만큼 연속으로 보낼 수 있어 처리량이 크게 올라갑니다.']
+];
+var CK=['흐름 제어와 혼잡 제어의 차이(상대 배려 vs 네트워크 배려)를 말할 수 있다','슬라이딩 윈도우가 왜 효율적인지 설명할 수 있다','TCP가 패킷 유실을 혼잡 신호로 해석한다는 걸 안다','Nagle 알고리즘이 뭐고, 게임이 왜 TCP_NODELAY로 끄는지 설명할 수 있다','UDP엔 혼잡 제어가 없다는 걸 안다'];
+var KEY='net07-check';
+
+/* 혼잡 윈도우 톱니 */
+(function(){
+  var SS0=32,st,pts,msg=document.getElementById('cwMsg');
+  function reset(){st={c:1,ss:SS0,cum:0};pts=[{c:1,ev:''}];msg.textContent='▶ 를 눌러 cwnd가 1, 2, 4, 8… 늘어나는 걸 보자.';msg.className='simmsg';draw();}
+  function rw(){return +document.getElementById('rw').value;}
+  function step(){
+    if(st.c<st.ss)st.c=Math.min(st.c*2,st.ss);else st.c+=1;
+    st.cum+=Math.min(st.c,rw());
+    pts.push({c:st.c,ev:''});
+  }
+  function loss(kind){
+    st.ss=Math.max(2,Math.floor(st.c/2));
+    if(kind==='3')st.c=st.ss;else st.c=1;
+    pts.push({c:st.c,ev:kind});
+    if(kind==='3'){msg.textContent='💥 3 dup ACK → ssthresh='+st.ss+', cwnd='+st.c+'로 절반만 감소. 거기서부터 +1씩 선형 증가(빠른 회복).';msg.className='simmsg bad';}
+    else{msg.textContent='⏱ 타임아웃 → ssthresh='+st.ss+', cwnd=1로 추락. 슬로 스타트부터 다시 — 훨씬 큰 타격이다.';msg.className='simmsg bad';}
+    draw();
+  }
+  function draw(){
+    var R=rw(),VIS=48,W=640,H=220,L=34,B=20,T=10,Rt=8,YM=70;
+    var vis=pts.slice(-VIS),off=pts.length-vis.length;
+    var xs=(W-L-Rt)/(VIS-1);
+    function X(i){return L+i*xs;}
+    function Y(v){return H-B-(v/YM)*(H-B-T);}
+    var s='';
+    [0,16,32,48,64].forEach(function(g){s+='<line x1="'+L+'" x2="'+(W-Rt)+'" y1="'+Y(g)+'" y2="'+Y(g)+'" stroke="#2a3157" stroke-width="1" vector-effect="non-scaling-stroke"/><text x="4" y="'+(Y(g)+4)+'" fill="#6b73a0" font-size="10">'+g+'</text>';});
+    s+='<line x1="'+L+'" x2="'+(W-Rt)+'" y1="'+Y(R)+'" y2="'+Y(R)+'" stroke="#6b73a0" stroke-dasharray="5 4" stroke-width="1.5" vector-effect="non-scaling-stroke"/>';
+    var pc=vis.map(function(p,i){return X(i)+','+Y(p.c);}).join(' ');
+    var pe=vis.map(function(p,i){return X(i)+','+Y(Math.min(p.c,R));}).join(' ');
+    s+='<polyline points="'+pc+'" fill="none" stroke="#6366f1" stroke-width="2.5" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>';
+    s+='<polyline points="'+pe+'" fill="none" stroke="#34d399" stroke-width="2" stroke-dasharray="2 3" vector-effect="non-scaling-stroke"/>';
+    vis.forEach(function(p,i){if(p.ev){s+='<circle cx="'+X(i)+'" cy="'+Y(p.c)+'" r="5" fill="'+(p.ev==='3'?'#f87171':'#fb923c')+'"/>';}});
+    s+='<text x="'+(W-Rt-2)+'" y="'+(H-5)+'" fill="#6b73a0" font-size="10" text-anchor="end">RTT 라운드 →</text>';
+    document.getElementById('cwSvg').innerHTML=s;
+    var eff=Math.min(st.c,R);
+    document.getElementById('cwStats').innerHTML=
+      '<div class="s"><div class="v">'+st.c+'</div><div class="l">cwnd</div></div>'+
+      '<div class="s"><div class="v">'+st.ss+'</div><div class="l">ssthresh</div></div>'+
+      '<div class="s"><div class="v" style="font-size:15px;line-height:33px">'+(st.c<st.ss?'슬로 스타트':'혼잡 회피')+'</div><div class="l">현재 단계</div></div>'+
+      '<div class="s"><div class="v'+(eff<st.c?' warn':'')+'">'+eff+'</div><div class="l">실제 전송량/RTT'+(eff<st.c?' (rwnd에 잘림)':'')+'</div></div>'+
+      '<div class="s"><div class="v">'+st.cum+'</div><div class="l">누적 전송 세그먼트</div></div>';
+  }
+  document.getElementById('cStep').addEventListener('click',function(){step();msg.className='simmsg';msg.textContent='RTT '+(pts.length-1)+'라운드 — '+(st.c<st.ss?'Slow Start: 매 RTT마다 cwnd가 2배.':'혼잡 회피: 매 RTT마다 cwnd가 +1.');draw();});
+  document.getElementById('cRun').addEventListener('click',function(){for(var i=0;i<10;i++)step();msg.className='simmsg';msg.textContent='RTT '+(pts.length-1)+'라운드까지 진행 — ssthresh('+st.ss+') 이후엔 완만한 선형 증가.';draw();});
+  document.getElementById('cLoss3').addEventListener('click',function(){loss('3');});
+  document.getElementById('cLossT').addEventListener('click',function(){loss('T');});
+  document.getElementById('cReset').addEventListener('click',reset);
+  document.getElementById('rw').addEventListener('input',function(){document.getElementById('rwV').textContent=this.value;draw();});
+  reset();
+})();
+
+/* 킬러: Nagle 타임라인 비교 */
+(function(){
+  var N=8,HDR=40;
+  function sim(nagle,rtt,gap,dack){
+    var half=rtt/2,ackDelay=rtt+dack,keys=[],packets=[],buf=[],inflight=false,ackAt=0,i;
+    for(i=0;i<N;i++)keys.push(i*gap);
+    function flush(limit){
+      while(inflight&&ackAt<=limit){
+        inflight=false;
+        if(buf.length){packets.push({t:ackAt,idx:buf.slice()});buf=[];inflight=true;ackAt=ackAt+ackDelay;}
+      }
+    }
+    for(i=0;i<N;i++){
+      var t=keys[i];
+      if(!nagle){packets.push({t:t,idx:[i]});continue;}
+      flush(t);
+      if(!inflight){packets.push({t:t,idx:[i]});inflight=true;ackAt=t+ackDelay;}
+      else buf.push(i);
+    }
+    if(nagle)flush(Infinity);
+    var lat=[];
+    packets.forEach(function(p){p.idx.forEach(function(k){lat[k]=p.t+half-keys[k];});});
+    var sum=0,mx=0;lat.forEach(function(v){sum+=v;if(v>mx)mx=v;});
+    return {keys:keys,packets:packets,lat:lat,avg:sum/N,max:mx,half:half};
+  }
+  function panel(el,title,sub,r,maxT,maxLat){
+    var h='<h4>'+title+'<small>'+sub+'</small></h4>';
+    h+='<div class="lane"><span class="lb">키 입력</span>'+r.keys.map(function(t){return '<i class="k" style="left:'+(t/maxT*100)+'%"></i>';}).join('')+'</div>';
+    h+='<div class="lane"><span class="lb">전송된 패킷</span>'+r.packets.map(function(p){return '<span class="p" style="left:'+(p.t/maxT*100)+'%">'+p.idx.length+'</span>';}).join('')+'</div>';
+    h+='<div class="bars">'+r.lat.map(function(v){return '<div class="b" style="height:'+Math.max(2,v/maxLat*100)+'%"><span>'+Math.round(v)+'</span></div>';}).join('')+'</div>';
+    h+='<div class="barcap">키 입력별 서버 도착까지 지연(ms)</div>';
+    var pk=r.packets.length,ov=Math.round(pk*HDR/(pk*HDR+N)*100);
+    h+='<div class="tst"><span>패킷 수 <b>'+pk+'</b>개</span><span>헤더 오버헤드 <b>'+ov+'%</b></span><span>평균 지연 <b>'+Math.round(r.avg)+'ms</b></span><span>최대 지연 <b>'+Math.round(r.max)+'ms</b></span></div>';
+    el.innerHTML=h;
+  }
+  function run(){
+    var rtt=+document.getElementById('nRtt').value,gap=+document.getElementById('nGap').value,dack=+document.getElementById('nDack').value;
+    document.getElementById('nRttV').textContent=rtt+'ms';document.getElementById('nGapV').textContent=gap+'ms';
+    var a=sim(true,rtt,gap,dack),b=sim(false,rtt,gap,dack);
+    var maxT=Math.max(a.packets[a.packets.length-1].t,b.packets[b.packets.length-1].t,(N-1)*gap)*1.06+1;
+    var maxLat=Math.max(a.max,b.max);
+    panel(document.getElementById('pNagle'),'Nagle 켜짐 (기본)','작은 데이터는 모았다가',a,maxT,maxLat);
+    panel(document.getElementById('pNod'),'TCP_NODELAY (Nagle 끔)','모으지 않고 즉시',b,maxT,maxLat);
+    var m=document.getElementById('nMsg');
+    m.className='simmsg '+(a.max>b.max*1.5?'bad':'');
+    m.textContent='Nagle: 패킷 '+a.packets.length+'개, 평균 '+Math.round(a.avg)+'ms · 최대 '+Math.round(a.max)+'ms   vs   NODELAY: 패킷 '+b.packets.length+'개, 전부 '+Math.round(b.max)+'ms(=RTT/2)';
+  }
+  ['nRtt','nGap'].forEach(function(id){document.getElementById(id).addEventListener('input',run);});
+  document.getElementById('nDack').addEventListener('change',run);
+  run();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

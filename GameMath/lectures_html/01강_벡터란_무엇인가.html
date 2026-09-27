@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1강 · 벡터란 무엇인가 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#818cf8;--acc2:#a5b4fc;--accrgb:129,140,248;--acc3:#22d3ee}
+/* 킬러: 위치·변위·방향 벡터 놀이터 */
+svg.pg{width:100%;height:auto;background:#0a0d18;border:1px solid var(--line);border-radius:12px;touch-action:none;display:block;margin-top:6px}
+svg.pg text{font-family:ui-monospace,monospace;font-size:11px;fill:var(--dim);pointer-events:none}
+svg.pg .dr{cursor:grab}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 18px;margin-top:14px}
+.sliders label{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim)}
+.sliders label b{font-family:ui-monospace,monospace;color:var(--txt);min-width:34px;text-align:right}
+.sliders input{flex:1;accent-color:var(--acc)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:14px}
+.readout .r{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px}
+.readout .r span{display:block;font-size:11px;color:var(--faint)}
+.readout .r code{font-family:ui-monospace,monospace;font-size:13.5px;color:var(--txt);background:none;padding:0}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>1강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#sv">스칼라 vs 벡터</a>
+    <a class="chip" href="#faces">세 가지 얼굴</a>
+    <a class="chip" href="#sim">벡터 놀이터</a>
+    <a class="chip" href="#ops">기본 연산</a>
+    <a class="chip" href="#types">벡터 타입</a>
+    <a class="chip" href="#coord">좌표계</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · 벡터 기초 · 게임 수학의 언어</span>
+  <h1>벡터란 <span class="g">무엇인가</span></h1>
+  <p class="sub">캐릭터가 목표와 상관없이 항상 X축으로만 걸어간다. "크기 + 방향"이라는 벡터의 정체와, 같은 FVector가 위치·방향·변위로 어떻게 달라지는지 직접 움직여본다.</p>
+  <div class="meta">
+    <div class="m">➡️ 크기 + 방향</div>
+    <div class="m">🧩 선수지식 <b>없음</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>캐릭터가 이상한 방향으로 걸어간다</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> AMyCharacter::MoveTowardTarget(<span class="kw">float</span> Speed)
+{
+    AddMovementInput(<span class="bad">FVector(Speed, 0.0f, 0.0f)</span>, 1.0f);   <span class="cm">// ???  Speed는 그냥 숫자 — "얼마나"만 있고 "어느 쪽"이 없다</span>
+}
+
+<span class="cm">// 올바른 버전</span>
+FVector ToTarget  = TargetLocation - GetActorLocation();   <span class="cm">// 방향 + 거리를 담은 벡터</span>
+FVector Direction = ToTarget.GetSafeNormal();              <span class="cm">// 방향만 뽑아냄</span>
+AddMovementInput(Direction, 1.0f);</pre>
+    <p class="hint">위 코드는 목표가 어디 있든 캐릭터를 항상 월드 X축으로만 민다. 원하는 건 "<b>어느 방향으로 얼마나</b>" — 숫자 하나로는 안 되고 두 정보가 함께 필요하다. 이게 벡터다.</p>
+  </div>
+</div></section>
+
+<section id="sv"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 개념</div>
+  <h2 class="sec"><span class="n">2</span>스칼라 vs 벡터, 그리고 FVector의 정체</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>스칼라 (Scalar)</h4><p>크기만 있는 값. HP(100), 데미지(30), 시간(0.5초), 질량(80kg). <code>float Speed = 500.0f;</code></p></div>
+      <div class="box good"><h4>벡터 (Vector)</h4><p>크기 <b>+ 방향</b>이 있는 값. 이동 속도, 힘, 위치, 변위. <code>FVector Velocity = FVector(500, 0, 0);</code></p></div>
+    </div>
+    <p class="hint">언리얼 캐릭터 무브먼트의 <code>MaxWalkSpeed</code>는 <b>스칼라(속력)</b>, 실제 이동에 쓰이는 <code>Velocity</code>는 <b>벡터(속도)</b>다. 역할이 다르다.</p>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="kw">struct</span> FVector { <span class="kw">float</span> X, Y, Z; };   <span class="cm">// 그냥 실수 3개를 묶은 구조체 — 의미는 문맥이 정한다</span></pre>
+    <table class="tbl">
+      <tr><th>문맥</th><th>의미</th></tr>
+      <tr><td><code>GetActorLocation()</code> 반환값</td><td>월드 원점에서 이 액터까지의 <b>위치</b></td></tr>
+      <tr><td><code>GetActorForwardVector()</code> 반환값</td><td>액터가 바라보는 <b>방향</b> (크기는 항상 1)</td></tr>
+      <tr><td><code>Velocity</code></td><td>이동 <b>속도</b>: 방향 + 초당 이동 거리</td></tr>
+      <tr><td><code>TargetLocation - MyLocation</code></td><td>두 지점 사이의 <b>변위(Displacement)</b></td></tr>
+      <tr><td><code>AddForce</code> 인자</td><td>가해지는 <b>힘</b>: 방향 + 세기</td></tr>
+    </table>
+    <p class="hint"><code>FVector</code>는 그릇일 뿐이라 "이 값이 지금 뭘 의미하는가"를 파악하는 게 중요하다 — 변수명을 <code>Direction</code>, <code>Location</code>, <code>Velocity</code>처럼 의미가 드러나게 짓는 이유다.</p>
+  </div>
+</div></section>
+
+<section id="faces"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 세 가지 얼굴</div>
+  <h2 class="sec"><span class="n">3</span>위치 · 방향 · 변위</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>위치 벡터</h4><p>원점(0,0,0)에서 어떤 점까지. <code>GetActorLocation()</code></p></div>
+      <div class="box"><h4>방향 벡터</h4><p>크기가 1로 정규화된, "어느 쪽"만 의미 있는 벡터. <code>GetActorForwardVector()</code></p></div>
+      <div class="box"><h4>변위 벡터</h4><p>두 위치의 차. <code>B - A</code>는 "A에서 B로 가는 벡터". 시작점과 무관하게 방향·거리만 의미.</p></div>
+    </div>
+    <pre class="code">FVector PlayerPos = FVector(100, 0, 0);     <span class="cm">// 위치</span>
+FVector EnemyPos  = FVector(400, 300, 0);   <span class="cm">// 위치</span>
+
+FVector ToEnemy       = EnemyPos - PlayerPos;   <span class="cm">// 변위: 플레이어에서 적까지</span>
+<span class="kw">float</span>   DistanceToEnemy = ToEnemy.Size();          <span class="cm">// 변위의 크기 = 거리</span>
+FVector DirToEnemy    = ToEnemy.GetSafeNormal(); <span class="cm">// 변위의 방향만 = 방향 벡터</span></pre>
+    <p class="hint"><b>변위 벡터는 위치가 아니다.</b> <code>ToEnemy</code>를 그대로 <code>SetActorLocation()</code>에 넣으면 안 된다. 원점 기준 좌표가 아니라 "얼마나 이동해야 하는가"라는 상대 정보이기 때문이다 — 아래 놀이터에서 직접 터뜨려보자.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>벡터 놀이터 — 같은 FVector, 다른 의미</h2>
+  <p class="lead">플레이어(파랑)와 적(빨강)을 <b>드래그하거나 슬라이더로</b> 움직여보자. 회색은 위치 벡터, 노랑은 변위 벡터 <code>ToEnemy</code>, 초록은 정규화한 방향이다.</p>
+  <div class="card">
+    <svg class="pg" id="pg" viewBox="0 0 600 400"></svg>
+    <div class="sliders">
+      <label>Player X <input type="range" id="sPx" min="-280" max="280" value="-150"><b id="vPx"></b></label>
+      <label>Player Y <input type="range" id="sPy" min="-180" max="180" value="-60"><b id="vPy"></b></label>
+      <label>Enemy X <input type="range" id="sEx" min="-280" max="280" value="120"><b id="vEx"></b></label>
+      <label>Enemy Y <input type="range" id="sEy" min="-180" max="180" value="90"><b id="vEy"></b></label>
+      <label>AttackRange <input type="range" id="sRg" min="50" max="400" value="200"><b id="vRg"></b></label>
+    </div>
+    <div class="readout">
+      <div class="r"><span>PlayerPos (위치)</span><code id="rP"></code></div>
+      <div class="r"><span>EnemyPos (위치)</span><code id="rE"></code></div>
+      <div class="r"><span>ToEnemy = EnemyPos − PlayerPos (변위)</span><code id="rT"></code></div>
+      <div class="r"><span>ToEnemy.Size() (거리, 스칼라)</span><code id="rS"></code></div>
+      <div class="r"><span>ToEnemy.GetSafeNormal() (방향)</span><code id="rD"></code></div>
+      <div class="r"><span>사거리 판정 (SizeSquared 비교)</span><code id="rR"></code></div>
+    </div>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow">
+      <button class="btn" id="bStep">🧭 한 걸음 (Old + Dir × Speed × dt)</button>
+      <button class="btn ghost" id="bBug">⚠ SetActorLocation(ToEnemy)</button>
+      <button class="btn ghost" id="bReset">↺ 초기화</button>
+    </div>
+    <p class="hint">① <b>🧭 한 걸음</b>을 반복하면 플레이어가 적에게 다가간다 — <code>NewLocation = OldLocation + Velocity * DeltaTime</code>. ② <b>⚠ 버튼</b>은 변위를 위치처럼 넣는 버그: 플레이어가 적과 무관한 엉뚱한 좌표로 순간이동한다. ③ 사거리 판정은 제곱끼리 비교해서 <code>sqrt</code>를 아낀다(2강).</p>
+  </div>
+</div></section>
+
+<section id="ops"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 연산</div>
+  <h2 class="sec"><span class="n">5</span>벡터 기본 연산이 게임에서 의미하는 것</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>연산</th><th>수식</th><th>게임에서의 의미</th></tr>
+      <tr><td>덧셈</td><td><code>A + B</code></td><td>이동을 순서대로 두 번 적용한 결과 (합성 이동)</td></tr>
+      <tr><td>뺄셈</td><td><code>B - A</code></td><td>A에서 B로 가는 방향+거리 (변위)</td></tr>
+      <tr><td>스칼라 곱</td><td><code>V * t</code></td><td>속도 벡터 × 시간 = 이동 거리 (등속 운동)</td></tr>
+      <tr><td>음수 스칼라 곱</td><td><code>V * -1</code></td><td>정반대 방향</td></tr>
+    </table>
+    <pre class="code"><span class="cm">// 등속 이동: 위치 = 이전 위치 + 속도 * 시간 — 캐릭터/투사체 이동의 뼈대 (Tick에서 매 프레임)</span>
+FVector NewLocation = OldLocation + Velocity * DeltaTime;
+
+<span class="cm">// 넉백: 맞은 방향의 반대쪽으로</span>
+FVector KnockbackForce = (-HitDirection) * KnockbackPower;</pre>
+  </div>
+</div></section>
+
+<section id="types"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 타입</div>
+  <h2 class="sec"><span class="n">6</span>FVector2D, FVector, FVector4 — 언제 뭘 쓰나</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>타입</th><th>성분</th><th>대표 용도</th></tr>
+      <tr><td><code>FVector2D</code></td><td>X, Y</td><td>UI/화면 좌표, 높이를 무시한 평면 계산(8강 점-다각형)</td></tr>
+      <tr><td><code>FVector</code></td><td>X, Y, Z</td><td>월드 공간의 위치·방향·속도 (이 시리즈의 기본형)</td></tr>
+      <tr><td><code>FVector4</code></td><td>X, Y, Z, W</td><td>동차좌표 — 렌더링 파이프라인 내부에서 위치와 방향을 구분</td></tr>
+    </table>
+    <p class="hint">감만 잡자: <b>W=1이면 위치, W=0이면 방향</b>. 위치는 이동(Translation)의 영향을 받아야 하지만 방향은 받으면 안 되는데, 행렬 변환에서 둘을 구분하려고 4번째 성분을 쓴다. 게임플레이 코드에서 <code>FVector4</code>를 직접 다룰 일은 드물다.</p>
+  </div>
+</div></section>
+
+<section id="coord"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 좌표계 · 실전</div>
+  <h2 class="sec"><span class="n">7</span>언리얼 좌표계와 근접 공격 범위 판정</h2>
+  <div class="card">
+    <pre class="code">        Z (Up)
+        │      ● EnemyPos (400, 300, 0)
+        │     ╱  ← ToEnemy = EnemyPos - PlayerPos
+        │    ╱
+        │   ● PlayerPos (100, 0, 0)
+        │╱________________ Y
+       ╱
+      X</pre>
+    <p class="hint">언리얼은 <b>왼손 좌표계 + Z-up</b>이다(수학 교과서·유니티의 Y-up 오른손과 다르다). 단위는 <b>cm</b> — <code>FVector(100, 0, 0)</code>은 X축으로 1m.</p>
+    <pre class="code"><span class="kw">bool</span> AMyCharacter::IsTargetInAttackRange(AActor* Target, <span class="kw">float</span> AttackRange) <span class="kw">const</span>
+{
+    <span class="kw">if</span> (!Target) { <span class="kw">return</span> <span class="kw">false</span>; }
+    FVector ToTarget = Target-&gt;GetActorLocation() - GetActorLocation();   <span class="cm">// 변위 벡터</span>
+    <span class="kw">return</span> ToTarget.Size() &lt;= AttackRange;                                 <span class="cm">// 변위의 크기(스칼라) = 거리</span>
+}</pre>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">8</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 면접 대비</div>
+  <h2 class="sec"><span class="n">9</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 방향만 필요할 땐 어떻게 처리하나요?"</i> → 정규화(Normalize)로 이어진다. (2강)</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 마무리</div>
+  <h2 class="sec"><span class="n">10</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="02강_벡터의_크기와_정규화.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">2강 — 벡터의 크기와 정규화 →</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 1강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"벡터는 화살표 그림일 뿐이다"','화살표는 눈에 보이게 그린 것일 뿐, 본질은 <span class="truth">숫자의 순서쌍</span>이다. <code>FVector(3, 4, 0)</code>은 어디서 시작하든 "X로 3, Y로 4만큼"이라는 같은 의미다. 시작점은 벡터 자체의 정보가 아니다.'],
+ ['"FVector 세 개짜리 값은 다 위치다"','방향, 속도, 힘, 변위 전부 <code>FVector</code>로 표현된다. 코드에서 <code>FVector</code>를 보면 <span class="truth">위치인지 방향인지 속도인지 변수명과 문맥으로 먼저 파악</span>해야 한다.'],
+ ['"벡터끼리는 그냥 곱하면 된다"','<code>FVector</code>의 <code>*</code>는 <span class="truth">컴포넌트별 곱셈</span>이지 수학적으로 의미 있는 "벡터의 곱"이 아니다. 의미 있는 곱은 내적과 외적 두 가지뿐이다(3강, 4강).'],
+ ['"정규화 안 해도 방향은 방향이다"','<code>Target - My</code>를 그대로 쓰면 크기는 "둘 사이의 거리"가 된다. 방향<b>만</b> 필요한 계산에 크기가 제각각인 벡터를 넣으면 <span class="truth">결과가 왜곡</span>된다. 해결은 정규화(2강).']
+];
+var QA=[
+ ['벡터와 스칼라의 차이가 뭔가요?','스칼라는 <b>크기만</b> 있는 값, 벡터는 <b>크기와 방향</b>을 같이 갖는 값입니다. 데미지 30은 스칼라고 이동 속도는 "초당 500cm, 정면 방향으로"처럼 방향이 있으니 벡터입니다.'],
+ ['언리얼에서 FVector는 어떻게 구성되나요?','X, Y, Z 세 개의 float으로 이루어진 구조체입니다. 다만 세 값이 항상 위치를 뜻하진 않고 <b>문맥에 따라</b> 위치·방향·속도·힘을 전부 표현할 수 있습니다.'],
+ ['두 위치 벡터를 빼면 뭐가 나오나요?','<b>변위 벡터</b>입니다. A에서 B로 가는 방향과 거리를 담고 있어 두 오브젝트 사이 거리나 상대 방향을 구할 때 씁니다.'],
+ ['방향 벡터와 위치 벡터를 같은 방식으로 다뤄도 되나요?','안 됩니다. 위치 벡터는 원점 기준 절대 좌표, 방향 벡터는 크기 1로 정규화된 방향만 의미 있는 벡터입니다. <b>변위 벡터를 그대로 위치에 대입</b>하면 엉뚱한 좌표가 나옵니다.'],
+ ['언리얼 좌표계는 일반적인 수학 좌표계와 뭐가 다른가요?','언리얼은 <b>왼손 좌표계에 Z-up</b>입니다. 수학이나 유니티의 오른손 좌표계·Y-up과 달라서 툴 연동 시 주의해야 합니다.'],
+ ['캐릭터가 목표 지점으로 이동하는 로직을 벡터로 어떻게 짜겠어요?','목표 위치에서 현재 위치를 빼서 <b>변위 벡터</b>를 구하고, 정규화해서 방향만 뽑아 <code>AddMovementInput</code>에 넘깁니다. 거리가 필요하면 정규화 전 변위의 크기를 따로 씁니다.'],
+ ['속도(Velocity)와 속력(Speed)을 구분해 설명해보세요.','속력은 <b>스칼라</b>로 얼마나 빠른가만, 속도는 <b>벡터</b>로 속력과 방향을 같이 갖습니다. 언리얼의 <code>MaxWalkSpeed</code>는 스칼라, 실제 이동에 쓰는 <code>Velocity</code>는 벡터입니다.']
+];
+var CK=['스칼라와 벡터의 차이를 예시와 함께 설명할 수 있다','FVector 하나가 위치·방향·속도·힘 등 여러 의미로 쓰일 수 있다는 걸 안다','두 위치의 차(B − A)가 변위 벡터이고 그 크기가 거리라는 걸 계산할 수 있다','언리얼 좌표계가 왼손 좌표계이고 Z-up이라는 걸 안다','방향 벡터와 위치 벡터를 혼동하면 안 되는 이유를 설명할 수 있다'];
+var KEY='gm01-check';
+
+/* 킬러: 벡터 놀이터 */
+(function(){
+  var st={px:-150,py:-60,ex:120,ey:90,rg:200};
+  var svg=document.getElementById('pg'),msg=document.getElementById('simMsg');
+  var ids={px:'sPx',py:'sPy',ex:'sEx',ey:'sEy',rg:'sRg'},vals={px:'vPx',py:'vPy',ex:'vEx',ey:'vEy',rg:'vRg'};
+  function X(x){return 300+x;} function Y(y){return 200-y;}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function arrow(x1,y1,x2,y2,cls,w,dash){
+    return '<line x1="'+X(x1)+'" y1="'+Y(y1)+'" x2="'+X(x2)+'" y2="'+Y(y2)+'" stroke="'+cls+'" stroke-width="'+w+'"'+(dash?' stroke-dasharray="5 4"':'')+' marker-end="url(#m'+cls.replace('#','')+')"/>';
+  }
+  function draw(){
+    var dx=st.ex-st.px,dy=st.ey-st.py,len=Math.sqrt(dx*dx+dy*dy),ux=len>1e-6?dx/len:0,uy=len>1e-6?dy/len:0;
+    var inR=(dx*dx+dy*dy)<=st.rg*st.rg;
+    var h='<defs>'+['9aa3c7','fbbf24','34d399'].map(function(c){return '<marker id="m'+c+'" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#'+c+'"/></marker>';}).join('')+'</defs>';
+    for(var gx=-300;gx<=300;gx+=100)h+='<line x1="'+X(gx)+'" y1="0" x2="'+X(gx)+'" y2="400" stroke="#1c2243" stroke-width="1"/>';
+    for(var gy=-200;gy<=200;gy+=100)h+='<line x1="0" y1="'+Y(gy)+'" x2="600" y2="'+Y(gy)+'" stroke="#1c2243" stroke-width="1"/>';
+    h+='<line x1="0" y1="200" x2="600" y2="200" stroke="#2a3157" stroke-width="1.5"/><line x1="300" y1="0" x2="300" y2="400" stroke="#2a3157" stroke-width="1.5"/>';
+    h+='<text x="574" y="194">X</text><text x="306" y="12">Y</text><text x="306" y="214">O (0,0)</text>';
+    h+='<circle cx="'+X(st.px)+'" cy="'+Y(st.py)+'" r="'+st.rg+'" fill="'+(inR?'rgba(52,211,153,.08)':'rgba(248,113,113,.05)')+'" stroke="'+(inR?'#34d399':'#6b73a0')+'" stroke-dasharray="4 4"/>';
+    h+=arrow(0,0,st.px,st.py,'#9aa3c7',1.5,true)+arrow(0,0,st.ex,st.ey,'#9aa3c7',1.5,true);
+    h+=arrow(st.px,st.py,st.ex,st.ey,'#fbbf24',3,false);
+    if(len>1e-6)h+=arrow(st.px,st.py,st.px+ux*70,st.py+uy*70,'#34d399',3,false);
+    h+='<text x="'+(X((st.px+st.ex)/2)+6)+'" y="'+(Y((st.py+st.ey)/2)-6)+'" style="fill:#fbbf24">ToEnemy</text>';
+    h+='<circle class="dr" data-k="p" cx="'+X(st.px)+'" cy="'+Y(st.py)+'" r="11" fill="#38bdf8" stroke="#fff" stroke-width="2"/><text x="'+(X(st.px)+14)+'" y="'+(Y(st.py)+4)+'" style="fill:#7dd3fc">Player</text>';
+    h+='<circle class="dr" data-k="e" cx="'+X(st.ex)+'" cy="'+Y(st.ey)+'" r="11" fill="#f87171" stroke="#fff" stroke-width="2"/><text x="'+(X(st.ex)+14)+'" y="'+(Y(st.ey)+4)+'" style="fill:#fca5a5">Enemy</text>';
+    svg.innerHTML=h;
+    ['px','py','ex','ey','rg'].forEach(function(k){document.getElementById(ids[k]).value=st[k];document.getElementById(vals[k]).textContent=Math.round(st[k]);});
+    function f(v){return (Math.round(v*10)/10).toFixed(1);}
+    document.getElementById('rP').textContent='('+f(st.px)+', '+f(st.py)+', 0)';
+    document.getElementById('rE').textContent='('+f(st.ex)+', '+f(st.ey)+', 0)';
+    document.getElementById('rT').textContent='('+f(dx)+', '+f(dy)+', 0)';
+    document.getElementById('rS').textContent=f(len)+' cm';
+    document.getElementById('rD').textContent='('+ux.toFixed(2)+', '+uy.toFixed(2)+', 0)';
+    document.getElementById('rR').textContent=Math.round(dx*dx+dy*dy)+' '+(inR?'≤':'>')+' '+(st.rg*st.rg)+(inR?'  ✔ 사거리 안':'  ✘ 밖');
+  }
+  function setMsg(t,c){msg.textContent=t;msg.className='simmsg'+(c?' '+c:'');}
+  ['px','py','ex','ey','rg'].forEach(function(k){
+    document.getElementById(ids[k]).addEventListener('input',function(){st[k]=+this.value;draw();});
+  });
+  var drag=null;
+  svg.addEventListener('pointerdown',function(e){var k=e.target.getAttribute&&e.target.getAttribute('data-k');if(!k)return;drag=k;try{svg.setPointerCapture(e.pointerId);}catch(x){}e.preventDefault();});
+  svg.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    var r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*600-300,sy=200-(e.clientY-r.top)/r.height*400;
+    sx=clamp(sx,-280,280);sy=clamp(sy,-180,180);
+    if(drag==='p'){st.px=sx;st.py=sy;}else{st.ex=sx;st.ey=sy;}
+    draw();
+  });
+  function up(){drag=null;}
+  svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
+  document.getElementById('bStep').addEventListener('click',function(){
+    var dx=st.ex-st.px,dy=st.ey-st.py,len=Math.sqrt(dx*dx+dy*dy);
+    if(len<1){setMsg('이미 적 위치에 도착했다.');return;}
+    var step=Math.min(35,len);st.px+=dx/len*step;st.py+=dy/len*step;
+    setMsg('Player = Old + Dir × Speed × dt  →  방향(정규화)에 이동량(스칼라)을 곱해 한 걸음 이동했다.','good');draw();
+  });
+  document.getElementById('bBug').addEventListener('click',function(){
+    var dx=st.ex-st.px,dy=st.ey-st.py;
+    st.px=clamp(dx,-280,280);st.py=clamp(dy,-180,180);
+    setMsg('💥 변위 벡터를 위치로 대입했다! Player가 (ToEnemy.X, ToEnemy.Y) 좌표로 순간이동 — 적과는 아무 관계없는 곳이다.','bad');draw();
+  });
+  document.getElementById('bReset').addEventListener('click',function(){st={px:-150,py:-60,ex:120,ey:90,rg:200};setMsg('');draw();});
+  draw();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

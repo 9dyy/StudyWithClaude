@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5강 · 좌표계와 변환 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#22d3ee;--acc2:#67e8f9;--accrgb:34,211,238;--acc3:#818cf8}
+/* 킬러: 트랜스폼 놀이터 */
+svg.pg{width:100%;height:auto;background:#0a0d18;border:1px solid var(--line);border-radius:12px;display:block;margin-top:8px;cursor:crosshair}
+svg.pg text{font-family:ui-monospace,monospace;font-size:11px;fill:var(--dim);pointer-events:none}
+.tgrow{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:center;margin-bottom:6px}
+.tg{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+.tg .lb{font-size:12px;color:var(--faint)}
+.tg button{font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.tg button.on{background:var(--acc);color:#04222a;border-color:var(--acc)}
+.tg button.warn.on{background:var(--red);color:#fff;border-color:var(--red)}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px 18px;margin-top:12px}
+.sliders label{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim)}
+.sliders label b{font-family:ui-monospace,monospace;color:var(--txt);min-width:40px;text-align:right}
+.sliders input{flex:1;accent-color:var(--acc)}
+.ckl{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--dim);cursor:pointer;background:var(--card2);border:1px solid var(--line);border-radius:20px;padding:6px 14px}
+.ckl input{accent-color:var(--acc)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:12px}
+.readout .r{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px}
+.readout .r span{display:block;font-size:11px;color:var(--faint)}
+.readout .r code{font-family:ui-monospace,monospace;font-size:13px;color:var(--txt);background:none;padding:0}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>5강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#sim">트랜스폼 놀이터</a>
+    <a class="chip" href="#wl">월드 vs 로컬</a>
+    <a class="chip" href="#ft">FTransform</a>
+    <a class="chip" href="#tree">계층 구조</a>
+    <a class="chip" href="#inv">역변환</a>
+    <a class="chip" href="#quat">쿼터니언</a>
+    <a class="chip" href="#code">실전</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 좌표계와 회전</span>
+  <h1>좌표계와 <span class="g">변환</span></h1>
+  <p class="sub">캐릭터가 걸어가는데 무기는 제자리에 남는다. 월드 좌표와 로컬 좌표를 왜 나누는지, FTransform이 뭘 하는지 캐릭터를 직접 돌리고 움직이며 확인한다.</p>
+  <div class="meta">
+    <div class="m">🌐 월드 ↔ 로컬</div>
+    <div class="m">🧩 선수지식 <b>1~4강</b></div>
+    <div class="m">⏱️ 약 25분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>캐릭터 손에 든 무기가 자꾸 이상한 위치에 붙는다</h2>
+  <div class="card">
+    <pre class="code">Weapon-&gt;AttachToComponent(Mesh, FAttachmentTransformRules::<span class="hl">KeepRelativeTransform</span>, TEXT(<span class="str">"hand_r_socket"</span>));</pre>
+    <p style="margin-top:14px">여기서 <b>"Relative"</b>가 왜 필요할까? 무기 위치를 <b>월드 좌표</b>로 고정해 손에 붙이면 캐릭터가 걸어가는 순간 무기는 원래 자리에 남고 손만 무기 없이 움직인다. 무기가 손을 <b>따라다니게</b> 하려면 위치를 월드 원점이 아니라 <b>손(소켓) 기준</b>으로 표현해야 한다 — 이게 <b style="color:var(--acc)">로컬 좌표</b>다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">2</span>트랜스폼 놀이터 — 캐릭터를 움직이고 돌려보자</h2>
+  <p class="lead">캐릭터(파란 상자)를 움직이고 돌리면 <b>월드 좌표만 바뀌고 무기의 로컬 좌표는 그대로</b>다. 토글로 "월드 고정 부착"과 "잘못된 변환 순서"를 켜서 버그를 재현하고, 빈 곳을 <b>클릭</b>해 폭발을 놓으면 캐릭터 기준 앞/뒤를 로컬 좌표로 판정한다.</p>
+  <div class="card">
+    <div class="tgrow">
+      <div class="tg"><span class="lb">무기 부착</span><button data-t="att" data-v="rel" class="on">KeepRelative (손 기준)</button><button data-t="att" data-v="world" class="warn">월드 좌표로 고정</button></div>
+      <div class="tg"><span class="lb">변환 순서</span><button data-t="ord" data-v="srt" class="on">스케일→회전→이동 (정상)</button><button data-t="ord" data-v="rst" class="warn">회전→스케일→이동 (버그)</button></div>
+      <label class="ckl"><input type="checkbox" id="ckNs" checked> 비균등 스케일 (1.8 × 0.7)</label>
+    </div>
+    <svg class="pg" id="pg" viewBox="0 0 600 360"></svg>
+    <div class="sliders">
+      <label>캐릭터 X <input type="range" id="sCx" min="-250" max="250" value="-100"><b id="vCx"></b></label>
+      <label>캐릭터 Y <input type="range" id="sCy" min="-140" max="140" value="-30"><b id="vCy"></b></label>
+      <label>Yaw(회전) <input type="range" id="sYw" min="-180" max="180" value="30"><b id="vYw"></b></label>
+    </div>
+    <div class="readout">
+      <div class="r"><span>Weapon 로컬 좌표 (GetRelativeLocation)</span><code id="rL"></code></div>
+      <div class="r"><span>Weapon 월드 좌표 (GetComponentLocation)</span><code id="rW"></code></div>
+      <div class="r"><span>폭발 월드 좌표</span><code id="rEw"></code></div>
+      <div class="r"><span>폭발 로컬 좌표 (InverseTransformPosition)</span><code id="rEl"></code></div>
+    </div>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow"><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <p class="hint">① 슬라이더로 캐릭터를 움직여도 <b>Weapon 로컬 좌표는 (10, 24)로 불변</b>, 월드 좌표만 재계산된다. ② "월드 좌표로 고정"으로 바꾼 뒤 움직이면 무기가 제자리에 남는다. ③ 비균등 스케일을 켠 채 "회전→스케일→이동"을 고르면 상자가 회전을 무시하고 월드 축으로 찌그러지고 무기가 몸에서 떨어진다. ④ 클릭한 폭발 지점의 <b>로컬 X 부호</b>가 앞/뒤다.</p>
+  </div>
+</div></section>
+
+<section id="wl"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 개념</div>
+  <h2 class="sec"><span class="n">3</span>월드 좌표 vs 로컬 좌표</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>월드 좌표 (World Space)</h4><p>레벨 전체의 원점(0,0,0) 기준 <b>절대 위치</b>. <code>GetActorLocation()</code></p></div>
+      <div class="box good"><h4>로컬 좌표 (Relative Space)</h4><p>부모(액터, 컴포넌트, 소켓) 기준 <b>상대 위치</b>. <code>GetRelativeLocation()</code></p></div>
+    </div>
+    <pre class="code">FVector WeaponWorldLocation = Weapon-&gt;GetComponentLocation();   <span class="cm">// 월드 기준 실제 위치</span>
+FVector WeaponLocalLocation = Weapon-&gt;GetRelativeLocation();    <span class="cm">// 소켓 기준 상대 위치 (10, 0, 5) — 불변</span></pre>
+    <p class="hint"><code>KeepRelativeTransform</code>으로 붙이면 무기의 <b>로컬 좌표는 고정</b>되고 부모가 움직이거나 회전할 때마다 <b>월드 좌표만 자동으로 재계산</b>된다. 이게 자식이 부모를 따라다니는 원리다.</p>
+  </div>
+</div></section>
+
+<section id="ft"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · FTransform</div>
+  <h2 class="sec"><span class="n">4</span>위치·회전·스케일을 하나로 — 그리고 변환 순서</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">struct</span> FTransform
+{
+    FQuat   Rotation;      <span class="cm">// 회전</span>
+    FVector Translation;   <span class="cm">// 위치(이동)</span>
+    FVector Scale3D;       <span class="cm">// 크기</span>
+};
+
+FTransform ActorTransform = GetActorTransform();
+FVector WorldPoint = ActorTransform.TransformPosition(FVector(1, 0, 0));   <span class="cm">// 로컬 → 월드</span></pre>
+    <p style="margin-top:14px">이 세 값이 <b>"한 좌표계를 다른 좌표계로 바꾸는 변환"</b> 하나를 표현한다. 로컬 → 월드 순서는:</p>
+    <pre class="code"><span class="hl">월드 좌표 = 이동( 회전( 스케일( 로컬 좌표 ) ) )</span></pre>
+    <p class="hint">스케일을 먼저 해야 "그 축 방향으로 늘어난 상태"에서 회전이 걸리고, 회전이 끝난 뒤에 최종 위치로 옮긴다. <b>순서를 바꾸면 결과가 완전히 달라진다</b> — 시뮬레이터의 "회전→스케일" 버그가 바로 그것이다. 비균등 스케일 오브젝트를 회전시켰더니 찌그러져 보이는 버그는 종종 이 순서 문제에서 나온다. <code>TransformPosition</code>/<code>InverseTransformPosition</code>이 이 계산을 알아서 처리해주니 직접 행렬 곱셈을 짤 필요는 없다.</p>
+  </div>
+</div></section>
+
+<section id="tree"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 계층 구조</div>
+  <h2 class="sec"><span class="n">5</span>부모-자식 변환 — 계층이 쌓일 때</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// 캐릭터 → 손 소켓 → 무기 메시 → 무기에 붙은 이펙트</span>
+<span class="hl">월드(이펙트) = 월드(캐릭터) × 로컬(손 소켓) × 로컬(무기) × 로컬(이펙트)</span>
+
+FTransform ChildWorldTransform = ChildComponent-&gt;GetComponentTransform();
+<span class="cm">// 내부적으로 부모의 월드 트랜스폼 + 자신의 RelativeTransform을 합성해 계산</span></pre>
+    <p class="hint">각 단계는 <b>바로 위 부모 기준 로컬 트랜스폼</b>만 알면 된다. 캐릭터 하나만 움직여도 무기·이펙트·파티클까지 자동으로 따라온다 — 월드 좌표를 매번 다시 넣어줄 필요가 없다.</p>
+  </div>
+</div></section>
+
+<section id="inv"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 역변환</div>
+  <h2 class="sec"><span class="n">6</span>월드 → 로컬 — "폭발이 캐릭터 앞인가 뒤인가"</h2>
+  <div class="card">
+    <pre class="code">FVector ExplosionWorldLocation = ...;
+FTransform CharTransform = GetActorTransform();
+FVector LocalExplosion = CharTransform.<span class="hl">InverseTransformPosition</span>(ExplosionWorldLocation);
+
+<span class="kw">bool</span> bInFront = LocalExplosion.X &gt; 0.0f;   <span class="cm">// 로컬 X가 양수면 앞, 음수면 뒤</span></pre>
+    <p class="hint">3·4강에서 내적/외적으로 앞/뒤, 좌/우를 판정한 것과 목적이 같다. 다만 로컬 변환은 앞/뒤뿐 아니라 <b>"로컬 좌표계에서 정확히 어디인지"</b>까지 한 번에 준다. 시뮬레이터에서 폭발을 여러 곳에 클릭해보자.</p>
+  </div>
+</div></section>
+
+<section id="quat"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 회전 합성</div>
+  <h2 class="sec"><span class="n">7</span>회전 합성에 오일러 각 대신 쿼터니언을 쓰는 이유</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box bad"><h4>짐벌락 (Gimbal Lock)</h4><p>Pitch ±90° 같은 각도에서 회전축 하나가 다른 축과 겹쳐 <b>자유도 하나를 잃는</b> 현상. 위/아래를 볼 때 카메라가 홱 돌아가는 버그.</p></div>
+      <div class="box bad"><h4>보간의 부자연스러움</h4><p>오일러 각을 축마다 선형 보간하면 최단 경로가 아니고 흔들린다.</p></div>
+      <div class="box good"><h4>FQuat</h4><p>합성은 <code>QuatA * QuatB</code>, 보간은 <code>FQuat::Slerp</code> — 항상 최단 경로.</p></div>
+    </div>
+    <p class="hint"><code>FTransform</code>은 회전을 <code>FQuat</code>으로 저장하고, <code>FRotator</code>는 사람이 읽고 입력하기 편한 겉모습일 뿐이다. 회전을 직접 합성할 땐 <code>FRotator</code>끼리 더하고 빼지 말고 <code>FQuat</code> 연산이 정석.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 실전</div>
+  <h2 class="sec"><span class="n">8</span>카메라 방향으로, 총구 위치에서 발사</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> AMyCharacter::FireWeapon()
+{
+    FVector MuzzleWorldLocation = WeaponMesh-&gt;GetSocketLocation(TEXT(<span class="str">"Muzzle"</span>));   <span class="cm">// 계층을 따라 자동 계산된 "월드" 위치</span>
+    FVector CameraForward       = CameraComponent-&gt;GetForwardVector();                 <span class="cm">// 카메라가 보는 "월드" 방향</span>
+
+    FActorSpawnParameters SpawnParams;
+    GetWorld()-&gt;SpawnActor&lt;AProjectile&gt;(ProjectileClass, MuzzleWorldLocation, CameraForward.Rotation(), SpawnParams);
+}</pre>
+    <p class="hint"><code>GetSocketLocation()</code>이 캐릭터 → 무기 메시 → 소켓의 로컬 트랜스폼들을 전부 곱해 월드 좌표 하나로 환산해준다. 이 계산을 직접 짤 필요가 없다는 게 FTransform/소켓 시스템의 실질적 이득이다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">9</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 면접 대비</div>
+  <h2 class="sec"><span class="n">10</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 11 · 마무리</div>
+  <h2 class="sec"><span class="n">11</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_외적_Cross_Product.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 4강 — 외적</div></div></a>
+  <a class="nx" href="06강_Look_At_회전값_구하기.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">6강 — Look At 회전값 →</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 5강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"GetActorLocation()과 GetRelativeLocation()은 같은 걸 반환한다"','<code>GetActorLocation()</code>은 <span class="truth">월드 좌표</span>, <code>GetRelativeLocation()</code>은 <span class="truth">부모 기준 로컬 좌표</span>다. 부모가 없는 최상위 액터라면 우연히 같을 수 있지만 부모-자식 관계의 컴포넌트에선 완전히 다른 값이다.'],
+ ['"스케일, 회전, 이동은 순서 상관없이 적용해도 결과가 같다"','행렬 곱셈(변환의 합성)은 <span class="truth">교환법칙이 성립하지 않는다.</span> 언리얼은 스케일 → 회전 → 이동으로 고정하고, 특히 비균등 스케일 오브젝트를 회전시키면 순서에 따라 결과가 눈에 띄게 달라진다(시뮬레이터의 버그 토글).'],
+ ['"자식을 부모에 붙이면(Attach) 자식의 월드 좌표도 그대로 유지된다"','<code>AttachmentTransformRules</code>에 따라 다르다. <span class="truth"><code>KeepWorldTransform</code></span>은 월드 좌표를 유지하도록 로컬을 역산하고, <span class="truth"><code>KeepRelativeTransform</code></span>(더 흔함)은 로컬을 유지하는 대신 월드 좌표가 부모를 따라 즉시 바뀐다.'],
+ ['"월드 좌표만 알면 로컬 좌표는 몰라도 된다"','두 캐릭터의 상대 관계(정면/후방, 좌/우)나 부모를 따라다니는 오브젝트는 <span class="truth">로컬 좌표 개념 없이는 설명이 안 된다.</span> 3·4강의 내적/외적 판정도 결국 "월드 좌표를 로컬 좌표계 관점으로 재해석"하는 것과 본질이 같다.']
+];
+var QA=[
+ ['월드 좌표와 로컬(상대) 좌표의 차이가 뭔가요?','월드 좌표는 레벨의 <b>원점 기준 절대 위치</b>, 로컬 좌표는 부모 오브젝트나 소켓 같은 <b>특정 기준점에 대한 상대 위치</b>입니다. 자식이 부모를 따라 움직이게 하려면 로컬 좌표를 고정하고 월드 좌표는 매번 자동으로 재계산합니다.'],
+ ['FTransform은 뭘 담고 있나요?','<b>위치(Translation), 회전(Rotation), 스케일(Scale)</b>을 하나로 묶은 구조체입니다. 세 정보를 합쳐 한 좌표계를 다른 좌표계로 바꾸는 변환을 표현합니다.'],
+ ['로컬 → 월드 변환에서 순서가 왜 중요한가요?','행렬 변환은 <b>교환법칙이 성립하지 않아서</b> 스케일-회전-이동 적용 순서에 따라 최종 위치가 달라집니다. 특히 비균등 스케일 오브젝트를 회전시키면 순서 차이가 눈에 보이는 왜곡으로 나타납니다.'],
+ ['캐릭터에 무기를 붙일 때 왜 상대 좌표(Relative)를 쓰나요?','무기 위치를 월드 좌표로 고정하면 캐릭터가 움직여도 무기는 그 자리에 남습니다. <b>손 소켓 기준 상대 좌표로 고정</b>해야 캐릭터가 이동·회전할 때 무기의 월드 좌표만 자동 재계산되며 손을 따라다닙니다.'],
+ ['부모-자식 계층이 여러 단계면 자식의 월드 좌표는 어떻게 구하나요?','루트부터 각 단계의 <b>로컬 트랜스폼을 순서대로 합성(곱)</b>해서 구합니다. 각 단계는 바로 위 부모 기준 로컬 트랜스폼만 알면 되고 최종 월드 트랜스폼은 계층을 따라 자동 계산됩니다.'],
+ ['어떤 지점이 캐릭터 앞/뒤인지 내적 대신 좌표 변환으로 판정한다면?','월드 좌표를 캐릭터의 <b>InverseTransformPosition</b>으로 로컬 좌표로 바꾸고 <b>로컬 X의 부호</b>를 봅니다. 내적과 결과는 같지만 앞/뒤뿐 아니라 정확한 상대 위치까지 한 번에 얻을 수 있습니다.'],
+ ['AttachToComponent에서 KeepRelativeTransform과 KeepWorldTransform 중 뭘 고르겠어요?','보통 <b>KeepRelativeTransform</b>입니다. 무기를 손에 붙이듯 자식이 부모를 따라다니길 원하면 로컬 좌표가 고정되는 게 자연스럽기 때문입니다. 월드 좌표를 그대로 유지하며 붙이고 싶을 때만 KeepWorldTransform을 씁니다.']
+];
+var CK=['월드 좌표와 로컬 좌표의 차이를 설명할 수 있다','FTransform이 위치·회전·스케일을 함께 담는다는 걸 안다','좌표 변환에서 스케일-회전-이동 순서가 중요한 이유를 설명할 수 있다','부모-자식 계층에서 자식의 월드 좌표가 어떻게 계산되는지 안다','KeepRelativeTransform과 KeepWorldTransform의 차이를 설명할 수 있다','월드 좌표를 로컬 좌표로 역변환하는 상황을 예로 들 수 있다'];
+var KEY='gm05-check';
+
+/* 킬러: 트랜스폼 놀이터 */
+(function(){
+  var D=Math.PI/180,LOCALW=[10,24];
+  var st,svg=document.getElementById('pg'),msg=document.getElementById('simMsg');
+  function init(){st={cx:-100,cy:-30,yaw:30,ns:true,ord:'srt',att:'rel',E:[180,60],fixedW:null};}
+  function S(){return st.ns?[1.8,0.7]:[1,1];}
+  function rot(p,a){var c=Math.cos(a),s=Math.sin(a);return [p[0]*c-p[1]*s,p[0]*s+p[1]*c];}
+  function toWorld(v){var s=S(),a=st.yaw*D,q;
+    if(st.ord==='srt')q=rot([v[0]*s[0],v[1]*s[1]],a);else{q=rot(v,a);q=[q[0]*s[0],q[1]*s[1]];}
+    return [q[0]+st.cx,q[1]+st.cy];}
+  function toLocal(w){var s=S(),a=st.yaw*D,d=[w[0]-st.cx,w[1]-st.cy],v;
+    if(st.ord==='srt'){v=rot(d,-a);v=[v[0]/s[0],v[1]/s[1]];}else{v=[d[0]/s[0],d[1]/s[1]];v=rot(v,-a);}
+    return v;}
+  function X(x){return 300+x;}function Y(y){return 180-y;}
+  function pts(a){return a.map(function(p){var w=toWorld(p);return X(w[0]).toFixed(1)+','+Y(w[1]).toFixed(1);}).join(' ');}
+  function f(v){return (Math.round(v*10)/10).toFixed(1);}
+  function weaponW(){return st.att==='rel'?toWorld(LOCALW):(st.fixedW||toWorld(LOCALW));}
+  function draw(){
+    var h='',gx,gy;
+    for(gx=-300;gx<=300;gx+=100)h+='<line x1="'+X(gx)+'" y1="0" x2="'+X(gx)+'" y2="360" stroke="#1c2243"/>';
+    for(gy=-180;gy<=180;gy+=100)h+='<line x1="0" y1="'+Y(gy)+'" x2="600" y2="'+Y(gy)+'" stroke="#1c2243"/>';
+    h+='<line x1="0" y1="180" x2="600" y2="180" stroke="#2a3157" stroke-width="1.5"/><line x1="300" y1="0" x2="300" y2="360" stroke="#2a3157" stroke-width="1.5"/><text x="8" y="16">월드 좌표계 (원점 O=중앙)</text>';
+    // 앞/뒤 경계 (로컬 Y축)
+    var b1=toWorld([0,-260]),b2=toWorld([0,260]);
+    h+='<line x1="'+X(b1[0])+'" y1="'+Y(b1[1])+'" x2="'+X(b2[0])+'" y2="'+Y(b2[1])+'" stroke="#22d3ee" stroke-width="1" stroke-dasharray="5 5" opacity=".7"/>';
+    // 로컬 X 축(앞)
+    var f1=toWorld([0,0]),f2=toWorld([110,0]);
+    h+='<line x1="'+X(f1[0])+'" y1="'+Y(f1[1])+'" x2="'+X(f2[0])+'" y2="'+Y(f2[1])+'" stroke="#34d399" stroke-width="2"/><text x="'+(X(f2[0])+6)+'" y="'+(Y(f2[1])-4)+'" style="fill:#34d399">로컬 +X (앞)</text>';
+    // 몸통
+    h+='<polygon points="'+pts([[-30,-18],[30,-18],[30,18],[-30,18]])+'" fill="rgba(56,189,248,.25)" stroke="#38bdf8" stroke-width="2"/>';
+    h+='<polygon points="'+pts([[30,-10],[46,0],[30,10]])+'" fill="#38bdf8"/>';
+    h+='<circle cx="'+X(st.cx)+'" cy="'+Y(st.cy)+'" r="3" fill="#fff"/>';
+    // 무기
+    var w=weaponW(),wl=toWorld(LOCALW);
+    if(st.att==='rel'){
+      h+='<line x1="'+X(st.cx)+'" y1="'+Y(st.cy)+'" x2="'+X(w[0])+'" y2="'+Y(w[1])+'" stroke="#fbbf24" stroke-width="1" stroke-dasharray="3 3"/>';
+      var a=st.yaw*D,q=[[-8,-8],[8,-8],[8,8],[-8,8]].map(function(p){var r=rot(p,a);return X(w[0]+r[0]).toFixed(1)+','+Y(w[1]+r[1]).toFixed(1);}).join(' ');
+      h+='<polygon points="'+q+'" fill="#fbbf24" stroke="#fff" stroke-width="1.5"/>';
+    }else{
+      h+='<rect x="'+(X(w[0])-8)+'" y="'+(Y(w[1])-8)+'" width="16" height="16" fill="#f87171" stroke="#fff" stroke-width="1.5"/>';
+      h+='<line x1="'+X(w[0])+'" y1="'+Y(w[1])+'" x2="'+X(wl[0])+'" y2="'+Y(wl[1])+'" stroke="#f87171" stroke-width="1" stroke-dasharray="3 3"/><text x="'+(X(w[0])+12)+'" y="'+(Y(w[1])+4)+'" style="fill:#f87171">제자리에 남은 무기</text>';
+    }
+    h+='<text x="'+(X(w[0])+12)+'" y="'+(Y(w[1])-10)+'" style="fill:#fbbf24">Weapon</text>';
+    // 폭발
+    var E=st.E,loc=toLocal(E),front=loc[0]>0;
+    h+='<line x1="'+X(st.cx)+'" y1="'+Y(st.cy)+'" x2="'+X(E[0])+'" y2="'+Y(E[1])+'" stroke="'+(front?'#34d399':'#f87171')+'" stroke-width="1" stroke-dasharray="4 4"/>';
+    h+='<text x="'+(X(E[0])+12)+'" y="'+(Y(E[1])+4)+'" style="fill:'+(front?'#34d399':'#f87171')+'">폭발 · '+(front?'앞':'뒤')+'</text><circle cx="'+X(E[0])+'" cy="'+Y(E[1])+'" r="8" fill="'+(front?'#34d399':'#f87171')+'" stroke="#fff" stroke-width="2"/>';
+    svg.innerHTML=h;
+    document.getElementById('sCx').value=st.cx;document.getElementById('sCy').value=st.cy;document.getElementById('sYw').value=st.yaw;
+    document.getElementById('vCx').textContent=Math.round(st.cx);document.getElementById('vCy').textContent=Math.round(st.cy);document.getElementById('vYw').textContent=Math.round(st.yaw)+'°';
+    document.getElementById('rL').textContent='('+LOCALW[0]+', '+LOCALW[1]+')  ← 불변';
+    document.getElementById('rW').textContent='('+f(w[0])+', '+f(w[1])+')';
+    document.getElementById('rEw').textContent='('+f(E[0])+', '+f(E[1])+')';
+    document.getElementById('rEl').textContent='('+f(loc[0])+', '+f(loc[1])+') → 로컬 X '+(front?'> 0 : 앞':'< 0 : 뒤');
+    document.querySelectorAll('.tg button').forEach(function(b){b.classList.toggle('on',st[b.dataset.t]===b.dataset.v);});
+    document.getElementById('ckNs').checked=st.ns;
+  }
+  function note(){
+    if(st.att==='world'){msg.textContent='무기가 월드 좌표로 고정돼 있어 캐릭터를 움직여도 제자리에 남는다 — 손을 따라다니지 않는다.';msg.className='simmsg bad';}
+    else if(st.ord==='rst'&&st.ns){msg.textContent='회전→스케일 순서: 스케일이 월드 축 기준으로 걸려 몸통이 Yaw를 무시하고 찌그러진다. 무기 위치도 어긋난다.';msg.className='simmsg bad';}
+    else if(st.ord==='rst'&&!st.ns){msg.textContent='균등 스케일(1,1)이면 순서를 바꿔도 결과가 같아 티가 안 난다. 비균등 스케일을 켜보자.';msg.className='simmsg';}
+    else{msg.textContent='정상: 로컬 좌표는 고정, 월드 좌표만 재계산된다. 캐릭터를 움직이고 돌려보자.';msg.className='simmsg good';}
+  }
+  function all(){draw();note();}
+  [['sCx','cx'],['sCy','cy'],['sYw','yaw']].forEach(function(p){document.getElementById(p[0]).addEventListener('input',function(){st[p[1]]=+this.value;all();});});
+  document.querySelectorAll('.tg button').forEach(function(b){b.addEventListener('click',function(){
+    if(b.dataset.t==='att'){if(b.dataset.v==='world'&&st.att!=='world')st.fixedW=toWorld(LOCALW);st.att=b.dataset.v;}
+    else st.ord=b.dataset.v;
+    all();});});
+  document.getElementById('ckNs').addEventListener('change',function(){st.ns=this.checked;all();});
+  svg.addEventListener('click',function(e){var r=svg.getBoundingClientRect();
+    st.E=[Math.max(-290,Math.min(290,(e.clientX-r.left)/r.width*600-300)),Math.max(-170,Math.min(170,180-(e.clientY-r.top)/r.height*360))];all();});
+  document.getElementById('bReset').addEventListener('click',function(){init();all();});
+  init();all();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9강 · 블로킹·논블로킹과 I/O 멀티플렉싱 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#fb923c;--acc2:#fdba74;--accrgb:251,146,60;--acc3:#fbbf24}
+/* 킬러: 소켓 감시 시뮬레이터 */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(14px,1fr));gap:3px;margin-top:10px}
+.sgrid .k{aspect-ratio:1;border-radius:3px;background:var(--bg2);border:1px solid var(--line);transition:background .15s}
+.sgrid .k.r{background:var(--cyan);border-color:var(--cyan)}
+.sgrid .k.t{box-shadow:0 0 0 2px rgba(251,191,36,.9) inset}
+.sgrid .k.x{background:var(--red);border-color:var(--red)}
+.sgrid .k.c{background:var(--pur);border-color:var(--pur)}
+.sgrid .k.p{background:rgba(248,113,113,.35);border-color:var(--red)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:11.5px;color:var(--faint)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:4px}
+.mt{width:100%;border-collapse:separate;border-spacing:0 6px;margin-top:14px;font-size:12.5px}
+.mt th{color:var(--dim);font-size:12px;padding:4px 6px;text-align:center;font-weight:700}
+.mt th small{display:block;color:var(--faint);font-weight:500;font-size:10.5px}
+.mt td{background:var(--card2);padding:8px 8px;text-align:center;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-family:ui-monospace,monospace;font-weight:800}
+.mt td.lab{text-align:left;font-family:inherit;font-weight:700;color:var(--dim);background:transparent;border:none;padding-left:0;width:22%}
+.mt td.lab small{display:block;font-weight:500;color:var(--faint);font-size:10.5px}
+.mt td.on{background:rgba(var(--accrgb),.13);border-color:rgba(var(--accrgb),.5)}
+.mt td.good{color:var(--grn)}.mt td.bad{color:var(--red)}
+.mt th.pick{cursor:pointer}
+.mt th.pick.on{color:var(--acc)}
+.mt th.pick:hover{color:var(--txt)}
+@media(max-width:640px){.mt{font-size:11px}.mt td.lab{width:auto}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>9강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#bnb">블로킹 vs 논블로킹</a>
+    <a class="chip" href="#mux">멀티플렉싱</a>
+    <a class="chip" href="#sim">감시 시뮬</a>
+    <a class="chip" href="#iocp">IOCP</a>
+    <a class="chip" href="#ue">언리얼</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 소켓 프로그래밍</span>
+  <h1>블로킹·논블로킹과 <span class="g">I/O 멀티플렉싱</span></h1>
+  <p class="sub">recv() 하나가 멈춰 있는 동안 다른 클라이언트는 접속도 못 한다. 한 스레드로 수천 연결을 받는 방법 — 소켓 수백 개를 직접 감시해보며 왜 멀티플렉싱인지 확인한다.</p>
+  <div class="meta">
+    <div class="m">👁️ 준비된 소켓만 골라준다</div>
+    <div class="m">🧩 선수지식 <b>8강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>8강 서버의 치명적 결함</h2>
+  <p class="lead">서버가 <code>recv()</code>로 한 클라의 데이터를 기다리는 동안 다른 클라는 접속도 못 한다.</p>
+  <div class="card">
+    <pre class="code">FSocket* ClientA = ListenSocket-&gt;Accept(...);
+ClientA-&gt;Recv(Buffer, size, Read);   <span class="bad">// ❌ A가 데이터 보낼 때까지 여기서 멈춤(블로킹)</span>
+                                     <span class="cm">//    그동안 B, C, D는 못 받음</span></pre>
+    <p class="hint"><code>recv()</code>는 데이터가 올 때까지 <b>함수가 리턴을 안 하고 멈춘다</b> — 이게 블로킹(blocking)이다. 이 상태론 동시 접속 2명도 못 받는다. 서버가 수천 명을 받으려면 이걸 깨야 한다.</p>
+  </div>
+</div></section>
+
+<section id="bnb"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 개념</div>
+  <h2 class="sec"><span class="n">2</span>블로킹 vs 논블로킹</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box bad"><h4>블로킹 — 문 앞에 서서 기다림</h4><p>데이터가 준비될 때까지 <b>함수가 멈춰서 기다린다.</b> 코드는 단순하지만 기다리는 동안 그 스레드는 아무것도 못 한다.</p></div>
+      <div class="box good"><h4>논블로킹 — 가끔 문을 확인함</h4><p>데이터가 없으면 <b>"지금 없음"을 즉시 리턴</b>하고 코드는 계속 진행한다. 안 묶인다.</p></div>
+    </div>
+    <pre class="code"><span class="cm">// 블로킹</span>
+Socket-&gt;Recv(Buffer, size, Read);   <span class="cm">// 데이터 올 때까지 여기 묶임</span>
+
+<span class="cm">// 논블로킹</span>
+Socket-&gt;SetNonBlocking(<span class="kw">true</span>);
+<span class="kw">if</span> (Socket-&gt;Recv(Buffer, size, Read)) { <span class="cm">/* 데이터 있으면 처리 */</span> }
+<span class="kw">else</span>                                   { <span class="cm">/* 없으면 넘어가서 다른 일 */</span> }</pre>
+    <p class="hint">논블로킹이면 한 스레드로 여러 소켓을 "돌아가며 확인"할 수 있다. 하지만 소켓이 수천 개면 매번 전부 확인(폴링)하는 게 낭비다. <b>"데이터 온 소켓만 골라서 알려주면 좋겠다"</b> → I/O 멀티플렉싱.</p>
+  </div>
+</div></section>
+
+<section id="mux"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · I/O 멀티플렉싱</div>
+  <h2 class="sec"><span class="n">3</span>여러 소켓을 한 번에 감시</h2>
+  <p class="lead">소켓 수천 개를 OS에 맡기고 <b>"이 중에 데이터 온 거 있으면 알려줘"</b> 하고 한 곳에서 기다린다. 스레드 하나로 수천 연결을 감시할 수 있다.</p>
+  <div class="card">
+    <pre class="code">        ┌──────────────────────────┐
+        │   감시 함수 (select 등)    │  "이 소켓들 중 준비된 거 알려줘"
+        └────────────┬─────────────┘
+          소켓1  소켓2  소켓3 ... 소켓5000
+                       │  소켓3, 소켓117에 데이터 도착!
+        "소켓3이랑 117 준비됨" ──→ <span class="hl">그 둘만 처리</span></pre>
+    <table class="tbl">
+      <tr><th>방식</th><th>특징</th><th>비고</th></tr>
+      <tr><td><code>select</code></td><td>가장 기본. 감시할 소켓을 <b>매번 등록</b>, 소켓 많으면 느림</td><td>이식성 좋음</td></tr>
+      <tr><td><code>poll</code></td><td>select 개선판. 개수 제한 완화</td><td>유닉스</td></tr>
+      <tr><td><code>epoll</code></td><td>리눅스 고성능. 수만 연결도 효율적</td><td>리눅스 서버</td></tr>
+      <tr><td><b>IOCP</b></td><td><b>윈도우 고성능 모델</b></td><td>윈도우 게임 서버</td></tr>
+    </table>
+    <p class="hint"><code>select</code>의 한계: 매번 전체 목록을 넘기고 OS가 전부 훑어야 한다. 연결이 수천이면 훑기 자체가 부담 → 대규모는 epoll/IOCP.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>소켓 감시 시뮬레이터 — 누가 얼마나 헛수고하나</h2>
+  <p class="lead">소켓 N개 중 매 라운드 일부에 데이터가 도착한다. 다섯 가지 서버 전략이 <b>같은 도착 패턴</b>을 처리하는 데 드는 작업량을 비교해보자. 헤더의 전략 이름을 누르면 그 전략이 소켓을 어떻게 만지는지 격자에 표시된다.</p>
+  <div class="card">
+    <div class="slrow">소켓 수 N <input type="range" id="nSl" min="20" max="400" step="20" value="100"><b id="nV" style="color:var(--txt);font-family:ui-monospace,monospace">100</b>
+      &nbsp;&nbsp;라운드당 도착 비율 <input type="range" id="aSl" min="1" max="20" step="1" value="3"><b id="aV" style="color:var(--txt);font-family:ui-monospace,monospace">3%</b></div>
+    <div class="sgrid" id="sgrid"></div>
+    <div class="legend"><span><i style="background:var(--cyan)"></i>데이터 도착(ready)</span><span><i style="background:transparent;box-shadow:0 0 0 2px #fbbf24 inset"></i>이번 라운드 서버가 들여다본 소켓</span><span><i style="background:var(--pur)"></i>블로킹 서버가 기다리는 소켓</span><span><i style="background:var(--red)"></i>도착했지만 못 받음(밀림)</span></div>
+    <table class="mt" id="mt"></table>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow"><button class="btn" id="bOne">▶ 1라운드</button><button class="btn" id="bHund">⏩ 100라운드</button><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <p class="hint">① <b>100라운드</b>를 돌려보자 — 폴링/select는 확인의 97%가 헛수고(도착 3%인데 N개를 매번 다 확인), epoll/IOCP는 헛수고가 0. ② 블로킹은 한 소켓만 기다리다가 <b>밀린 이벤트가 쌓인다.</b> ③ 연결당 스레드는 잘 처리하지만 <b>스레드 N개 = 스택 메모리 N MB</b> + 컨텍스트 스위칭 부담. ④ N을 400으로 올리면 폴링/select의 낭비가 커지고 스레드 모델도 부담이 된다.</p>
+  </div>
+</div></section>
+
+<section id="iocp"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · IOCP (개념만)</div>
+  <h2 class="sec"><span class="n">5</span>select는 "물어보기", IOCP는 "통보받기"</h2>
+  <p class="lead">윈도우 게임 서버는 거의 <b>IOCP(I/O Completion Port)</b>를 쓴다. 면접에서 "윈도우 고성능 서버"라고 하면 IOCP가 나온다.</p>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>select</h4><p>"준비됐는지 <b>내가 물어본다</b>" — 확인하러 간다.</p></div>
+      <div class="box good"><h4>IOCP</h4><p>"끝나면 <b>OS가 알려준다</b>" — 완료 통보를 받는다. 비동기 I/O.</p></div>
+    </div>
+    <pre class="code">요청: "소켓들에서 읽기 시작해" → OS에 맡기고 끝
+       ↓ (OS가 백그라운드에서 다 처리)
+완료 큐: [소켓3 읽기완료] [소켓117 읽기완료] ...
+       ↓
+<span class="hl">워커 스레드 몇 개</span>가 완료된 것만 꺼내 처리</pre>
+    <p class="hint">스레드 몇 개로 <b>수만 연결</b>을 감당한다. 연결마다 스레드를 주면 스레드가 수천 개라 컨텍스트 스위칭 비용으로 죽는다(OS 6강). <b>클라 개발자 기준:</b> IOCP를 직접 짤 일은 드물지만 "왜 IOCP를 쓰나 → 적은 스레드로 대량 연결을 비동기로 처리하려고"는 답할 수 있어야 한다.</p>
+  </div>
+</div></section>
+
+<section id="ue"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 언리얼</div>
+  <h2 class="sec"><span class="n">6</span>언리얼 클라에선 어떻게 하나</h2>
+  <p class="lead">멀티플레이는 Replication/RPC(14강)가 알아서 한다. 직접 소켓을 쓸 땐(커스텀 프로토콜, 외부 서버 연동) <b>논블로킹 + 별도 스레드</b> 패턴을 쓴다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FSocketReceiver : <span class="kw">public</span> FRunnable
+{
+    FSocket* Socket;
+    <span class="kw">virtual</span> uint32 Run() <span class="kw">override</span>
+    {
+        Socket-&gt;SetNonBlocking(<span class="kw">true</span>);
+        <span class="kw">while</span> (bRunning)
+        {
+            uint32 PendingSize = 0;
+            <span class="kw">if</span> (Socket-&gt;HasPendingData(PendingSize))   <span class="cm">// 온 게 있을 때만</span>
+            {
+                uint8 Buffer[2048]; int32 Read = 0;
+                Socket-&gt;Recv(Buffer, <span class="kw">sizeof</span>(Buffer), Read);
+                <span class="cm">// 받은 데이터를 게임 스레드로 안전하게 전달 (동기화 필요 — OS 7~8강)</span>
+            }
+            FPlatformProcess::Sleep(0.001f);   <span class="cm">// CPU 다 안 쓰게 살짝 양보</span>
+        }
+        <span class="kw">return</span> 0;
+    }
+};</pre>
+    <p class="hint">수신은 <b>별도 스레드</b>, 게임 스레드로 넘길 땐 <b>동기화(락)</b>가 필요하다. 네트워크와 멀티스레드가 만나는 지점이다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"받은 바이트를 어떻게 게임 패킷으로 해석하나요? TCP는 메시지 경계가 없다던데?"</i> → 10강(패킷 설계와 직렬화)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="08강_소켓_프로그래밍_기초.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 8강 — 소켓 프로그래밍 기초</div></div></a>
+  <a class="nx" href="10강_패킷_설계와_직렬화.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">10강 — 패킷 설계와 직렬화 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 9강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"논블로킹이면 무조건 빠르다"','논블로킹은 <span class="truth">"안 멈춘다"</span>는 거지 "더 빠르다"가 아니다. 잘못 쓰면 데이터도 없는데 계속 확인(busy polling)하느라 CPU만 태운다. 그래서 보통 I/O 멀티플렉싱과 함께 써서 "준비된 것만" 처리한다.'],
+ ['"연결마다 스레드 하나씩 주면 되지 않나"','수백 명까진 되지만 수천 명이면 <span class="truth">컨텍스트 스위칭 비용과 스레드별 스택 메모리</span>로 서버가 무너진다. 그래서 IOCP/epoll로 소수 스레드 + 비동기를 쓴다(OS 강의의 "스레드 많이 만들면 안 되는 이유").'],
+ ['"select랑 IOCP는 같은 거다"','<span class="truth">방향이 반대</span>다. select는 "준비됐는지 내가 물어보는" 모델, IOCP는 "완료되면 OS가 알려주는" 비동기 완료 모델이다. 대규모에서는 IOCP가 훨씬 효율적이다.'],
+ ['"멀티플렉싱은 멀티스레드다"','다르다. I/O 멀티플렉싱은 <span class="truth">한 스레드로 여러 소켓을 감시</span>하는 기법이고 멀티스레드는 여러 스레드를 쓰는 것이다. 스레드를 늘리지 않고 동시성을 얻는 방법이라 별개 개념이다(실무에선 섞어 쓴다).']
+];
+var QA=[
+ ['블로킹과 논블로킹의 차이는?','블로킹은 데이터가 준비될 때까지 <b>함수가 멈춰서 기다리는</b> 방식, 논블로킹은 데이터가 없으면 <b>즉시 리턴</b>해서 다른 일을 계속하는 방식입니다. 블로킹은 단순하지만 스레드가 묶이고, 논블로킹은 안 묶이는 대신 도착 여부를 확인하는 로직이 필요합니다.'],
+ ['서버 하나가 수천 명을 동시에 처리하는 방법은?','<b>I/O 멀티플렉싱</b>입니다. 소켓 수천 개를 OS에 맡기고 데이터가 준비된 것만 골라 처리해 한 스레드로 많은 연결을 감시합니다. 리눅스는 epoll, 윈도우는 IOCP를 쓰고, 연결마다 스레드를 주는 방식은 컨텍스트 스위칭 비용 때문에 대규모에선 안 씁니다.'],
+ ['IOCP가 뭔가요?','윈도우의 <b>고성능 비동기 I/O 모델</b>입니다. I/O 요청을 OS에 던져놓으면 작업 완료 통보를 큐에 넣어주고, 소수의 워커 스레드가 그것만 꺼내 처리합니다. 매번 준비 여부를 묻는 게 아니라 완료를 통보받아 적은 스레드로 수만 연결을 감당합니다.'],
+ ['select의 한계는 뭔가요?','감시할 소켓 목록을 <b>매번 OS에 넘기고 OS가 전부 훑어야</b> 해서 연결이 많아질수록 훑는 비용 자체가 부담입니다. 그래서 대규모 서버는 epoll이나 IOCP 같은 더 효율적인 모델을 씁니다.'],
+ ['I/O 멀티플렉싱과 멀티스레드는 같은 건가요?','다릅니다. 멀티플렉싱은 <b>한 스레드로 여러 소켓을 동시에 감시</b>하는 기법이고 멀티스레드는 여러 스레드로 일을 나누는 겁니다. 실무에선 IOCP 같은 멀티플렉싱 위에 워커 스레드 몇 개를 얹어 함께 쓰지만 개념은 별개입니다.']
+];
+var CK=['블로킹과 논블로킹의 차이를 택배 비유로 설명할 수 있다','I/O 멀티플렉싱이 "준비된 소켓만 골라준다"는 개념을 안다','select와 IOCP의 방향 차이(물어보기 vs 통보받기)를 말할 수 있다','연결마다 스레드를 주면 왜 대규모에서 망하는지(컨텍스트 스위칭, 스택 메모리) 안다','멀티플렉싱과 멀티스레드가 다른 개념이라는 걸 안다'];
+var KEY='net09-check';
+
+/* 킬러: 소켓 감시 시뮬레이터 */
+(function(){
+  var seed=99;
+  function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  var MODES=[['blk','블로킹','스레드 1개'],['thr','연결당 스레드','스레드 N개'],['poll','논블로킹 폴링','스레드 1개'],['sel','select','스레드 1개'],['epl','epoll / IOCP','워커 4개']];
+  var N=100,act=0.03,sel='poll',rounds,cursor,pend,S,last,handledNow;
+  var grid=document.getElementById('sgrid'),mt=document.getElementById('mt'),msgEl=document.getElementById('simMsg');
+  function reset(){
+    seed=99;rounds=0;cursor=0;pend=[];for(var i=0;i<N;i++)pend.push(false);last=[];handledNow=[];
+    S={};MODES.forEach(function(m){S[m[0]]={chk:0,han:0};});
+    msgEl.textContent='▶ 라운드를 진행해보자.';msgEl.className='simmsg';draw();
+  }
+  function round(){
+    rounds++;var R=[],i;
+    for(i=0;i<N;i++)if(rnd()<act)R.push(i);
+    last=R;R.forEach(function(i){pend[i]=true;});
+    handledNow=[];
+    var g=0;while(pend[cursor]&&g++<N){pend[cursor]=false;S.blk.han++;S.blk.chk++;handledNow.push(cursor);cursor=(cursor+1)%N;}
+    S.thr.han+=R.length;S.thr.chk+=R.length;
+    S.poll.han+=R.length;S.poll.chk+=N;
+    S.sel.han+=R.length;S.sel.chk+=N;
+    S.epl.han+=R.length;S.epl.chk+=R.length;
+  }
+  function backlog(){var c=0;pend.forEach(function(x){if(x)c++;});return c;}
+  function draw(){
+    grid.innerHTML='';
+    var rs={};last.forEach(function(i){rs[i]=1;});
+    var hn={};handledNow.forEach(function(i){hn[i]=1;});
+    for(var i=0;i<N;i++){
+      var d=document.createElement('div'),c='k';
+      if(sel==='blk'){
+        if(i===cursor)c+=' c t';
+        else if(pend[i])c+=' x';
+        else if(hn[i])c+=' r t';
+      }else{
+        if(rs[i])c+=' r';
+        if(sel==='poll'||sel==='sel')c+=' t';
+        else if(rs[i])c+=' t';
+      }
+      d.className=c;grid.appendChild(d);
+    }
+    var bl=backlog();
+    var rows=[
+      ['threads','필요한 스레드','',function(m){return m==='thr'?N:(m==='epl'?4:1);},function(v,m){return v;},function(m,v){return m==='thr'&&N>=200?'bad':'';}],
+      ['mem','스택 메모리','스레드당 1MB 가정',function(m){return (m==='thr'?N:(m==='epl'?4:1))+' MB';},null,function(m){return m==='thr'&&N>=200?'bad':'';}],
+      ['chk','누적 확인(작업) 횟수','소켓을 들여다본 횟수',function(m){return S[m].chk;},null,null],
+      ['han','처리한 이벤트','실제로 받은 데이터',function(m){return S[m].han;},null,null],
+      ['waste','헛수고 비율','확인 중 데이터 없던 비율',function(m){var s=S[m];return s.chk?Math.round((1-s.han/s.chk)*100)+'%':'-';},null,function(m){var s=S[m];if(!s.chk)return '';var w=1-s.han/s.chk;return w>0.5?'bad':(w<0.01?'good':'');}],
+      ['back','밀린 이벤트','도착했지만 못 받은 것',function(m){return m==='blk'?bl:0;},null,function(m){return m==='blk'&&bl>0?'bad':(m!=='blk'?'good':'');}]
+    ];
+    var h='<tr><th></th>'+MODES.map(function(m){return '<th class="pick'+(m[0]===sel?' on':'')+'" data-m="'+m[0]+'">'+m[1]+'<small>'+m[2]+'</small></th>';}).join('')+'</tr>';
+    rows.forEach(function(r){
+      h+='<tr><td class="lab">'+r[1]+(r[2]?'<small>'+r[2]+'</small>':'')+'</td>'+MODES.map(function(m){
+        var v=r[3](m[0]),cls=(r[5]?r[5](m[0]):'');
+        return '<td class="'+(m[0]===sel?'on ':'')+cls+'">'+(typeof v==='number'?v.toLocaleString():v)+'</td>';}).join('')+'</tr>';
+    });
+    mt.innerHTML=h;
+    mt.querySelectorAll('th.pick').forEach(function(t){t.addEventListener('click',function(){sel=t.dataset.m;draw();});});
+    if(rounds>0){
+      var p=S.poll,e=S.epl;
+      msgEl.textContent=rounds+'라운드 — 폴링은 확인 '+p.chk.toLocaleString()+'번 중 유효 '+p.han+'번(헛수고 '+Math.round((1-p.han/p.chk)*100)+'%), epoll/IOCP는 확인 '+e.chk+'번 전부 유효. 블로킹은 밀린 이벤트 '+bl+'개.';
+      msgEl.className='simmsg';
+    }
+  }
+  document.getElementById('nSl').addEventListener('input',function(){N=+this.value;document.getElementById('nV').textContent=N;reset();});
+  document.getElementById('aSl').addEventListener('input',function(){act=this.value/100;document.getElementById('aV').textContent=this.value+'%';reset();});
+  document.getElementById('bOne').addEventListener('click',function(){round();draw();});
+  document.getElementById('bHund').addEventListener('click',function(){for(var i=0;i<100;i++)round();draw();});
+  document.getElementById('bReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

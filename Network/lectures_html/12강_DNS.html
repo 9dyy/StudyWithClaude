@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12강 · DNS — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#34d399;--acc2:#6ee7b7;--accrgb:52,211,153;--acc3:#22d3ee}
+.btn{color:#04221a}
+nav a.chip.on{color:#04221a}
+.modetoggle button.on{color:#04221a}
+/* 킬러: DNS 리졸버 */
+.dtop{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.dpn{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px;min-width:0}
+.dpn h4{font-size:12.5px;color:var(--dim);margin-bottom:8px}
+.dpn .big{font-family:ui-monospace,monospace;font-size:15px;color:var(--txt);word-break:break-all}
+.dpn .big.chg{color:var(--amber)}
+.dpn select{width:100%;font-family:inherit;font-size:13.5px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:8px 10px;margin-top:8px}
+.dpn small{display:block;color:var(--faint);font-size:11.5px;margin-top:6px}
+.cache{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.crow{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;background:var(--card2);border:1px solid var(--line);border-radius:11px;padding:8px 12px;transition:.2s}
+.crow.hit{border-color:var(--grn);background:rgba(52,211,153,.1)}
+.crow .nm{font-size:12.5px;font-weight:700;color:var(--dim)}
+.crow .ipv{font-family:ui-monospace,monospace;font-size:13px;color:var(--txt)}
+.crow .ipv.stale{color:var(--red)}
+.crow .ipv.empty{color:var(--faint)}
+.crow .ttl{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--faint);text-align:right}
+.tline{margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center;font-size:13.5px;color:var(--dim)}
+.tline b{font-family:ui-monospace,monospace;color:var(--txt);font-size:15px}
+.tline button{font-family:inherit;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:16px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer}
+.tline button:hover{border-color:var(--acc);color:var(--txt)}
+.dlog{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.dlog .st{display:grid;grid-template-columns:64px 1fr;gap:8px;font-size:13px;color:var(--dim);animation:pop .3s both}
+.dlog .st i{font-style:normal;font-family:ui-monospace,monospace;font-size:11.5px;color:var(--faint);text-align:right}
+.dlog .st.hit{color:var(--grn)}
+.dlog .st.bad{color:var(--red)}
+.dlog .st b{color:var(--txt)}
+.dres{margin-top:12px;padding:12px 14px;border-radius:12px;font-size:14px;text-align:center;border:1px solid var(--line);background:var(--card2);min-height:48px}
+.dres.good{border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.08)}
+.dres.bad{border-color:rgba(248,113,113,.5);background:rgba(248,113,113,.08)}
+.dres small{display:block;color:var(--dim);font-size:12.5px;margin-top:4px}
+@keyframes pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media(max-width:640px){.crow{grid-template-columns:1fr auto}.crow .nm{grid-column:1/3}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>12강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#what">DNS란</a>
+    <a class="chip" href="#resolve">리졸빙</a>
+    <a class="chip" href="#sim">캐시·TTL</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 애플리케이션 계층 · 서버 이전과 TTL</span>
+  <h1><span class="g">DNS</span></h1>
+  <p class="sub">서버 IP를 코드에 박았다가 이전하면 전 유저가 접속 불가다. 도메인이 IP가 되기까지의 리졸빙 과정과, "IP를 바꿨는데 옛 서버로 가요"의 원인인 캐시·TTL을 시간을 돌려가며 직접 재현한다.</p>
+  <div class="meta">
+    <div class="m">📖 DNS 리졸버 시뮬레이터</div>
+    <div class="m">🧩 선수지식 <b>2·3·11강</b></div>
+    <div class="m">⏱️ 약 15분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>서버 주소를 IP로 박았더니 생긴 일</h2>
+  <div class="card">
+    <pre class="code"><span class="fn">Connect</span>(<span class="fn">TEXT</span>(<span class="str">"203.0.113.10"</span>), 7777);   <span class="cm">// 서버 IP를 코드에 하드코딩</span></pre>
+    <p style="margin-top:16px">처음엔 잘 됐다. 몇 달 뒤 서버를 이전하면서 IP가 <code>198.51.100.25</code>로 바뀌었다. 이미 배포된 클라들은 옛 IP로 접속을 시도한다 → <b style="color:var(--red)">전부 접속 불가</b>, 패치를 다시 내려야 한다. 게다가 사람이 IP를 외울 수도 없다.</p>
+    <pre class="code"><span class="fn">Connect</span>(<span class="fn">TEXT</span>(<span class="str">"connect.mygame.com"</span>), 7777);   <span class="cm">// 도메인. IP가 바뀌어도 이건 그대로</span></pre>
+    <p class="hint">도메인을 쓰면 서버 IP가 바뀌어도 <b>도메인 → IP 매핑만 갱신</b>하면 클라는 그대로 접속된다. 그 변환을 해주는 시스템이 <b>DNS(Domain Name System)</b>다.</p>
+  </div>
+</div></section>
+
+<section id="what"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 개념</div>
+  <h2 class="sec"><span class="n">2</span>DNS = 인터넷의 전화번호부</h2>
+  <div class="card">
+    <pre class="code">사람이 기억하는 것:  connect.mygame.com
+컴퓨터가 필요한 것:  198.51.100.25
+                  ↑
+               <span class="hl">DNS가 변환</span></pre>
+    <p class="hint">"홍길동"(도메인)을 찾으면 "010-1234-5678"(IP)을 알려주는 전화번호부와 같다. 포트는 <b>53번</b>(3강의 well-known 포트)이고, 주로 UDP(빠르고 작아서), 큰 응답은 TCP로 주고받는다.</p>
+  </div>
+</div></section>
+
+<section id="resolve"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 리졸빙</div>
+  <h2 class="sec"><span class="n">3</span>리졸빙 — 도메인이 IP가 되기까지</h2>
+  <p class="lead"><code>connect.mygame.com</code>을 입력하면 한 군데에 물어보고 끝나는 게 아니라 <b>여러 DNS 서버를 거친다.</b> 한 곳이 전부 아는 게 아니라 위에서 아래로 위임하며 좁혀간다.</p>
+  <div class="card">
+    <pre class="code">내 PC ─ 1. "connect.mygame.com IP 뭐야?" ─→ <span class="hl">[로컬 DNS 서버]</span> (통신사/공유기)
+                         │ 캐시에 있으면 바로 응답. 없으면 대신 물어봐줌(재귀 질의)
+                         ├─ 2. "com 담당 누구?"          ─→ [루트 DNS]      → ".com 서버는 저기야"
+                         ├─ 3. "mygame.com 담당 누구?"    ─→ [.com TLD 서버] → "mygame.com 서버는 저기야"
+                         └─ 4. "connect.mygame.com IP는?" ─→ [권한 네임서버]  → <span class="good">"198.51.100.25야"</span>
+내 PC ←─ 5. "198.51.100.25래" ─ 로컬 DNS가 돌려주면서 <span class="hl">캐시</span>해둔다</pre>
+    <p class="hint"><b>비유:</b> 모르는 사람 번호를 찾는데, 안내데스크(루트)가 "인사팀에 물어봐", 인사팀(TLD)이 "그 부서 담당자한테 물어봐", 담당자(권한 서버)가 마침내 번호를 알려주는 식이다. 아래 시뮬레이터에서 이 과정이 실제로 몇 ms 걸리는지, 그리고 캐시가 그걸 어떻게 없애는지 본다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>DNS 리졸버 — 캐시와 TTL로 "서버 이전" 사고 재현</h2>
+  <p class="lead">[조회]를 누르면 <b>앱 캐시 → OS 캐시 → 로컬 DNS → (전체 리졸빙)</b> 순으로 찾는다. 시간을 흘려보내고, 서버를 이전(IP 변경)해서 <b>"옛 IP로 가요"</b> 사고를 만들어보자. (가정: 로컬 DNS 왕복 5ms, 루트 20ms, TLD 25ms, 권한 30ms)</p>
+  <div class="card">
+    <div class="dtop">
+      <div class="dpn"><h4>🖥 권한 네임서버의 진짜 기록 (A 레코드)</h4><div class="big" id="authIp">connect.mygame.com → 203.0.113.10</div>
+        <select id="ttlSel"><option value="30">TTL 30초 (서버 이전 전에 줄여둔 값)</option><option value="300" selected>TTL 300초 (5분)</option><option value="3600">TTL 3600초 (1시간)</option></select>
+        <small>TTL은 <b>다음 전체 리졸빙부터</b> 적용된다. 이미 캐시된 값의 유효기간은 그대로.</small></div>
+      <div class="dpn"><h4>⏱ 지금 시각</h4><div class="big" id="clock">0초</div>
+        <div class="tline" style="margin-top:8px;justify-content:flex-start"><button data-dt="10">+10초</button><button data-dt="300">+5분</button><button data-dt="3600">+1시간</button></div></div>
+    </div>
+    <div class="cache" id="cache"></div>
+    <div class="btnrow"><button class="btn" id="bQ">🔎 connect.mygame.com 조회</button><button class="btn ghost" id="bMove">🚚 서버 이전 (IP 변경)</button><button class="btn ghost" id="bFlush">🧹 ipconfig /flushdns</button><button class="btn ghost" id="bRst">↺ 처음부터</button></div>
+    <div class="dlog" id="dlog"></div>
+    <div class="dres" id="dres">▶ 조회 버튼을 눌러 시작하자.</div>
+    <div class="stats">
+      <div class="s"><div class="v" id="sQ">0</div><div class="l">조회 횟수</div></div>
+      <div class="s"><div class="v" id="sFull">0</div><div class="l">전체 리졸빙 횟수</div></div>
+      <div class="s"><div class="v" id="sMs">—</div><div class="l">마지막 소요 (ms)</div></div>
+      <div class="s"><div class="v" id="sStale">0</div><div class="l">옛 IP로 간 횟수</div></div>
+    </div>
+    <p class="hint">① 조회 → 첫 번째는 <b>전체 리졸빙(약 80ms)</b>, 바로 다시 조회하면 앱 캐시에서 <b>0ms</b>. ② 조회 후 <b>서버 이전</b> → 다시 조회하면 캐시가 옛 IP를 준다(빨간 글씨) — TTL이 끝나기 전까지. ③ <b>flushdns</b>를 눌러보자: 앱·OS 캐시는 지워지지만 <b>통신사 로컬 DNS 캐시는 그대로</b>라 여전히 옛 IP가 온다. ④ TTL 30초로 바꾼 뒤 조회 → 이전 → +10초 ×3이면 금방 새 IP로 넘어간다. 이게 "이전 <b>전에</b> TTL을 줄여둔다"는 운영 기법이다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 코드</div>
+  <h2 class="sec"><span class="n">5</span>언리얼에서 도메인 → IP (리졸빙)</h2>
+  <div class="card">
+    <pre class="code">ISocketSubsystem* SocketSub = ISocketSubsystem::<span class="fn">Get</span>(PLATFORM_SOCKETSUBSYSTEM);
+
+<span class="cm">// 도메인 → IP 변환(리졸빙). 이 안에서 위의 DNS 과정이 일어난다.</span>
+FAddressInfoResult Result = SocketSub-&gt;<span class="fn">GetAddressInfo</span>(
+    <span class="fn">TEXT</span>(<span class="str">"connect.mygame.com"</span>),     <span class="cm">// 도메인</span>
+    <span class="kw">nullptr</span>,
+    EAddressInfoFlags::Default,
+    NAME_None);
+
+<span class="kw">if</span> (Result.ReturnCode == SE_NO_ERROR &amp;&amp; Result.Results.<span class="fn">Num</span>() &gt; 0)
+{
+    TSharedRef&lt;FInternetAddr&gt; ResolvedAddr = Result.Results[0].Address;
+    ResolvedAddr-&gt;<span class="fn">SetPort</span>(7777);
+    <span class="fn">UE_LOG</span>(LogTemp, Log, <span class="fn">TEXT</span>(<span class="str">"Resolved IP: %s"</span>), *ResolvedAddr-&gt;<span class="fn">ToString</span>(<span class="kw">false</span>));
+    <span class="cm">// 출력 예: 198.51.100.25  ← 도메인이 IP로 바뀌었다</span>
+
+    Socket-&gt;<span class="fn">Connect</span>(*ResolvedAddr);   <span class="cm">// 변환된 IP로 접속</span>
+}</pre>
+    <p class="hint"><b>주의:</b> 리졸빙은 네트워크를 타는 작업이라 캐시가 없으면 시뮬레이터에서 본 80ms급 시간이 든다. 게임 스레드에서 동기로 부르면 잠깐 멈출 수 있어 비동기로 처리하거나 접속 단계에서만 한다(9강의 블로킹 주의). <code>OpenLevel</code>이나 HTTP 모듈(11강)에 도메인을 넘기면 엔진이 알아서 리졸빙해주므로 <code>GetAddressInfo</code>를 직접 부르는 일은 드물지만, "도메인은 결국 IP로 변환되어 접속된다"는 흐름은 알아야 한다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"HTTPS 주소로 접속할 때, 그 서버가 진짜 그 서버인지 어떻게 믿나요?"</i> → 13강(TLS와 게임 보안)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="11강_HTTP_HTTPS.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 11강 — HTTP와 HTTPS</div></div></a>
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">강의 목차로</div></div></a>
+  <a class="nx" href="13강_TLS와_게임보안.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">13강 — TLS와 게임 보안 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 12강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"DNS 서버 한 대가 모든 도메인 IP를 다 안다"','아니다. <span class="truth">계층적으로 나눠져</span> 있다. 루트는 ".com 담당이 누군지"만, TLD는 "mygame.com 담당이 누군지"만 알고, 권한 서버가 최종 IP를 안다. 한 곳이 전부 아는 게 아니라 위에서 아래로 위임된다.'],
+ ['"도메인 입력하면 매번 전체 리졸빙을 한다"','대부분 <span class="truth">캐시에서 끝난다.</span> 브라우저·OS·로컬 DNS에 캐시가 있어서 TTL이 안 지났으면 전체 과정을 안 거친다. 시뮬레이터에서 본 것처럼 전체 리졸빙(약 80ms)은 캐시가 없을 때만 일어난다.'],
+ ['"DNS는 도메인을 IP로 바꿔주기만 한다"','주된 역할은 맞지만 기록 종류가 여럿이다. <span class="truth">A</span>(도메인→IPv4), <span class="truth">AAAA</span>(→IPv6), <span class="truth">MX</span>(메일 서버), <span class="truth">CNAME</span>(별칭) 등. 게임 클라 면접엔 "A 레코드로 도메인→IP" 수준이면 충분하다.'],
+ ['"서버 IP 바꾸면 즉시 모두에게 적용된다"','캐시와 TTL 때문에 <span class="truth">즉시가 아니다.</span> 기존 캐시가 TTL 동안 옛 IP를 들고 있어 그 시간만큼은 옛 서버로 접속이 갈 수 있다(시뮬레이터의 빨간 IP). 그래서 이전 <span class="truth">전에</span> TTL을 줄여두는 운영 기법을 쓴다.']
+];
+var QA=[
+ ['DNS가 뭔가요?','<b>도메인 이름을 IP 주소로 변환</b>해주는 시스템입니다. 사람은 connect.mygame.com 같은 이름을 기억하고 실제 통신은 대응하는 IP로 하기 때문에 그 사이를 이어주는 인터넷의 전화번호부 역할을 합니다. 기본 포트는 53번입니다.'],
+ ['DNS 동작 과정을 설명해보세요.','먼저 <b>로컬 DNS 서버</b>에 묻고, 캐시에 없으면 로컬 DNS가 대신 알아봅니다. <b>루트 DNS</b>에 물어 .com 담당 서버를 찾고, 그 <b>TLD 서버</b>에서 해당 도메인의 <b>권한 네임서버</b>를 찾고, 마지막으로 그 권한 서버가 최종 IP를 응답합니다. 루트에서 아래로 위임받으며 좁혀가는 계층 구조입니다.'],
+ ['게임에서 서버 주소를 IP가 아니라 도메인으로 쓰는 이유는?','서버 IP는 바뀔 수 있는데 IP를 하드코딩하면 바뀔 때마다 <b>클라이언트를 다시 배포</b>해야 합니다. 도메인을 쓰면 DNS의 도메인-IP 매핑만 갱신하면 되니까 클라 수정 없이 서버를 이전할 수 있습니다.'],
+ ['DNS 캐싱과 TTL이 뭔가요?','한 번 알아낸 도메인-IP 매핑을 일정 시간 저장해 재사용하는 게 <b>캐싱</b>이고, 그 <b>유효 기간이 TTL</b>입니다. 브라우저·OS·로컬 DNS 서버 등 여러 곳에 캐시가 있어서 매번 전체 조회를 안 해도 됩니다. TTL이 지나면 캐시를 버리고 다시 조회합니다.'],
+ ['서버 IP를 바꿨는데 일부 유저가 옛 서버로 접속하면 왜 그런가요?','<b>DNS 캐시와 TTL</b> 때문입니다. TTL이 끝나기 전까지는 캐시에 옛 IP가 남아 있어 그쪽으로 접속이 갑니다. 그래서 IP 변경 <b>전에</b> 미리 TTL을 짧게 줄여두면 변경이 더 빨리 전파됩니다.']
+];
+var CK=['DNS가 도메인↔IP 변환이라는 걸 한 문장으로 말할 수 있다','리졸빙 과정(로컬→루트→TLD→권한 서버)을 순서대로 설명할 수 있다','게임이 IP 대신 도메인을 쓰는 이유(IP 변경 대응)를 안다','캐싱과 TTL이 뭔지, 서버 이전 시 왜 중요한지 안다','리졸빙이 시간이 걸려 블로킹될 수 있다는 걸 안다'];
+var KEY='net12-check';
+
+/* 킬러: DNS 리졸버 */
+(function(){
+  var IP_OLD='203.0.113.10',IP_NEW='198.51.100.25';
+  var now,authIp,cA,cO,cL,cnt,full,lastMs,stale,logHtml,hitRow;
+  var $=function(id){return document.getElementById(id);};
+  function reset(){now=0;authIp=IP_OLD;cA=null;cO=null;cL=null;cnt=0;full=0;lastMs=null;stale=0;hitRow='';$('dlog').innerHTML='';$('dres').className='dres';$('dres').textContent='▶ 조회 버튼을 눌러 시작하자.';render();}
+  function alive(c){return c&&c.exp>now;}
+  function rem(c){return c?Math.max(0,c.exp-now):0;}
+  function fmt(s){return s>=3600?(Math.round(s/360)/10)+'시간':s>=60?Math.floor(s/60)+'분 '+(s%60)+'초':s+'초';}
+  function render(){
+    $('authIp').textContent='connect.mygame.com → '+authIp;$('authIp').className='big'+(authIp===IP_NEW?' chg':'');
+    $('clock').textContent=fmt(now)==='0초'?'0초':fmt(now);
+    var rows=[['앱 캐시',cA,'app'],['OS 캐시',cO,'os'],['로컬 DNS (통신사)',cL,'ldns']];
+    $('cache').innerHTML=rows.map(function(r){
+      var c=r[1],a=alive(c),ipc=!a?'empty':(c.ip!==authIp?'stale':'');
+      return '<div class="crow'+(hitRow===r[2]?' hit':'')+'"><div class="nm">'+r[0]+'</div><div class="ipv '+ipc+'">'+(a?c.ip+(c.ip!==authIp?'  ⚠ 옛 IP':''):(c?'만료됨':'— (비어 있음)'))+'</div><div class="ttl">'+(a?'남은 TTL '+fmt(rem(c)):'')+'</div></div>';
+    }).join('');
+    $('sQ').textContent=cnt;$('sFull').textContent=full;$('sMs').textContent=lastMs===null?'—':lastMs;$('sStale').textContent=stale;
+    $('sStale').className='v'+(stale>0?' warn':'');
+  }
+  function step(t,txt,cl,d){return '<div class="st '+(cl||'')+'" style="animation-delay:'+(d*0.1)+'s"><i>'+t+'</i><div>'+txt+'</div></div>';}
+  function query(){
+    cnt++;hitRow='';var ms=0,ip,steps=[],ttl=+$('ttlSel').value,d=0;
+    if(alive(cA)){ip=cA.ip;hitRow='app';steps.push(step('0ms','<b>앱 캐시</b>에 있다 → 네트워크를 아예 안 탄다','hit',d++));}
+    else if(alive(cO)){ip=cO.ip;ms=1;hitRow='os';cA={ip:ip,exp:cO.exp};steps.push(step('0ms','앱 캐시: 없음','',d++));steps.push(step('1ms','<b>OS 캐시</b>에 있다 → 앱 캐시에도 채워둠','hit',d++));}
+    else if(alive(cL)){ip=cL.ip;ms=5;hitRow='ldns';cO={ip:ip,exp:cL.exp};cA={ip:ip,exp:cL.exp};
+      steps.push(step('0ms','앱·OS 캐시: 없음','',d++));steps.push(step('5ms','<b>로컬 DNS 캐시</b>에 있다 (남은 TTL '+fmt(rem(cL))+') → 아래 캐시들을 채워둠','hit',d++));}
+    else{
+      full++;var t=0;
+      steps.push(step('0ms','앱·OS·로컬 DNS 캐시: 모두 없음 → <b>전체 리졸빙</b> 시작','',d++));
+      t+=5;steps.push(step(t+'ms','① 로컬 DNS 서버에 질의 (재귀 질의 위임)','',d++));
+      t+=20;steps.push(step(t+'ms','② 루트 DNS → ".com 서버는 저기야"','',d++));
+      t+=25;steps.push(step(t+'ms','③ .com TLD 서버 → "mygame.com 권한 서버는 저기야"','',d++));
+      t+=30;steps.push(step(t+'ms','④ 권한 네임서버 → <b>'+authIp+'</b> (TTL '+ttl+'초)','hit',d++));
+      ms=t;ip=authIp;var e=now+ttl;cL={ip:ip,exp:e};cO={ip:ip,exp:e};cA={ip:ip,exp:e};hitRow='ldns';
+      steps.push(step(t+'ms','⑤ 로컬 DNS가 결과를 돌려주며 <b>캐시</b>에 저장','',d++));
+    }
+    lastMs=ms;var isStale=ip!==authIp;if(isStale)stale++;
+    $('dlog').innerHTML=steps.join('');
+    var res=$('dres');
+    if(isStale){res.className='dres bad';res.innerHTML='⚠ 접속 IP: <b>'+ip+'</b> — 그런데 서버는 이미 <b>'+authIp+'</b>로 이전했다. 옛 서버(또는 빈 IP)로 간다!<small>캐시가 옛 IP를 들고 있다. 남은 TTL이 끝나야 새 IP를 다시 물어본다.</small>';}
+    else{res.className='dres good';res.innerHTML='✅ 접속 IP: <b>'+ip+'</b> — 소요 <b>'+ms+'ms</b>'+(ms===0?' (캐시 덕에 거의 공짜)':ms>=80?' (전체 리졸빙은 이만큼 든다)':'')+'<small>'+(hitRow==='ldns'&&ms>=80?'이 결과가 방금 3단계 캐시에 저장됐다. 바로 다시 조회해보자.':'')+'</small>';}
+    render();
+  }
+  document.getElementById('bQ').addEventListener('click',query);
+  [].forEach.call(document.querySelectorAll('.tline button[data-dt]'),function(b){b.addEventListener('click',function(){now+=+b.getAttribute('data-dt');hitRow='';render();});});
+  $('bMove').addEventListener('click',function(){
+    if(authIp===IP_NEW){$('dres').className='dres';$('dres').textContent='이미 이전했다. 처음부터를 눌러 다시 실험할 수 있다.';return;}
+    authIp=IP_NEW;$('dres').className='dres';$('dres').innerHTML='🚚 서버를 이전했다. 권한 서버의 기록은 즉시 <b>'+IP_NEW+'</b>로 바뀌었다. 그런데 캐시들은 아직 모른다 — 조회해보자.';hitRow='';render();
+  });
+  $('bFlush').addEventListener('click',function(){
+    cA=null;cO=null;hitRow='';render();
+    $('dres').className='dres';$('dres').innerHTML='🧹 <b>ipconfig /flushdns</b> — 앱·OS 캐시만 지웠다. <b>통신사 로컬 DNS의 캐시는 내 PC가 못 지운다.</b>';
+  });
+  $('bRst').addEventListener('click',reset);
+  reset();
+  window.__dns={get:function(){return {now:now,authIp:authIp,cA:cA,cO:cO,cL:cL,cnt:cnt,full:full,stale:stale};}};
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

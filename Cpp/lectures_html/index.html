@@ -108,7 +108,7 @@ footer .reset:hover{border-color:var(--red);color:var(--red)}
     <div class="top"><span class="t">전체 학습 진행</span><span class="n" id="ovNum">0%</span></div>
     <div class="pbar"><i id="ovBar"></i></div>
     <div class="stats">
-      <span>인터랙티브 <b id="ovLive">4</b> / 13강</span>
+      <span>인터랙티브 <b id="ovLive">9</b> / 13강</span>
       <span>셀프체크 <b id="ovCheck">0</b> 항목 완료</span>
     </div>
   </div>
@@ -126,22 +126,22 @@ var PARTS=[
   {id:'p1',cls:'p1',pill:'PART 1',title:'C++ 문법 심화',desc:'면접에서 진짜 많이 물어보는 문법',accent:'var(--pur)',lecs:[
     {n:1,t:'static의 여러 얼굴',one:'총알 카운터를 직접 만들며 static의 네 얼굴을 체감한다.',file:'01강_static의_여러_얼굴.html',killer:'총알 카운터 시뮬레이터',checks:8,key:'cpp01-check'},
     {n:2,t:'C++ 캐스팅 4형제',one:'히트 판정 시나리오를 직접 돌려보며 4가지 캐스팅을 비교한다.',file:'02강_C++_캐스팅_4형제.html',killer:'캐스팅 시뮬레이터',checks:6,key:'cpp02-check'},
-    {n:3,t:'생성자·소멸자와 RAII',one:'초기화 리스트, 소멸자 호출 시점 — 스마트 포인터로 이어지는 이유.'}
+    {n:3,t:'생성자·소멸자와 RAII',one:'함수 종료 경로를 골라 손으로 fclose와 RAII의 누수를 비교한다.',file:'03강_생성자_소멸자와_RAII.html',killer:'함수 종료 경로 시뮬레이터',checks:5,key:'cpp03-check'}
   ]},
   {id:'p2',cls:'p2',pill:'PART 2',title:'자료구조 기본기',desc:'왜 이 자료구조를 쓰는가',accent:'var(--cyan)',lecs:[
     {n:4,t:'배열 vs LinkedList',one:'캐시 미스 레이스로 이론과 실측이 왜 다른지 확인한다.',file:'04강_배열_vs_LinkedList.html',killer:'캐시 미스 레이스',checks:7,key:'cpp04-check'},
-    {n:5,t:'Stack과 Queue',one:'Undo 스택, BFS 커맨드 큐의 실제 쓰임.'},
-    {n:6,t:'해시맵과 트리 맛보기',one:'TMap 내부 동작과 트리 기반 탐색.'}
+    {n:5,t:'Stack과 Queue',one:'컨테이너 하나만 바꿔 BFS와 DFS의 탐색 차이를 직접 본다.',file:'05강_Stack과_Queue.html',killer:'BFS vs DFS 격자 탐색',checks:5,key:'cpp05-check'},
+    {n:6,t:'해시맵과 트리 맛보기',one:'해시 버킷·충돌·Rehash를 눈으로 보고 배열 순회와 비교 횟수를 잰다.',file:'06강_해시맵과_트리_맛보기.html',killer:'해시 버킷 시각화',checks:6,key:'cpp06-check'}
   ]},
   {id:'p3',cls:'p3',pill:'PART 3',title:'디자인 패턴',desc:'패턴 이름보다 왜 쓰는지',accent:'var(--grn)',lecs:[
-    {n:7,t:'Object Pooling',one:'매 프레임 new/delete의 비용과 총알 풀링.'},
-    {n:8,t:'Observer Pattern',one:'언리얼 Delegate — HP 변화가 UI를 자동 갱신하는 원리.'},
-    {n:9,t:'Singleton과 Factory',one:'언리얼 GameInstance/Subsystem과 팩토리 패턴.'},
-    {n:10,t:'State Pattern',one:'캐릭터 상태 머신 — if-else 지옥 정리법.'}
+    {n:7,t:'Object Pooling',one:'new/delete가 힙을 조각내는 걸 직접 보고 풀로 비용을 옮긴다.',file:'07강_Object_Pooling.html',killer:'힙 조각화 vs 풀 시뮬레이터',checks:6,key:'cpp07-check'},
+    {n:8,t:'Observer Pattern',one:'HP 이벤트를 Broadcast하며 느슨한 결합과 댕글링 콜백을 확인한다.',file:'08강_Observer_Pattern.html',killer:'HP 이벤트 Broadcast 시뮬레이터',checks:6,key:'cpp08-check'},
+    {n:9,t:'Singleton과 Factory',one:'PIE를 여러 번 돌려 Singleton 수명 문제를 재현하고 Factory의 수정 지점을 센다.',file:'09강_Singleton과_Factory.html',killer:'생명주기 · 수정 지점 실험',checks:5,key:'cpp09-check'},
+    {n:10,t:'State Pattern',one:'Enter·Tick·Exit 상태 머신을 굴리고 구르기를 추가했을 때 수정 범위를 비교한다.',file:'10강_State_Pattern.html',killer:'상태 머신 시뮬레이터',checks:5,key:'cpp10-check'}
   ]},
   {id:'p4',cls:'p4',pill:'PART 4',title:'실전 보강',desc:'AI 면접 공통역량에서 드러난 빈틈',accent:'var(--amber)',lecs:[
     {n:11,t:'스마트 포인터',one:'순환 참조를 직접 만들고 weak_ptr로 끊어본다.',file:'11강_스마트_포인터.html',killer:'순환 참조 시뮬레이터',checks:5,key:'cpp11-check'},
-    {n:12,t:'정렬 알고리즘과 시간복잡도',one:'Big-O와 분할정복, TArray::Sort 내부.'}
+    {n:12,t:'정렬 알고리즘과 시간복잡도',one:'5가지 정렬의 비교 횟수를 직접 세며 Big-O와 퀵정렬 최악을 확인한다.',file:'12강_정렬_알고리즘과_시간복잡도.html',killer:'정렬 비교 횟수 레이스',checks:5,key:'cpp12-check'}
   ]},
   {id:'pb',cls:'pb',pill:'BONUS',title:'면접 정리',desc:'',accent:'var(--red)',lecs:[
     {n:'★',t:'클라 개발자 C++/자료구조/패턴 면접 BEST 20',one:'20문항 모범답변 + 꼬리질문.'}

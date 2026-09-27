@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3강 · 생성자·소멸자와 RAII — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 종료 경로 시뮬레이터 */
+.codebox{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:12px 0;font-family:ui-monospace,monospace;font-size:12.5px;margin-top:6px;overflow-x:auto}
+.codebox .ln{display:flex;gap:12px;padding:1px 16px;white-space:pre;color:var(--dim);border-left:3px solid transparent;transition:.2s}
+.codebox .ln .no{color:var(--faint);width:14px;text-align:right;flex-shrink:0}
+.codebox .ln.hit{background:rgba(var(--accrgb),.14);color:var(--txt);border-left-color:var(--acc)}
+.codebox .ln.dtor{background:rgba(52,211,153,.14);color:var(--txt);border-left-color:var(--grn)}
+.codebox .ln.leak{background:rgba(248,113,113,.16);color:var(--txt);border-left-color:var(--red)}
+.evlog{margin-top:12px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:13px;min-height:88px}
+.evlog div{padding:2px 0;color:var(--dim)}
+.evlog .g{color:var(--grn)}.evlog .r{color:var(--red);font-weight:700}.evlog .a{color:var(--amber)}
+.paths{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-top:14px}
+.paths button{font-family:inherit;font-size:12.5px;font-weight:700;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--txt);cursor:pointer;transition:.15s;text-align:left}
+.paths button:hover{border-color:var(--acc)}
+.ordbtn{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>3강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#sim">종료 경로 시뮬</a>
+    <a class="chip" href="#ctor">생성자</a>
+    <a class="chip" href="#impl">암시적 생성자</a>
+    <a class="chip" href="#dtor">소멸자</a>
+    <a class="chip" href="#raii">RAII</a>
+    <a class="chip" href="#smart">스마트 포인터</a>
+    <a class="chip" href="#order">생성·소멸 순서</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 메모리와 객체 수명 · 면접 단골</span>
+  <h1>생성자·소멸자와 <span class="g">RAII</span></h1>
+  <p class="sub">파일을 열어놓고 return해버린 함수. 정리를 "사람이 기억해야 하는 일"에서 "언어가 보장하는 일"로 옮기는 RAII가 왜 스마트 포인터까지 이어지는지 본다.</p>
+  <div class="meta">
+    <div class="m">🔒 스코프 종료 = 자동 정리</div>
+    <div class="m">🧩 선수지식 <b>2강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>파일을 열어놓고 리턴해버린 함수</h2>
+  <p class="lead">레벨 로딩 중에 설정 파일을 읽는 함수를 짰다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> LoadLevelConfig(<span class="kw">const</span> FString&amp; Path)
+{
+    FILE* File = fopen(TCHAR_TO_ANSI(*Path), <span class="str">"r"</span>);
+    <span class="kw">if</span> (File == <span class="kw">nullptr</span>) { <span class="kw">return</span>; }                  <span class="cm">// 파일 못 열면 리턴 — 여긴 괜찮다</span>
+    <span class="kw">if</span> (!ParseConfig(File))  { <span class="bad">return;</span> }              <span class="cm">// 파싱 실패해도 리턴 — fclose(File) 까먹음!</span>
+    fclose(File);
+}</pre>
+    <p style="margin-top:16px">함수에 <code>return</code>이 세 군데면 세 군데 다 <code>fclose</code>를 챙겨야 하는데, 사람이 손으로 관리하면 <b style="color:var(--red)">언젠가 하나는 까먹는다.</b> <code>new</code> 메모리, 소켓, 뮤텍스도 똑같다 — 근본 원인은 "정리를 사람이 매번 챙겨야 한다"는 것. C++은 이걸 <b>생성자/소멸자로 "정리를 객체의 죽음에 자동으로 묶어버리는"</b> RAII로 푼다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">2</span>함수 종료 경로 시뮬레이터 — 손으로 fclose vs RAII</h2>
+  <p class="lead">함수가 <b>어떤 경로로 끝나는지</b>를 골라 실행해보자. 손으로 관리하면 경로마다 누수 여부가 갈리고, RAII는 어떤 경로든 똑같다.</p>
+  <div class="card">
+    <div class="modetoggle"><button class="on" data-m="manual">✋ 손으로 fclose</button><button data-m="raii">🛡️ RAII (FScopedFile)</button></div>
+    <div class="codebox" id="codeBox"></div>
+    <div class="paths" id="paths">
+      <button data-p="A">A · 파일 열기 실패 → return</button>
+      <button data-p="B">B · 파싱 실패 → return</button>
+      <button data-p="C">C · 나중에 추가된 검증 return</button>
+      <button data-p="D">D · 정상 종료</button>
+    </div>
+    <div class="evlog" id="evLog"><div>경로 버튼을 눌러 함수를 실행해보자.</div></div>
+    <div class="stats">
+      <div class="s"><div class="v" id="stRuns">0</div><div class="l">함수 실행 횟수</div></div>
+      <div class="s"><div class="v" id="stLeak">0</div><div class="l">새고 있는 파일 핸들</div></div>
+    </div>
+    <div class="btnrow"><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <p class="hint">손으로 관리 모드에서 <b>B, C를 몇 번 실행</b>해보자 — 핸들이 계속 쌓인다. 그리고 C는 "처음 코드엔 없었는데 나중에 누가 return을 하나 추가한" 경로다. RAII 모드에선 어느 경로든 소멸자가 <code>fclose</code>를 대신 한다.</p>
+  </div>
+</div></section>
+
+<section id="ctor"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 생성자</div>
+  <h2 class="sec"><span class="n">3</span>초기화 리스트 vs 본문 대입</h2>
+  <p class="lead"><b>차이는 "생성이냐 대입이냐"</b>다.</p>
+  <div class="card">
+    <div class="two">
+      <div class="box good"><h4>멤버 초기화 리스트</h4><p>멤버를 <b>그 값으로 바로 생성</b>한다.</p></div>
+      <div class="box bad"><h4>생성자 본문 대입</h4><p>멤버가 <b>먼저 기본값으로 생성된 뒤</b> 대입 연산으로 덮어쓴다 — 한 단계 더 거친다.</p></div>
+    </div>
+    <pre class="code">AWeapon(<span class="kw">const</span> AActor* InOwner)
+    : Damage(10.0f)
+    , OwnerName(TEXT(<span class="str">"Unknown"</span>))
+    , <span class="hl">Owner(InOwner)</span>          <span class="cm">// const / 참조 멤버는 대입이 불가능 → 초기화 리스트가 필수</span>
+{ }
+
+<span class="kw">private</span>:
+    <span class="kw">float</span> Damage;
+    FString OwnerName;
+    <span class="kw">const</span> AActor* <span class="kw">const</span> Owner;</pre>
+    <p class="hint"><code>FString</code> 같은 클래스 멤버는 본문 대입이면 "기본 생성자 + 대입 연산자" 두 번 일한다. 그리고 <b>초기화 순서는 리스트에 적은 순서가 아니라 클래스에 멤버를 선언한 순서</b>다 — 섹션 8에서 눈으로 확인한다.</p>
+  </div>
+</div></section>
+
+<section id="impl"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 암시적 생성자</div>
+  <h2 class="sec"><span class="n">4</span>안 써도 컴파일러가 만들어주는 것들</h2>
+  <p class="lead">생성자를 하나도 안 쓰면 컴파일러가 <b>기본 생성자, 복사 생성자, 소멸자, 대입 연산자</b>를 만들어준다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FInventorySlot { <span class="kw">public</span>: int32 ItemID; int32 Count; };   <span class="cm">// 생성자 없음</span>
+
+FInventorySlot Slot;          <span class="cm">// 암시적 기본 생성자 — <span class="bad">ItemID, Count는 쓰레기 값일 수 있다!</span></span>
+FInventorySlot Copy = Slot;   <span class="cm">// 암시적 복사 생성자 — 멤버를 하나하나 그대로 복사</span>
+
+<span class="cm">// 그래서 기본값은 클래스 안에서 직접 지정하는 습관이 안전하다</span>
+int32 ItemID = 0;</pre>
+    <div class="two">
+      <div class="box bad"><h4>기본 타입은 0 보장이 없다</h4><p><code>FString</code> 같은 클래스 멤버는 자기 기본 생성자로 확실히 초기화되지만 <code>int32/float/포인터</code>는 아니다.</p></div>
+      <div class="box bad"><h4>포인터 멤버 = 얕은 복사</h4><p>암시적 복사 생성자는 <b>포인터 값만</b> 복사한다. 한쪽이 소멸자에서 해제하면 다른 쪽은 댕글링 포인터.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="dtor"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 소멸자</div>
+  <h2 class="sec"><span class="n">5</span>소멸자는 정확히 언제 호출되나</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>객체가 사는 곳</th><th>소멸자 호출 시점</th></tr>
+      <tr><td>지역 변수(스택)</td><td>그 변수가 선언된 <b>스코프 <code>{ }</code>를 벗어날 때</b></td></tr>
+      <tr><td><code>new</code>로 만든 힙 객체</td><td><code>delete</code>를 <b>명시적으로</b> 호출할 때</td></tr>
+      <tr><td>스마트 포인터가 감싼 힙 객체</td><td>마지막 소유자가 사라질 때 (자동)</td></tr>
+      <tr><td>전역/static 객체</td><td>프로그램 종료 시</td></tr>
+    </table>
+    <pre class="code"><span class="kw">void</span> LoadLevel()
+{
+    FScopedLog Log(TEXT(<span class="str">"LoadLevel"</span>));    <span class="cm">// 생성자 → "시작" 로그</span>
+    <span class="kw">if</span> (!CheckPrerequisites()) { <span class="kw">return</span>; }   <span class="cm">// 스코프를 벗어나므로 소멸자 자동 호출 → "종료" 로그</span>
+    DoActualLoading();
+}                                        <span class="cm">// 정상 경로도 여기서 소멸자 호출</span></pre>
+    <p class="hint"><code>return</code>이 몇 군데든, 예외가 던져지든 <b>스코프를 벗어나는 모든 경로에서 소멸자는 반드시 호출된다.</b> 도입 문제의 해결 실마리가 이것이고, 시뮬레이터의 RAII 모드가 정확히 이걸 보여줬다.</p>
+  </div>
+</div></section>
+
+<section id="raii"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · RAII</div>
+  <h2 class="sec"><span class="n">6</span>자원 해제를 소멸자에 묶어버리기</h2>
+  <p class="lead"><b>RAII(Resource Acquisition Is Initialization)</b> — 생성자에서 자원을 획득하고, 소멸자에서 반드시 해제하도록 클래스로 감싸는 패턴.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FScopedFile
+{
+<span class="kw">public</span>:
+    FScopedFile(<span class="kw">const</span> FString&amp; Path) { File = fopen(TCHAR_TO_ANSI(*Path), <span class="str">"r"</span>); }   <span class="cm">// 생성자에서 획득</span>
+    ~FScopedFile()             { <span class="kw">if</span> (File) { <span class="good">fclose(File);</span> } }                                  <span class="cm">// 소멸자에서 반드시 해제</span>
+    FILE* Get() <span class="kw">const</span> { <span class="kw">return</span> File; }
+<span class="kw">private</span>:
+    FILE* File = <span class="kw">nullptr</span>;
+};
+
+<span class="cm">// 언리얼의 FScopeLock이 정확히 이 패턴</span>
+<span class="kw">void</span> UpdateSharedData()
+{
+    FScopeLock Lock(&amp;CriticalSection);   <span class="cm">// 생성자에서 Lock()</span>
+    SharedData++;
+}                                       <span class="cm">// 소멸자에서 Unlock() 자동 호출 — Unlock 깜빡할 일이 없다</span></pre>
+    <p class="hint">자원 해제를 <b>"사람이 기억해야 할 일"에서 "언어가 보장해주는 일"로 옮긴 것</b>이 RAII의 핵심이다.</p>
+  </div>
+</div></section>
+
+<section id="smart"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 스마트 포인터로</div>
+  <h2 class="sec"><span class="n">7</span>RAII의 다음 단계가 스마트 포인터인 이유</h2>
+  <p class="lead"><code>new</code>로 잡은 메모리도 결국 "획득한 자원"이니, 똑같이 소멸자에 <code>delete</code>를 묶으면 된다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FSimpleOwningPtr
+{
+<span class="kw">public</span>:
+    FSimpleOwningPtr(AActor* InPtr) : Ptr(InPtr) {}
+    ~FSimpleOwningPtr() { <span class="good">delete Ptr;</span> }       <span class="cm">// 소멸자에서 자동 delete — 사실상 TUniquePtr의 원리 그대로</span>
+    AActor* Get() <span class="kw">const</span> { <span class="kw">return</span> Ptr; }
+<span class="kw">private</span>:
+    AActor* Ptr;
+};</pre>
+    <p class="hint"><code>TSharedPtr</code>는 여기에 "몇 명이 같이 소유하는지" 세는 <b>참조 카운트</b>를 얹어서, 마지막 소유자의 소멸자가 실행될 때만 <code>delete</code>하도록 확장한 것이다. "delete 깜빡함", "이미 delete한 걸 또 delete함"이 원천적으로 줄어든다 (11강).</p>
+  </div>
+</div></section>
+
+<section id="order"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 눈으로 확인</div>
+  <h2 class="sec"><span class="n">8</span>생성/소멸 순서 — 선언 순서가 결정한다</h2>
+  <p class="lead">멤버는 <b>클래스에 선언한 순서</b>로 생성되고, 소멸은 <b>정반대 순서</b>다. 초기화 리스트에 적은 순서는 무시된다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FOuter
+{
+<span class="kw">public</span>:
+    FOuter() : <span id="ordInit"><span class="hl">A</span>(TEXT("A")), <span class="hl">B</span>(TEXT("B"))</span> { UE_LOG(..., TEXT("Outer 생성")); }
+    ~FOuter() { UE_LOG(..., TEXT("Outer 소멸")); }
+<span class="kw">private</span>:
+    FInner <span id="ordDecl"><span class="hl">A</span>; FInner <span class="hl">B</span>;</span>   <span class="cm">// 선언 순서</span>
+};</pre>
+    <div class="ordbtn">
+      <button class="btn" id="ordAB">선언 순서 A, B · 리스트 A, B</button>
+      <button class="btn ghost" id="ordBA">선언 순서 A, B · 리스트 B, A (다르게 씀)</button>
+    </div>
+    <div class="evlog" id="ordLog"><div>버튼을 눌러 출력 순서를 확인하자.</div></div>
+    <p class="hint">리스트를 <b>B, A</b>로 적어도 실제 순서는 선언 순서(A → B)다. 나중에 생긴 게 먼저 죽는다(<b>LIFO</b> — 5강 Stack과 같은 원리). 리스트 순서와 선언 순서를 맞춰 쓰는 게 안전한 이유: 한 멤버가 다른 멤버를 참조해 초기화하면 아직 초기화 안 된 멤버를 볼 수 있다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">9</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 면접 대비</div>
+  <h2 class="sec"><span class="n">10</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 shared_ptr의 참조 카운트 증가/감소는 스레드 안전한가요?"</i> → OS 9강(Atomic과 Lock-Free)과 연결. 참조 카운트 자체는 atomic으로 안전하지만 가리키는 객체의 동시 접근은 별개 문제라고 짚어주면 된다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 11 · 마무리</div>
+  <h2 class="sec"><span class="n">11</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="02강_C++_캐스팅_4형제.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 2강 — C++ 캐스팅 4형제</div></div></a>
+  <a class="nx" href="04강_배열_vs_LinkedList.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">4강 — 배열 vs LinkedList →</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 3강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"멤버 초기화 리스트나 본문 대입이나 결국 똑같다"','기본 타입은 차이가 거의 없지만 클래스 멤버는 본문 대입이 <span class="truth">"기본 생성 + 대입" 두 단계</span>라 비효율적이다. 게다가 <code>const</code>/참조 멤버는 본문 대입 자체가 불가능해 초기화 리스트가 필수다.'],
+ ['"생성자를 안 쓰면 멤버는 자동으로 0으로 초기화된다"','아니다. 클래스 타입 멤버는 자기 기본 생성자로 초기화되지만 <code>int32/float/포인터</code>는 <span class="truth">값이 보장되지 않는다.</span> <code>int32 Count = 0;</code>처럼 직접 기본값을 줘야 안전하다.'],
+ ['"포인터 멤버가 있는 클래스도 복사하면 알아서 잘 복사된다"','암시적 복사 생성자는 포인터 <span class="truth">값만</span> 복사한다(얕은 복사). 소유한 자원이면 두 객체가 같은 자원을 가리키게 되어 이중 해제나 댕글링 포인터로 이어진다.'],
+ ['"소멸자는 delete를 명시적으로 불러야만 실행된다"','지역(스택) 객체는 <span class="truth">스코프를 벗어나는 순간 자동으로</span> 소멸자가 실행된다. <code>delete</code>가 필요한 건 <code>new</code>로 만든 힙 객체뿐이다. RAII가 성립하는 이유가 바로 이 보장이다.'],
+ ['"예외가 발생하면 소멸자가 안 불릴 수도 있다"','예외로 빠져나가는 경우(스택 언와인딩)에도 그 스코프의 지역 객체 소멸자는 <span class="truth">정상 호출된다.</span> 그래서 RAII가 예외 안전성에도 쓰인다.']
+];
+var QA=[
+ ['멤버 초기화 리스트와 생성자 본문 대입의 차이는 뭔가요?','초기화 리스트는 멤버를 <b>해당 값으로 바로 생성</b>하고, 본문 대입은 기본 생성한 뒤 대입 연산자로 덮어씁니다. 클래스 멤버는 한 단계 더 거쳐 비효율적이고, <b>const나 참조 멤버는 대입이 불가능</b>해서 초기화 리스트가 필수입니다.'],
+ ['소멸자는 정확히 언제 호출되나요?','지역 변수는 <b>선언된 스코프를 벗어날 때</b>, new로 만든 객체는 delete를 호출할 때, 스마트 포인터로 감싼 객체는 마지막 소유자가 사라질 때입니다. return이나 예외로 빠져나가도 지역 객체 소멸자는 반드시 실행됩니다.'],
+ ['RAII가 뭔가요?','<b>자원 획득을 생성자에, 해제를 소멸자에 묶는</b> 패턴입니다. 스코프를 벗어나면 소멸자가 자동 호출되는 걸 이용해, 파일 핸들·락·메모리를 매 return마다 직접 해제하지 않고 언어 차원에서 보장받습니다.'],
+ ['포인터 멤버가 있는 클래스의 기본 복사 생성자를 그대로 써도 되나요?','소유한 자원이면 안 됩니다. 암시적 복사 생성자는 <b>포인터 값만 복사하는 얕은 복사</b>라 두 객체가 같은 메모리를 가리키고, 한쪽이 해제하면 다른 쪽은 댕글링 포인터가 됩니다. 복사 생성자를 직접 정의하거나 스마트 포인터로 소유권을 명확히 해야 합니다.'],
+ ['RAII가 스마트 포인터로 어떻게 이어지나요?','new로 얻은 메모리도 관리할 자원이라 해제를 소멸자에 묶으면 스마트 포인터가 됩니다. <b>unique_ptr</b>은 소멸자에서 바로 delete하고, <b>shared_ptr</b>은 참조 카운트를 둬서 마지막 소유자의 소멸자가 실행될 때만 delete합니다.'],
+ ['초기화 리스트 순서를 선언 순서와 다르게 쓰면 어떻게 되나요?','실제 순서는 리스트가 아니라 <b>클래스의 멤버 선언 순서</b>를 따릅니다. 한 멤버가 다른 멤버를 참조해 초기화하면 아직 초기화 안 된 멤버를 참조하는 버그가 될 수 있어서 순서를 맞춰 쓰는 게 안전합니다.'],
+ ['함수 안에서 예외가 발생해도 RAII 자원은 제대로 해제되나요?','됩니다. 스택 언와인딩이 일어나도 그 스코프의 지역 객체 소멸자는 정상 호출되므로 락이나 파일 핸들을 RAII로 감싸두면 예외 상황에서도 새지 않습니다.']
+];
+var CK=['멤버 초기화 리스트와 본문 대입의 차이, const/참조 멤버가 초기화 리스트를 강제하는 이유를 안다','암시적 기본 생성자가 기본 타입 멤버를 0으로 보장하지 않는다는 걸 안다','포인터 멤버 클래스에서 암시적 복사 생성자가 왜 위험한지(얕은 복사) 설명할 수 있다','소멸자가 호출되는 정확한 시점(스코프 종료, delete, 스마트 포인터 소유자 소멸)을 구분한다','RAII가 뭔지, 왜 스마트 포인터의 원리로 이어지는지 설명할 수 있다'];
+var KEY='cpp03-check';
+
+/* 킬러: 함수 종료 경로 시뮬레이터 */
+(function(){
+  var mode='manual',runs=0,leaks=0;
+  var codeBox=document.getElementById('codeBox'),ev=document.getElementById('evLog');
+  var CODE={
+    manual:['void LoadLevelConfig(const FString& Path) {','  FILE* File = fopen(...);            // 획득','  if (File == nullptr) { return; }','  if (!ParseConfig(File)) { return; }    // fclose 없음','  if (!ValidateConfig(File)) { return; } // 나중에 추가된 경로','  fclose(File);','}'],
+    raii:['void LoadLevelConfig(const FString& Path) {','  FScopedFile ScopedFile(Path);       // 생성자: fopen','  if (ScopedFile.Get() == nullptr) { return; }','  if (!ParseConfig(ScopedFile.Get())) { return; }','  if (!ValidateConfig(ScopedFile.Get())) { return; }','  // fclose를 직접 쓰지 않는다','}   // ← 어떤 경로든 여기서 소멸자가 fclose']
+  };
+  function draw(cls){
+    codeBox.innerHTML='';
+    CODE[mode].forEach(function(t,i){
+      var d=document.createElement('div');d.className='ln'+((cls&&cls[i])?' '+cls[i]:'');
+      d.innerHTML='<span class="no">'+(i+1)+'</span><span></span>';d.lastChild.textContent=t;codeBox.appendChild(d);
+    });
+  }
+  function stats(){document.getElementById('stRuns').textContent=runs;var l=document.getElementById('stLeak');l.textContent=leaks;l.className='v'+(leaks>0?' warn':'');}
+  function exec(p){
+    runs++;
+    var hit={},lines=[];
+    var upto={A:2,B:3,C:4,D:5}[p];  // 마지막으로 실행되는 줄 index(0-based) — D는 fclose 줄
+    for(var i=0;i<=upto;i++)hit[i]='hit';
+    var opened=(p!=='A');
+    lines.push('<div>▶ 함수 시작</div>');
+    if(mode==='manual'){
+      lines.push(opened?'<div class="a">fopen → 핸들 열림</div>':'<div>fopen 실패 → 열린 핸들 없음</div>');
+      if(p==='A'){lines.push('<div>return (열린 게 없으니 정리할 것도 없다)</div>');}
+      else if(p==='D'){hit[5]='dtor';lines.push('<div class="g">fclose(File) 실행 ✔ 핸들 닫힘</div>');}
+      else{hit[upto]='leak';leaks++;lines.push('<div class="r">return — fclose를 지나치지 못했다 ✘ 핸들 누수 (+1)</div>');}
+    }else{
+      lines.push(opened?'<div class="a">생성자: fopen → 핸들 열림</div>':'<div class="a">생성자: fopen 실패 (File == nullptr)</div>');
+      if(p==='D'){hit[6]='dtor';}else{hit[upto]='hit';hit[6]='dtor';}
+      lines.push('<div>'+(p==='D'?'함수 끝 — 스코프 종료':'return — 스코프 종료')+'</div>');
+      lines.push(opened?'<div class="g">소멸자: fclose 자동 실행 ✔ 핸들 닫힘</div>':'<div class="g">소멸자: 닫을 핸들 없음 ✔</div>');
+    }
+    draw(hit);ev.innerHTML=lines.join('');stats();
+  }
+  document.querySelectorAll('.modetoggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');mode=b.dataset.m;runs=0;leaks=0;draw();ev.innerHTML='<div>경로 버튼을 눌러 함수를 실행해보자.</div>';stats();
+    });
+  });
+  document.querySelectorAll('#paths button').forEach(function(b){b.addEventListener('click',function(){exec(b.dataset.p);});});
+  document.getElementById('bReset').addEventListener('click',function(){runs=0;leaks=0;draw();ev.innerHTML='<div>경로 버튼을 눌러 함수를 실행해보자.</div>';stats();});
+  draw();stats();
+})();
+
+/* 생성/소멸 순서 미니 데모 */
+(function(){
+  var log=document.getElementById('ordLog');
+  function show(alt){
+    document.getElementById('ordInit').innerHTML=alt?'<span class="hl">B</span>(TEXT("B")), <span class="hl">A</span>(TEXT("A"))':'<span class="hl">A</span>(TEXT("A")), <span class="hl">B</span>(TEXT("B"))';
+    var l=['Inner(A) 생성','Inner(B) 생성','Outer 생성','Outer 소멸','Inner(B) 소멸','Inner(A) 소멸'];
+    log.innerHTML=l.map(function(t,i){return '<div class="'+(i<3?'a':'g')+'">'+(i+1)+'. '+t+'</div>';}).join('')+(alt?'<div class="r">→ 리스트를 B, A로 적었지만 실제 순서는 선언 순서(A → B)</div>':'<div>→ 생성은 선언 순서, 소멸은 그 역순</div>');
+  }
+  document.getElementById('ordAB').addEventListener('click',function(){show(false);});
+  document.getElementById('ordBA').addEventListener('click',function(){show(true);});
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

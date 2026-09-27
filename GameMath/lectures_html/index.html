@@ -108,7 +108,7 @@ footer .reset:hover{border-color:var(--red);color:var(--red)}
     <div class="top"><span class="t">전체 학습 진행</span><span class="n" id="ovNum">0%</span></div>
     <div class="pbar"><i id="ovBar"></i></div>
     <div class="stats">
-      <span>인터랙티브 <b id="ovLive">5</b> / 9강</span>
+      <span>인터랙티브 <b id="ovLive">8</b> / 9강</span>
       <span>셀프체크 <b id="ovCheck">0</b> 항목 완료</span>
     </div>
   </div>
@@ -124,15 +124,15 @@ footer .reset:hover{border-color:var(--red);color:var(--red)}
 <script>
 var PARTS=[
   {id:'p1',cls:'p1',pill:'PART 1',title:'벡터 기초',desc:'게임 수학의 언어',accent:'var(--ind2)',lecs:[
-    {n:1,t:'벡터란 무엇인가',one:'위치·방향·속도로서의 벡터, FVector, 스칼라와의 차이.'},
-    {n:2,t:'벡터의 크기와 정규화',one:'Magnitude, Normalize — 방향만 필요할 때 왜 정규화하는가.'}
+    {n:1,t:'벡터란 무엇인가',one:'점을 드래그하며 위치·변위·방향 벡터의 차이를 확인한다.',file:'01강_벡터란_무엇인가.html',killer:'벡터 놀이터',checks:5,key:'gm01-check'},
+    {n:2,t:'벡터의 크기와 정규화',one:'대각선 이동이 41% 빨라지는 버그로 정규화와 NaN 함정을 확인한다.',file:'02강_벡터의_크기와_정규화.html',killer:'대각선 이동 시뮬레이터',checks:5,key:'gm02-check'}
   ]},
   {id:'p2',cls:'p2',pill:'PART 2',title:'내적과 외적',desc:'면접에서 반드시 나온다',accent:'var(--grn)',lecs:[
     {n:3,t:'내적 (Dot Product)',one:'FOV 시뮬레이터로 각도·투영 개념을 직접 확인한다.',file:'03강_내적_Dot_Product.html',killer:'FOV 판정 시뮬레이터',checks:6,key:'gm03-check'},
     {n:4,t:'외적 (Cross Product)',one:'슬라이더로 타겟을 돌려보며 좌/우 판정 부호를 확인한다.',file:'04강_외적_Cross_Product.html',killer:'좌우 판정 시뮬레이터',checks:6,key:'gm04-check'}
   ]},
   {id:'p3',cls:'p3',pill:'PART 3',title:'좌표계와 회전',desc:'',accent:'var(--cyan)',lecs:[
-    {n:5,t:'좌표계와 변환',one:'월드/로컬 좌표, FTransform, 부모-자식 좌표 변환.'},
+    {n:5,t:'좌표계와 변환',one:'캐릭터를 움직이고 돌리며 월드/로컬 좌표와 변환 순서 버그를 확인한다.',file:'05강_좌표계와_변환.html',killer:'트랜스폼 놀이터',checks:6,key:'gm05-check'},
     {n:6,t:'Look-At — 회전값 구하기',one:'터렛 조준 시뮬레이터로 atan2와 atan의 차이를 확인한다.',file:'06강_Look_At_회전값_구하기.html',killer:'터렛 조준 시뮬레이터',checks:6,key:'gm06-check'}
   ]},
   {id:'p4',cls:'p4',pill:'PART 4',title:'충돌과 판정',desc:'실전에서 제일 많이 씀',accent:'var(--orange)',lecs:[

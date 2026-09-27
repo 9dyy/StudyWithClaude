@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>5강 · Stack과 Queue — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: BFS vs DFS 격자 탐색 */
+.maze{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin-top:6px;max-width:640px;margin-left:auto;margin-right:auto}
+.maze .c{aspect-ratio:1;border-radius:6px;background:var(--bg2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:rgba(255,255,255,.8);transition:background .15s}
+.maze .c.w{background:#05070f;border-color:#05070f}
+.maze .c.v{background:rgba(var(--accrgb),.55);border-color:rgba(var(--accrgb),.8)}
+.maze .c.f{background:rgba(34,211,238,.35);border-color:var(--cyan)}
+.maze .c.p{background:var(--amber);border-color:var(--amber);color:#3a2a00}
+.maze .c.s{background:var(--grn);border-color:var(--grn);color:#04221a}
+.maze .c.g{background:var(--red);border-color:var(--red);color:#fff}
+.fstrip{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-top:14px;min-height:34px;justify-content:center}
+.fstrip .tk{font-family:ui-monospace,monospace;font-size:11px;padding:4px 7px;border-radius:7px;background:var(--card2);border:1px solid var(--line);color:var(--dim)}
+.fstrip .tk.nx{border-color:var(--amber);color:var(--amber);font-weight:800}
+.fstrip .lb{font-size:11.5px;color:var(--faint)}
+.legend{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px;font-size:11.5px;color:var(--faint)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:middle;margin-right:4px}
+/* Undo/Redo 미니 */
+.ur{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+.ur .col{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:150px}
+.ur .col h4{font-size:12.5px;color:var(--dim);margin-bottom:8px}
+.ur .col .it{font-size:12.5px;padding:5px 8px;border-radius:7px;background:var(--bg2);border:1px solid var(--line);margin-bottom:5px}
+.ur .col.us .it:first-of-type{border-color:var(--acc);color:var(--txt)}
+.ur .col.rs .it:first-of-type{border-color:var(--cyan);color:var(--txt)}
+.ur .col .empty{font-size:12px;color:var(--faint)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>5강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#stack">Stack</a>
+    <a class="chip" href="#queue">Queue</a>
+    <a class="chip" href="#sim">BFS vs DFS</a>
+    <a class="chip" href="#impl">내부 구현</a>
+    <a class="chip" href="#combo">콤보</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 2 · 자료구조 기본기</span>
+  <h1>Stack과 <span class="g">Queue</span></h1>
+  <p class="sub">LIFO/FIFO 정의를 외우는 게 아니라, Undo와 커맨드 큐가 왜 각각 그 구조에 딱 맞는지 — 그리고 컨테이너 하나만 바꿔도 BFS가 DFS가 되는 걸 직접 본다.</p>
+  <div class="meta">
+    <div class="m">↕️ LIFO · FIFO</div>
+    <div class="m">🧩 선수지식 <b>4강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>Undo를 배열 인덱스로 짜다가 꼬인 코드</h2>
+  <p class="lead">레벨 에디터에 되돌리기(Ctrl+Z)를 넣어야 한다. 처음엔 배열에 액션을 쌓고 인덱스로 관리했다.</p>
+  <div class="card">
+    <pre class="code">TArray&lt;FEditAction&gt; ActionHistory;
+int32 CurrentIndex = -1;
+
+<span class="kw">void</span> Undo()
+{
+    <span class="kw">if</span> (CurrentIndex &lt; 0) <span class="kw">return</span>;
+    ActionHistory[CurrentIndex].Revert();
+    <span class="bad">CurrentIndex--;</span>   <span class="cm">// 이 인덱스 관리가 점점 꼬인다 — Redo, "되돌린 뒤 새 액션" 처리까지 넣으면 조건문 폭발</span>
+}</pre>
+    <p style="margin-top:16px">사실 이 문제는 <b>"가장 최근에 한 일을 가장 먼저 되돌린다"</b> — 정확히 <b>LIFO</b> 구조가 필요한 상황이다. 자료구조 이름을 몰라도 "마지막에 쌓은 것부터 꺼낸다"는 동작이 필요했던 거고, 그게 <b>Stack</b>이다.</p>
+  </div>
+</div></section>
+
+<section id="stack"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · Stack</div>
+  <h2 class="sec"><span class="n">2</span>LIFO — 마지막에 넣은 걸 먼저 꺼낸다</h2>
+  <p class="lead">한쪽 끝에서만 넣고(<code>Push</code>) 빼는(<code>Pop</code>) 구조. 접시를 쌓고 위에서부터 빼는 그림이다. 아래 에디터에서 액션을 하고 Undo/Redo를 눌러보자 — <b>스택 두 개</b>가 전부다.</p>
+  <div class="card">
+    <div class="btnrow" style="margin-top:0">
+      <button class="btn" data-a="🧱 블록 배치">🧱 블록 배치</button>
+      <button class="btn" data-a="🌲 나무 추가">🌲 나무 추가</button>
+      <button class="btn" data-a="📦 상자 이동">📦 상자 이동</button>
+      <button class="btn ghost" id="bUndo">↶ Undo</button>
+      <button class="btn ghost" id="bRedo">↷ Redo</button>
+    </div>
+    <div class="ur">
+      <div class="col"><h4>🎬 현재 씬 (아래가 먼저 한 일)</h4><div id="scene"></div></div>
+      <div class="col us"><h4>UndoStack (맨 위 = Pop 대상)</h4><div id="undoS"></div></div>
+      <div class="col rs"><h4>RedoStack</h4><div id="redoS"></div></div>
+    </div>
+    <div class="simmsg" id="urMsg">액션을 몇 개 하고 Undo → 새 액션을 해보자. Redo 스택이 비워지는 걸 볼 수 있다.</div>
+    <pre class="code"><span class="kw">void</span> RecordAction(<span class="kw">const</span> FEditAction&amp; A) { UndoStack.Push(A); <span class="hl">RedoStack.Empty();</span> }   <span class="cm">// 새 액션 → Redo 무효화</span>
+<span class="kw">void</span> Undo() { FEditAction A = UndoStack.Pop(); A.Revert();  RedoStack.Push(A); }   <span class="cm">// 가장 최근 액션부터 (LIFO)</span>
+<span class="kw">void</span> Redo() { FEditAction A = RedoStack.Pop(); A.Reapply(); UndoStack.Push(A); }</pre>
+    <p class="hint">인덱스로 손수 관리하던 코드가 Stack 두 개로 정리됐다. 핵심은 <code>Push/Pop</code>이라는 이름이 아니라 <b>"가장 최근 걸 먼저 되돌린다 = LIFO"</b>를 알아채는 것. <b>함수 호출 스택</b>도 정확히 이 구조다(C가 끝나야 B로, B가 끝나야 A로). 3강의 "멤버 소멸이 생성의 역순"도 같은 원리다.</p>
+  </div>
+</div></section>
+
+<section id="queue"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · Queue</div>
+  <h2 class="sec"><span class="n">3</span>FIFO — 먼저 넣은 걸 먼저 꺼낸다</h2>
+  <p class="lead">한쪽 끝에서 넣고(<code>Enqueue</code>) 반대쪽에서 꺼낸다(<code>Dequeue</code>). 놀이기구 줄서기 그대로다. 언리얼에선 <code>TQueue</code>(스레드 안전 옵션 지원).</p>
+  <div class="card">
+    <pre class="code">TQueue&lt;FUnitCommand&gt; CommandQueue;
+
+<span class="kw">void</span> AUnit::IssueCommand(<span class="kw">const</span> FUnitCommand&amp; Cmd) { CommandQueue.Enqueue(Cmd); }   <span class="cm">// 명령을 큐 끝에 추가</span>
+
+<span class="kw">void</span> AUnit::Tick(<span class="kw">float</span> DeltaTime)
+{
+    <span class="kw">if</span> (bIsExecutingCommand) <span class="kw">return</span>;
+    FUnitCommand Next;
+    <span class="kw">if</span> (CommandQueue.Dequeue(Next)) { ExecuteCommand(Next); }   <span class="cm">// 가장 먼저 내려진 명령부터</span>
+}</pre>
+    <p class="hint">RTS 유닛에 "이동 → 공격 → 방어"를 예약해두면 <b>내린 순서 그대로</b> 실행돼야 한다 — FIFO가 딱 맞는다. Stack을 쓰면 가장 나중에 내린 명령이 먼저 실행돼 플레이어 의도와 어긋난다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>컨테이너 하나만 바꿨는데 탐색이 달라진다 — BFS vs DFS</h2>
+  <p class="lead">길찾기 코드에서 <b>frontier(다음에 방문할 칸들)</b>를 담는 컨테이너를 Queue ↔ Stack으로 바꿔보자. 나머지 로직(이웃 탐색, 방문 체크)은 한 글자도 안 바뀐다.</p>
+  <div class="card">
+    <div class="modetoggle"><button class="on" data-m="q">📥 Queue (앞에서 꺼냄) → BFS</button><button data-m="s">📚 Stack (뒤에서 꺼냄) → DFS</button></div>
+    <div class="maze" id="maze"></div>
+    <div class="legend"><span><i style="background:var(--grn)"></i>시작</span><span><i style="background:var(--red)"></i>목표</span><span><i style="background:rgba(34,211,238,.6)"></i>frontier(대기 중)</span><span><i style="background:rgba(168,85,247,.7)"></i>방문 순서(숫자)</span><span><i style="background:var(--amber)"></i>찾은 경로</span></div>
+    <div class="fstrip" id="fstrip"></div>
+    <div class="stats">
+      <div class="s"><div class="v" id="stVis">0</div><div class="l">방문한 칸 수</div></div>
+      <div class="s"><div class="v" id="stPath">-</div><div class="l">찾은 경로 길이</div></div>
+      <div class="s"><div class="v" id="stMax">0</div><div class="l">frontier 최대 크기</div></div>
+    </div>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow"><button class="btn" id="bStep">▶ 1스텝</button><button class="btn" id="bPlay">⏵ 재생</button><button class="btn" id="bAll">⏩ 끝까지</button><button class="btn ghost" id="bReset">↺ 초기화</button></div>
+    <pre class="code">TQueue&lt;FGridCell&gt; Frontier;              <span class="cm">// ← 이 한 줄만 TArray(Stack)로 바꾸면 DFS</span>
+Frontier.Enqueue(StartCell);  Visited.Add(StartCell);
+
+FGridCell Current;
+<span class="kw">while</span> (Frontier.Dequeue(Current))
+{
+    <span class="kw">if</span> (Current == GoalCell) <span class="kw">break</span>;
+    <span class="kw">for</span> (<span class="kw">const</span> FGridCell&amp; N : GetNeighbors(Current))
+        <span class="kw">if</span> (!Visited.Contains(N)) { Visited.Add(N); Frontier.Enqueue(N); }   <span class="cm">// 가까운 순서를 지키려고 큐 끝에</span>
+}</pre>
+    <p class="hint"><b>Queue</b>는 가까운 칸부터 물결처럼 퍼지며 <b>최단 경로</b>를 보장한다. <b>Stack</b>은 가장 최근에 넣은 이웃을 먼저 파고들어 한쪽으로 깊게 들어가고 경로가 구불구불하다. "BFS는 Queue, DFS는 Stack" — 자료구조 선택이 알고리즘의 성격을 결정한다.</p>
+  </div>
+</div></section>
+
+<section id="impl"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 내부 구현</div>
+  <h2 class="sec"><span class="n">5</span>내부적으로 뭘로 구현하나 — 배열이냐 LinkedList냐</h2>
+  <div class="card">
+    <div class="two">
+      <div class="box good"><h4>Stack → 배열(TArray)이 정석</h4><p>Push/Pop이 전부 <b>끝에서</b> 일어나 O(1). 4강에서 본 배열의 캐시 지역성 이점을 그대로 가져간다.</p></div>
+      <div class="box bad"><h4>Queue를 배열 그대로 쓰면</h4><p>앞에서 빼는 <code>RemoveAt(0)</code>이 나머지를 전부 앞으로 당겨야 해서 <b>O(n)</b>. 4강의 "앞 삭제는 배열이 O(n)"과 같은 문제.</p></div>
+    </div>
+    <pre class="code"><span class="cm">방법 1: 원형 버퍼 — 배열이지만 앞/뒤 인덱스를 순환시켜 "앞에서 빼기"도 인덱스만 옮기는 O(1)</span>
+┌───┬───┬───┬───┬───┐
+│ C │ D │   │   │ A │B│   ← Head가 뒤쪽으로 순환하며 앞에서 뺀 자리를 재활용
+└───┴───┴───┴───┴───┘
+      ↑Tail          ↑Head (순환)
+<span class="cm">방법 2: 연결 리스트 기반 — TQueue가 내부적으로 사용</span></pre>
+    <p class="hint"><b>Queue는 앞/뒤 양쪽에서 O(1)로 넣고 뺄 수 있어야 쓸모가 있다.</b> 그걸 어떤 내부 구조로 구현하느냐는 4강의 배열 vs LinkedList 트레이드오프로 다시 판단하는 문제다.</p>
+  </div>
+</div></section>
+
+<section id="combo"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 코드로 체감</div>
+  <h2 class="sec"><span class="n">6</span>스킬 콤보 입력 검증</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> FComboValidator::PushInput(EComboInput Input)
+{
+    InputStack.Push(Input);
+    <span class="kw">if</span> (InputStack.Num() &gt; MaxComboLength) { InputStack.RemoveAt(0); }   <span class="cm">// O(n)이지만 길이가 5라 무시 가능</span>
+}
+
+<span class="kw">bool</span> FComboValidator::CheckCombo(<span class="kw">const</span> TArray&lt;EComboInput&gt;&amp; Pattern) <span class="kw">const</span>
+{
+    <span class="kw">if</span> (InputStack.Num() &lt; Pattern.Num()) <span class="kw">return</span> <span class="kw">false</span>;
+    int32 Offset = InputStack.Num() - Pattern.Num();          <span class="cm">// 스택 "맨 위" 쪽 N개만 패턴과 비교</span>
+    <span class="kw">for</span> (int32 i = 0; i &lt; Pattern.Num(); ++i)
+        <span class="kw">if</span> (InputStack[Offset + i] != Pattern[i]) <span class="kw">return</span> <span class="kw">false</span>;
+    <span class="kw">return</span> <span class="kw">true</span>;
+}</pre>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"우선순위가 있는 커맨드(급한 명령 먼저)는 어떻게 처리하나요?"</i> → 6강에서 다룰 우선순위 큐/힙 같은 트리 기반 자료구조로 이어진다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_배열_vs_LinkedList.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 4강 — 배열 vs LinkedList</div></div></a>
+  <a class="nx" href="06강_해시맵과_트리_맛보기.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">6강 — 해시맵과 트리 맛보기 →</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 5강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"Stack과 Queue는 완전히 새로운 자료구조라 따로 구현해야 한다"','대부분 배열이나 LinkedList <span class="truth">위에 인터페이스만 씌운 것</span>이다. <code>TArray</code>에 Push/Pop만 쓰면 Stack, 앞뒤 양쪽을 O(1)로 다루게 감싸면 Queue다. "순서 제약을 지키는 개념"이지 다른 내부 구조가 아니다.'],
+ ['"Queue를 배열로 구현해도 Stack이랑 성능이 비슷하다"','아니다. 배열에서 앞을 빼면(<code>RemoveAt(0)</code>) 나머지를 전부 당겨야 해서 <span class="truth">O(n)</span>이다. 끝에서만 넣고 빼는 Stack과 다르다. 원형 버퍼 등이 필요하다.'],
+ ['"BFS와 DFS는 알고리즘 로직 자체가 다르다"','핵심 로직(이웃 탐색, 방문 체크)은 거의 같고 <span class="truth">탐색 순서를 관리하는 자료구조가 Queue냐 Stack이냐</span>만 다르다. 시뮬레이터에서 컨테이너만 바꿨을 뿐이다.'],
+ ['"함수 호출 스택은 그냥 비유일 뿐이다"','아니다. CPU가 함수 호출/리턴을 관리하는 콜 스택은 <span class="truth">진짜 LIFO로 동작하는 메모리 영역</span>이다. 지역 변수, 리턴 주소, 인자가 그 위에 쌓였다 빠진다(OS 3강의 스택 영역).'],
+ ['"Undo/Redo는 Stack 하나로 충분하다"','Undo만이면 하나로 되지만 Redo까지 하려면 <span class="truth">Undo 스택 + Redo 스택 두 개</span>가 필요하다. Undo로 꺼낸 걸 Redo에 쌓고, 새 액션을 기록하면 Redo를 비워야 어긋나지 않는다.']
+];
+var QA=[
+ ['Stack과 Queue의 차이는 뭔가요?','Stack은 <b>LIFO</b>(마지막에 넣은 걸 먼저 꺼냄), Queue는 <b>FIFO</b>(먼저 넣은 걸 먼저 꺼냄)입니다. Undo처럼 최근 작업부터 되돌릴 땐 Stack, 커맨드 처리처럼 들어온 순서를 지켜야 할 땐 Queue를 씁니다.'],
+ ['Undo 기능을 구현한다면 어떤 자료구조를 쓰시겠어요?','<b>Stack</b>입니다. 가장 최근 작업을 가장 먼저 되돌려야 하니 LIFO가 맞습니다. Redo까지 지원하려면 Undo 스택에서 꺼낸 작업을 Redo 스택에 쌓는 <b>스택 두 개</b>를 씁니다.'],
+ ['BFS에서 왜 Queue를 쓰나요? Stack을 쓰면요?','BFS는 가까운 노드부터 탐색해야 하는데 Queue는 먼저 넣은 이웃을 먼저 꺼내 그 순서를 보장합니다. Stack을 쓰면 가장 최근 이웃을 먼저 파고들어 <b>DFS</b>가 됩니다.'],
+ ['Stack은 보통 어떤 자료구조로 구현하나요?','<b>배열</b>로 구현합니다. Push/Pop이 전부 끝에서 일어나 O(1)이고 배열의 캐시 지역성도 그대로 가져갑니다.'],
+ ['Queue를 배열로 그대로 구현하면 어떤 문제가 생기나요?','앞에서 원소를 빼는 연산이 나머지를 한 칸씩 당겨야 해서 <b>O(n)</b>입니다. 그래서 <b>원형 버퍼</b>나 연결 리스트 기반으로 구현해 앞뒤 연산을 O(1)로 만듭니다.'],
+ ['함수 호출과 Stack 자료구조는 무슨 관계인가요?','CPU는 콜 스택에 지역 변수와 리턴 주소를 쌓고, 리턴하면 가장 최근에 쌓인 것부터 빠집니다. <b>LIFO</b>라서 Stack 자료구조와 원리가 같습니다.'],
+ ['RTS 유닛의 커맨드 큐를 구현한다면 어떤 자료구조가 맞을까요?','<b>Queue</b>입니다. 플레이어가 내린 순서대로 실행돼야 하니 FIFO가 자연스럽습니다. Stack이면 가장 나중 명령이 먼저 실행돼 의도와 어긋납니다.']
+];
+var CK=['LIFO와 FIFO를 정의하고 Undo, 커맨드 큐 예시와 연결해서 설명할 수 있다','BFS는 Queue, DFS는 Stack이라는 대응 관계와 그 이유를 안다','Stack이 왜 대부분 배열로 구현되는지(끝에서만 연산, 캐시 지역성) 설명할 수 있다','Queue를 배열로 그대로 구현하면 왜 문제가 되고, 원형 버퍼가 왜 필요한지 안다','함수 호출 스택이 실제 Stack 자료구조와 같은 원리로 동작한다는 걸 안다'];
+var KEY='cpp05-check';
+
+/* Undo/Redo 미니 시뮬레이터 */
+(function(){
+  var scene=[],U=[],R=[],n=0;
+  var elScene=document.getElementById('scene'),elU=document.getElementById('undoS'),elR=document.getElementById('redoS'),msg=document.getElementById('urMsg');
+  function list(el,arr,top){el.innerHTML='';if(!arr.length){el.innerHTML='<div class="empty">비어 있음</div>';return;}
+    var order=top?arr.slice().reverse():arr;order.forEach(function(a){var d=document.createElement('div');d.className='it';d.textContent=a.t;el.appendChild(d);});}
+  function draw(){list(elScene,scene,true);list(elU,U,true);list(elR,R,true);}
+  document.querySelectorAll('button[data-a]').forEach(function(b){b.addEventListener('click',function(){
+    var a={t:'#'+(++n)+' '+b.dataset.a};scene.push(a);U.push(a);
+    var had=R.length;R=[];
+    msg.textContent=had?'새 액션 → Redo 스택 '+had+'개가 무효화되어 비워졌다 (RedoStack.Empty())':'Push → UndoStack에 쌓임';draw();});});
+  document.getElementById('bUndo').addEventListener('click',function(){
+    if(!U.length){msg.textContent='UndoStack이 비어 있다';return;}
+    var a=U.pop();scene.pop();R.push(a);msg.textContent='Pop → '+a.t+' 되돌림 (가장 최근 액션부터: LIFO), RedoStack으로 이동';draw();});
+  document.getElementById('bRedo').addEventListener('click',function(){
+    if(!R.length){msg.textContent='RedoStack이 비어 있다';return;}
+    var a=R.pop();scene.push(a);U.push(a);msg.textContent='Pop → '+a.t+' 다시 적용, UndoStack으로 복귀';draw();});
+  draw();
+})();
+
+/* 킬러: BFS vs DFS */
+(function(){
+  var MAP=['S..........G','.....#......','.....#......','..####..###.','............','.#####.#####','............','............'];
+  var W=12,H=8,mode='q',cells=[],wall=[],start,goal,frontier,vis,par,order,cur,done,maxF,timer=null,foundPath;
+  var maze=document.getElementById('maze'),strip=document.getElementById('fstrip'),msgEl=document.getElementById('simMsg');
+  for(var y=0;y<H;y++)for(var x=0;x<W;x++){var ch=MAP[y][x],i=y*W+x;wall[i]=(ch==='#');if(ch==='S')start=i;if(ch==='G')goal=i;
+    var d=document.createElement('div');d.className='c';maze.appendChild(d);cells[i]=d;}
+  function nbrs(i){var x=i%W,y=(i/W)|0,r=[];
+    if(y>0)r.push(i-W);if(x<W-1)r.push(i+1);if(y<H-1)r.push(i+W);if(x>0)r.push(i-1);
+    return r.filter(function(j){return !wall[j];});}
+  function reset(){
+    if(timer){clearInterval(timer);timer=null;}
+    frontier=[start];vis={};vis[start]=true;par={};order={};cur=-1;done=false;maxF=1;foundPath=null;draw();
+    msgEl.textContent='▶ 1스텝을 눌러 frontier에서 한 칸씩 꺼내보자.';msgEl.className='simmsg';
+  }
+  function step(){
+    if(done)return;
+    if(!frontier.length){done=true;msgEl.textContent='frontier가 비었다 — 경로 없음';draw();return;}
+    var c=(mode==='q')?frontier.shift():frontier.pop();
+    cur=c;order[c]=Object.keys(order).length+1;
+    if(c===goal){
+      done=true;foundPath=[];var p=c;while(p!==undefined&&p!==start){foundPath.push(p);p=par[p];}foundPath.push(start);
+      msgEl.textContent=(mode==='q'?'📥 BFS':'📚 DFS')+' 도착! '+Object.keys(order).length+'칸을 방문했고 경로 길이는 '+(foundPath.length-1)+(mode==='q'?' (BFS는 최단 경로 보장)':' (DFS는 구불구불 돌아올 수 있다)');
+      msgEl.className='simmsg good';draw();return;
+    }
+    nbrs(c).forEach(function(nb){if(!vis[nb]){vis[nb]=true;par[nb]=c;frontier.push(nb);}});
+    if(frontier.length>maxF)maxF=frontier.length;
+    draw();
+  }
+  function draw(){
+    var pathSet={};if(foundPath)foundPath.forEach(function(p){pathSet[p]=1;});
+    var inF={};frontier.forEach(function(f){inF[f]=1;});
+    for(var i=0;i<W*H;i++){
+      var c=cells[i],cls='c';
+      if(wall[i])cls+=' w';else if(pathSet[i])cls+=' p';else if(i===start)cls+=' s';else if(i===goal)cls+=' g';else if(order[i])cls+=' v';else if(inF[i])cls+=' f';
+      c.className=cls;c.textContent=order[i]?order[i]:(i===start?'S':(i===goal?'G':''));
+    }
+    strip.innerHTML='';
+    var lb=document.createElement('span');lb.className='lb';lb.textContent=mode==='q'?'앞(Dequeue) →':'뒤(Pop) →';
+    var showL=frontier.slice();
+    if(mode==='s')showL=showL.reverse();
+    strip.appendChild(lb);
+    showL.slice(0,14).forEach(function(f,idx){var k=document.createElement('span');k.className='tk'+(idx===0?' nx':'');k.textContent='('+(f%W)+','+((f/W)|0)+')';strip.appendChild(k);});
+    if(showL.length>14){var m=document.createElement('span');m.className='lb';m.textContent='… +'+(showL.length-14);strip.appendChild(m);}
+    if(!showL.length){var e=document.createElement('span');e.className='lb';e.textContent='(비어 있음)';strip.appendChild(e);}
+    document.getElementById('stVis').textContent=Object.keys(order).length;
+    document.getElementById('stPath').textContent=foundPath?(foundPath.length-1):'-';
+    document.getElementById('stMax').textContent=maxF;
+  }
+  document.querySelectorAll('.modetoggle button').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});b.classList.add('on');mode=b.dataset.m;reset();});});
+  document.getElementById('bStep').addEventListener('click',step);
+  document.getElementById('bAll').addEventListener('click',function(){var g=0;while(!done&&g++<2000)step();});
+  document.getElementById('bPlay').addEventListener('click',function(){if(timer||done)return;timer=setInterval(function(){step();if(done){clearInterval(timer);timer=null;}},70);});
+  document.getElementById('bReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

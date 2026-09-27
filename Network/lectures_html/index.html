@@ -110,7 +110,7 @@ footer .reset:hover{border-color:var(--red);color:var(--red)}
     <div class="top"><span class="t">전체 학습 진행</span><span class="n" id="ovNum">0%</span></div>
     <div class="pbar"><i id="ovBar"></i></div>
     <div class="stats">
-      <span>인터랙티브 <b id="ovLive">2</b> / 16강</span>
+      <span>인터랙티브 <b id="ovLive">5</b> / 16강</span>
       <span>셀프체크 <b id="ovCheck">0</b> 항목 완료</span>
     </div>
   </div>
@@ -126,29 +126,29 @@ footer .reset:hover{border-color:var(--red);color:var(--red)}
 <script>
 var PARTS=[
   {id:'p1',cls:'p1',pill:'PART 1',title:'네트워크 기초',desc:'패킷이 게임에 도착하기까지',accent:'var(--cyan)',lecs:[
-    {n:1,t:'네트워크란 무엇인가',one:'왜 멀티플레이는 어려운가. OSI 7계층과 캡슐화.'},
-    {n:2,t:'IP 주소와 라우팅',one:'공인/사설 IP, NAT — 매치메이킹에서 상대 IP를 못 받는 이유.'},
-    {n:3,t:'포트와 소켓',one:'소켓 = IP + 포트. 한 서버가 수천 명을 받는 원리.'}
+    {n:1,t:'네트워크란 무엇인가',one:'캡슐화를 직접 눌러보며 위치 12바이트가 66바이트로 나가는 이유를 본다. OSI 7계층과 TCP/IP 4계층.',file:'01강_네트워크란.html',killer:'캡슐화 시뮬레이터',checks:5,key:'net01-check'},
+    {n:2,t:'IP 주소와 라우팅',one:'친구의 사설 IP·공인 IP·서버 중계·홀 펀칭으로 P2P를 직접 시도해본다 — 매치메이킹 서버가 필요한 이유.',file:'02강_IP주소와_라우팅.html',killer:'NAT 통과 시뮬레이터',checks:6,key:'net02-check'},
+    {n:3,t:'포트와 소켓',one:'패킷을 직접 던져 4-tuple로 연결이 구분되는 걸 확인한다 — 서버 하나가 수천 명을 받는 원리.',file:'03강_포트와_소켓.html',killer:'패킷 배달 시뮬레이터',checks:5,key:'net03-check'}
   ]},
   {id:'p2',cls:'p2',pill:'PART 2',title:'전송 계층',desc:'면접에서 가장 많이 물어보는 곳',accent:'var(--ind)',lecs:[
-    {n:4,t:'TCP — 신뢰성의 대가',one:'3-way handshake, 시퀀스 번호, ACK, 재전송.'},
-    {n:5,t:'UDP — 빠름의 대가',one:'비연결, 작은 헤더 — FPS가 UDP를 쓰는 이유.'},
+    {n:4,t:'TCP — 신뢰성의 대가',one:'연결·전송·유실·재전송·종료를 한 장면씩 재생하며 HOL 블로킹을 확인한다.',file:'04강_TCP_신뢰성의_대가.html',killer:'TCP 흐름 재생기',checks:5,key:'net04-check'},
+    {n:5,t:'UDP — 빠름의 대가',one:'유실률을 바꿔가며 순수 UDP·신뢰성 UDP·TCP처럼을 비교한다.',file:'05강_UDP_빠름의_대가.html',killer:'신뢰성 전략 비교 실험',checks:5,key:'net05-check'},
     {n:6,t:'TCP vs UDP, 게임은 뭘 쓰나',one:'데이터를 직접 분류해보고 신뢰성 UDP까지 이해한다.',file:'06강_TCP_vs_UDP_게임은_뭘쓰나.html',killer:'데이터 분류 게임',checks:5,key:'net06-check'},
-    {n:7,t:'흐름 제어·혼잡 제어와 Nagle',one:'슬라이딩 윈도우 — 게임이 Nagle을 꺼버리는 이유.'}
+    {n:7,t:'흐름 제어·혼잡 제어와 Nagle',one:'혼잡 윈도우 톱니와 Nagle 타임라인으로 게임이 Nagle을 끄는 이유를 눈으로 확인한다.',file:'07강_흐름제어_혼잡제어_Nagle.html',killer:'Nagle 타임라인 비교',checks:5,key:'net07-check'}
   ]},
   {id:'p3',cls:'p3',pill:'PART 3',title:'소켓 프로그래밍',desc:'직접 짜봐야 이해됨',accent:'var(--orange)',lecs:[
-    {n:8,t:'소켓 프로그래밍 기초',one:'socket/bind/listen/accept/connect의 역할.'},
-    {n:9,t:'블로킹·논블로킹과 I/O 멀티플렉싱',one:'한 스레드로 수천 연결 받기 — 언리얼 FSocket.'},
-    {n:10,t:'패킷 설계와 직렬화',one:'헤더 구조, 엔디안, TCP 경계 문제.'}
+    {n:8,t:'소켓 프로그래밍 기초',one:'서버·클라 함수를 직접 호출해 순서를 틀리면 어떻게 되는지 확인한다.',file:'08강_소켓_프로그래밍_기초.html',killer:'소켓 호출 시뮬레이터',checks:5,key:'net08-check'},
+    {n:9,t:'블로킹·논블로킹과 I/O 멀티플렉싱',one:'소켓 수백 개를 직접 감시하며 폴링·select·epoll/IOCP의 작업량을 비교한다.',file:'09강_블로킹_논블로킹_IO멀티플렉싱.html',killer:'소켓 감시 시뮬레이터',checks:5,key:'net09-check'},
+    {n:10,t:'패킷 설계와 직렬화',one:'합쳐지고 쪼개진 TCP 바이트에서 길이 접두사로 메시지를 복원한다.',file:'10강_패킷_설계와_직렬화.html',killer:'TCP 스트림 조립기',checks:5,key:'net10-check'}
   ]},
   {id:'p4',cls:'p4',pill:'PART 4',title:'애플리케이션 계층',desc:'로그인·상점·랭킹은 여기',accent:'var(--amber)',lecs:[
-    {n:11,t:'HTTP / HTTPS',one:'요청/응답, 상태 코드 — 언리얼 FHttpModule.'},
-    {n:12,t:'DNS',one:'도메인 → IP, 리졸빙과 캐싱.'},
-    {n:13,t:'TLS와 게임 보안',one:'TLS 핸드셰이크 — 패킷 변조·치팅과 서버 권한 검증.'}
+    {n:11,t:'HTTP / HTTPS',one:'요청을 직접 조립해 게임 서버에 던지고 401·403·429·500 응답을 읽는다 — 언리얼 FHttpModule.',file:'11강_HTTP_HTTPS.html',killer:'HTTP 요청 콘솔',checks:6,key:'net11-check'},
+    {n:12,t:'DNS',one:'캐시와 TTL로 서버 이전 사고("옛 IP로 가요")를 재현한다 — 도메인 → IP 리졸빙.',file:'12강_DNS.html',killer:'DNS 리졸버 시뮬레이터',checks:5,key:'net12-check'},
+    {n:13,t:'TLS와 게임 보안',one:'TLS 핸드셰이크와 중간자 공격, 그리고 TLS를 켜도 뚫리는 데미지 위조를 직접 확인한다.',file:'13강_TLS와_게임보안.html',killer:'핵 유저 vs 서버',checks:5,key:'net13-check'}
   ]},
   {id:'p5',cls:'p5',pill:'PART 5',title:'게임 네트워킹',desc:'언리얼 멀티플레이의 정체',accent:'var(--grn)',lecs:[
     {n:14,t:'언리얼 네트워크 모델',one:'공격 흐름을 직접 재생해 서버 권한·Replication·RPC를 확인한다.',file:'14강_언리얼_네트워크_모델.html',killer:'공격 흐름 애니메이션',checks:6,key:'net14-check'},
-    {n:15,t:'레이턴시와 지연 보상',one:'RTT/핑, 클라이언트 예측과 서버 보정.'}
+    {n:15,t:'레이턴시와 지연 보상',one:'예측·보정·지연 보상을 시간축 위에서 재생하며 핑을 숨기는 원리를 확인한다.',file:'15강_레이턴시와_지연보상.html',killer:'예측·보정 · 지연 보상 실험',checks:5,key:'net15-check'}
   ]},
   {id:'pb',cls:'pb',pill:'BONUS',title:'면접 정리',desc:'',accent:'var(--pur)',lecs:[
     {n:'★',t:'클라 개발자 네트워크 면접 BEST 20',one:'20문항 모범답변 + 꼬리질문.'}

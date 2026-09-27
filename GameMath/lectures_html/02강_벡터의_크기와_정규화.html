@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2강 · 벡터의 크기와 정규화 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#818cf8;--acc2:#a5b4fc;--accrgb:129,140,248;--acc3:#22d3ee}
+/* 킬러: 대각선 이동 속도 */
+.pad{display:grid;grid-template-columns:repeat(3,64px);gap:6px;justify-content:center;margin:4px auto 0}
+.pad button{height:56px;font-family:inherit;font-size:20px;font-weight:800;border-radius:12px;border:1px solid var(--line);background:var(--card2);color:var(--dim);cursor:pointer;transition:.15s}
+.pad button:hover{border-color:var(--acc)}
+.pad button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.pad button small{display:block;font-size:9.5px;font-weight:500;opacity:.8;margin-top:-2px}
+svg.pg{width:100%;max-width:560px;height:auto;background:#0a0d18;border:1px solid var(--line);border-radius:12px;display:block;margin:12px auto 0}
+svg.pg text{font-family:ui-monospace,monospace;font-size:11px;fill:var(--dim)}
+.spd{margin-top:16px}
+.spd .row{display:grid;grid-template-columns:150px 1fr 90px;gap:10px;align-items:center;margin-top:8px;font-size:12.5px;color:var(--dim)}
+.spd .track{height:16px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;overflow:hidden;position:relative}
+.spd .track i{display:block;height:100%;width:0;transition:.25s}
+.spd .track u{position:absolute;top:0;bottom:0;left:70.7%;border-left:2px dashed var(--faint)}
+.spd .val{font-family:ui-monospace,monospace;font-weight:800;color:var(--txt);text-align:right}
+.chips2{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.chips2 .c2{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-family:ui-monospace,monospace;font-size:12.5px}
+.chips2 .c2 span{display:block;font-family:'Pretendard',sans-serif;font-size:11px;color:var(--faint)}
+.chips2 .c2.bad{border-color:var(--red);color:var(--red)}
+.chips2 .c2.good{border-color:var(--grn);color:var(--grn)}
+@media(max-width:640px){.spd .row{grid-template-columns:1fr;gap:3px}.spd .val{text-align:left}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">GameMath · <b>2강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#sim">대각선 시뮬</a>
+    <a class="chip" href="#mag">크기</a>
+    <a class="chip" href="#norm">정규화</a>
+    <a class="chip" href="#zero">0벡터 함정</a>
+    <a class="chip" href="#when">필요한 상황</a>
+    <a class="chip" href="#code">실전</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · 벡터 기초 · 면접 단골</span>
+  <h1>벡터의 크기와 <span class="g">정규화</span></h1>
+  <p class="sub">W와 D를 같이 누르면 대각선에서만 41% 더 빨라진다. 크기가 제각각인 벡터를 방향 자리에 넣으면 왜 이런 버그가 나는지, 정규화가 정확히 뭘 하는지 직접 눌러본다.</p>
+  <div class="meta">
+    <div class="m">📏 |V| = √(x²+y²+z²)</div>
+    <div class="m">🧩 선수지식 <b>1강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>이동 속도가 대각선에서만 빨라진다</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> AMyCharacter::Tick(<span class="kw">float</span> DeltaTime)
+{
+    FVector Input = FVector(ForwardInput, RightInput, 0.0f);
+    AddMovementInput(<span class="bad">Input</span>, 1.0f);           <span class="cm">// W+D 동시에 누르면 Input = (1, 1, 0)</span>
+}</pre>
+    <p style="margin-top:14px">앞으로만 갈 때 <code>(1, 0, 0)</code>의 크기는 1, 대각선 <code>(1, 1, 0)</code>의 크기는 <code>√2 ≈ 1.41</code>. 대각선이 <b style="color:var(--red)">41% 더 빠르게</b> 움직인다. 옛날 게임의 단골 버그 — 원인은 <b>방향만 필요한 자리에 크기가 제각각인 벡터</b>를 넣었기 때문이다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">2</span>대각선 이동 시뮬레이터 — 정규화 안 함 vs GetSafeNormal</h2>
+  <p class="lead">방향 패드(또는 키보드 <b>WASD</b>)로 입력을 바꿔보자. 빨간 점선이 <b>정규화 안 한</b> 입력, 초록 화살표가 <b>정규화한</b> 방향이다. 가운데 <b>●</b>는 입력 없음(0벡터).</p>
+  <div class="card">
+    <div class="pad" id="pad"></div>
+    <svg class="pg" id="pg" viewBox="0 0 600 340"></svg>
+    <div class="spd">
+      <div class="row"><span>정규화 안 함 (MoveSpeed × |Input|)</span><div class="track"><i id="bRaw" style="background:linear-gradient(90deg,var(--orange),var(--red))"></i><u></u></div><span class="val" id="vRaw"></span></div>
+      <div class="row"><span>GetSafeNormal() 적용</span><div class="track"><i id="bNorm" style="background:linear-gradient(90deg,var(--grn),var(--cyan))"></i><u></u></div><span class="val" id="vNorm"></span></div>
+    </div>
+    <div class="chips2" id="chips"></div>
+    <div class="simmsg" id="simMsg"></div>
+    <p class="hint">MoveSpeed = 500 cm/s. 점선은 500(정상 속도). ① 앞(↑)과 대각선(↗)을 번갈아 눌러 속도 막대가 <b>707로 튀는 것</b>을 보자. ② 가운데 ●(입력 없음)에서는 <code>Normalize()</code>가 0/0으로 <b>NaN</b>이 나오고 <code>GetSafeNormal()</code>은 (0,0)을 안전하게 돌려준다.</p>
+  </div>
+</div></section>
+
+<section id="mag"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 크기</div>
+  <h2 class="sec"><span class="n">3</span>벡터의 크기 — 피타고라스 정리 그 자체</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">|V| = sqrt(X² + Y² + Z²)     // 3차원으로 확장된 피타고라스 정리 (2D 빗변 sqrt(a²+b²)와 같은 원리)</span>
+
+FVector V = FVector(3.0f, 4.0f, 0.0f);
+<span class="kw">float</span> Length        = V.Size();          <span class="cm">// sqrt(9 + 16 + 0) = 5.0</span>
+<span class="kw">float</span> LengthSquared = V.SizeSquared();   <span class="cm">// 25.0 (루트 계산 생략)</span></pre>
+    <p class="hint"><b>SizeSquared()가 따로 있는 이유:</b> <code>sqrt</code>는 상대적으로 비싼 연산이다. 거리를 <b>비교만</b> 할 거면 제곱끼리 비교해도 대소 관계가 같다. 몬스터 수백 마리 중 가장 가까운 걸 찾는 타겟팅/어그로 계산에서 프레임 타임에 영향을 준다.</p>
+    <pre class="code"><span class="bad">// 나쁜 예: 거리 비교에 굳이 sqrt 두 번</span>
+if (FVector::Dist(A, B) &lt; FVector::Dist(A, C)) { ... }
+<span class="good">// 좋은 예: 제곱 거리로 비교 (sqrt 생략)</span>
+if (FVector::DistSquared(A, B) &lt; FVector::DistSquared(A, C)) { ... }</pre>
+  </div>
+</div></section>
+
+<section id="norm"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 정규화</div>
+  <h2 class="sec"><span class="n">4</span>방향만 남기고 크기를 1로</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">Normalized(V) = V / |V|          // 크기 1인 벡터 = 단위 벡터(Unit Vector)</span>
+
+FVector V   = FVector(3.0f, 4.0f, 0.0f);   <span class="cm">// 크기 5</span>
+FVector Dir = V.GetSafeNormal();           <span class="cm">// (0.6, 0.8, 0.0), 크기 1  — 0.6 = 3/5, 0.8 = 4/5</span></pre>
+    <p class="hint">정규화하면 "어느 쪽을 가리키는가"만 남고 "얼마나 긴가"는 1로 고정된다. <b>방향(각 축의 비율)은 그대로</b>다 — 시뮬레이터에서 빨간 점선과 초록 화살표가 같은 방향을 가리키는 것을 확인했다.</p>
+  </div>
+</div></section>
+
+<section id="zero"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 0벡터 함정</div>
+  <h2 class="sec"><span class="n">5</span>왜 GetSafeNormal()을 쓰는가</h2>
+  <div class="card">
+    <p style="margin-bottom:10px">크기가 0인 벡터(멈춰 있을 때의 이동 입력, 자기 자신과의 변위)를 정규화하면 <b>0으로 나누기</b>가 된다.</p>
+    <div class="two">
+      <div class="box bad"><h4>Normalize()</h4><p>0 근처 처리가 약해 그대로 나눠 <b>NaN</b>을 만들 수 있다.</p></div>
+      <div class="box good"><h4>GetSafeNormal()</h4><p>크기가 너무 작으면 정규화를 시도하지 않고 <b>0벡터를 그대로 반환</b>한다.</p></div>
+    </div>
+    <pre class="code">FVector Zero = FVector::ZeroVector;
+FVector R1 = Zero.GetSafeNormal();   <span class="good">// (0, 0, 0) — 안전</span>
+<span class="cm">// FVector R2 = Zero; R2.Normalize();   // 내부적으로 0 나누기 위험</span></pre>
+    <p class="hint">캐릭터가 멈춰 있을 때 이동 입력이 0벡터가 되는 건 흔하다. 이걸 못 다루면 방향이 <code>NaN</code>이 되어 캐릭터가 화면 밖으로 튕겨나가는 버그가 된다. <b>실무에선 거의 항상 <code>GetSafeNormal()</code>.</b></p>
+    <p class="hint"><b>"안전"의 기준:</b> 정확히 <code>0</code>인지가 아니라 <b>허용 오차(KINDA_SMALL_NUMBER 수준) 이하인지</b>를 본다. 부동소수점 오차 때문에 논리적으로 0인 값이 <code>0.0000001</code>로 남는 경우가 흔해서, <code>== 0.0f</code> 비교로는 놓친다. 정확한 동등 비교 대신 허용 오차 비교 — 게임 코드 전반에서 반복되는 패턴이다.</p>
+  </div>
+</div></section>
+
+<section id="when"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 정리</div>
+  <h2 class="sec"><span class="n">6</span>정규화가 필요한 대표 상황</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>상황</th><th>왜 정규화가 필요한가</th></tr>
+      <tr><td>이동 입력 벡터</td><td>대각선 입력이 축 방향 입력보다 빨라지는 걸 막음</td></tr>
+      <tr><td><code>GetActorForwardVector()</code> 등</td><td>애초에 항상 정규화된 상태로 제공됨 (크기 1 보장)</td></tr>
+      <tr><td>두 지점 사이 "방향만" 필요할 때</td><td><code>(B-A)</code>는 거리에 비례해 커지므로 방향만 쓰려면 정규화 필수</td></tr>
+      <tr><td>내적으로 각도를 구할 때 (3강)</td><td>정규화 안 하면 각도가 아니라 <b>거리가 섞인 값</b>이 나옴</td></tr>
+      <tr><td>법선 벡터, 회전축 (4강)</td><td>방향의 "순수한 표현"이 필요 → 항상 단위 벡터</td></tr>
+    </table>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 실전</div>
+  <h2 class="sec"><span class="n">7</span>8방향 이동 정규화</h2>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> AMyCharacter::ApplyMovementInput(<span class="kw">float</span> ForwardAxis, <span class="kw">float</span> RightAxis, <span class="kw">float</span> DeltaTime)
+{
+    FVector RawInput  = FVector(ForwardAxis, RightAxis, 0.0f);
+    FVector Direction = RawInput.GetSafeNormal();                  <span class="cm">// 멈춤 상태(0벡터)도 안전하게 (0,0,0)</span>
+    FVector Movement  = Direction * MoveSpeed * DeltaTime;         <span class="cm">// 방향(크기 1) × 속도(스칼라) × 시간</span>
+    AddActorWorldOffset(Movement, <span class="kw">true</span>);
+}</pre>
+    <p class="hint"><code>Direction</code>은 항상 크기 1(정지 시 0)이라 앞이든 대각선이든 <code>MoveSpeed</code>가 일정하게 적용된다. <b>방향과 크기를 분리해서 다루는 것</b>이 벡터 연산의 기본 패턴이다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">8</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 면접 대비</div>
+  <h2 class="sec"><span class="n">9</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 0벡터를 정규화하려고 하면 실제로 어떤 값이 나오나요?"</i> → 0/0이라 정의되지 않고, 구현에 따라 NaN이나 (0,0,0)이 나올 수 있다는 점을 짚어주면 좋다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 마무리</div>
+  <h2 class="sec"><span class="n">10</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="01강_벡터란_무엇인가.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 1강 — 벡터란 무엇인가</div></div></a>
+  <a class="nx" href="03강_내적_Dot_Product.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">3강 — 내적 →</div></div></a>
+  <div class="cap">게임 수학 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 2강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"정규화하면 벡터의 방향도 바뀐다"','정규화는 <span class="truth">크기만</span> 바꾼다. 방향(각 축의 비율)은 유지된다. <code>(3,4,0)</code>을 정규화하면 <code>(0.6,0.8,0)</code>인데 둘 다 원점에서 같은 각도로 뻗어 있다.'],
+ ['"Size()가 비싼 건 알겠는데 SizeSquared()도 비슷하게 비쌀 것이다"','<code>Size()</code>는 제곱합을 구한 뒤 <code>sqrt</code>를 호출하고 <code>SizeSquared()</code>는 <span class="truth">sqrt 없이 제곱합만</span> 반환한다. sqrt는 곱셈/덧셈보다 훨씬 비싸서 단순 비교엔 <code>SizeSquared()</code>가 명확히 빠르다.'],
+ ['"0벡터도 그냥 Normalize() 쓰면 알아서 처리해준다"','<code>Normalize()</code>(in-place)는 안전장치가 약하고 <span class="truth"><code>GetSafeNormal()</code>이 0벡터·매우 작은 벡터를 명시적으로 처리</span>한다. 이름이 비슷한 두 함수를 헷갈리면 실제로 NaN 버그가 난다.'],
+ ['"방향 벡터끼리는 크기 비교가 의미 없으니 신경 안 써도 된다"','단위 벡터끼리는 맞다. 하지만 문제는 <span class="truth">정규화를 빼먹은 벡터를 방향 벡터인 줄 알고 쓰는 것</span>이다. 벡터를 넘길 때 "이게 정규화된 벡터인가"를 항상 의식해야 한다.']
+];
+var QA=[
+ ['벡터의 크기는 어떻게 구하나요?','각 성분을 <b>제곱해서 더한 뒤 제곱근</b>을 씌웁니다. 3차원으로 확장된 피타고라스 정리입니다.'],
+ ['정규화가 뭔가요?','벡터를 <b>자기 자신의 크기로 나눠</b> 방향은 그대로 두고 크기만 1로 만드는 연산입니다. 결과인 크기 1짜리 벡터를 단위 벡터라 부릅니다.'],
+ ['거리만 비교할 때 Size() 대신 SizeSquared()를 쓰는 이유는?','제곱근 연산이 상대적으로 비싸기 때문입니다. 대소 관계만 비교하면 <b>제곱값끼리 비교해도 결과가 같아</b> sqrt를 아낄 수 있고, 가장 가까운 몬스터를 찾는 것처럼 거리 비교가 많은 로직에서 특히 의미가 있습니다.'],
+ ['이동 입력을 정규화하지 않으면 어떤 문제가 생기나요?','대각선 입력의 크기가 1보다 커져(√2) <b>축 방향보다 41% 빠르게</b> 움직이는 버그가 생깁니다. 방향만 필요한 이동 입력은 항상 정규화해서 크기를 1로 고정해야 합니다.'],
+ ['Normalize()와 GetSafeNormal()의 차이는 뭔가요?','Normalize()는 그냥 크기로 나눠서 크기가 0에 가까우면 <b>0으로 나누기, NaN</b>이 나올 수 있고, GetSafeNormal()은 크기가 너무 작으면 정규화를 시도하지 않고 <b>0벡터를 안전하게 반환</b>합니다. 실무에선 거의 항상 GetSafeNormal()을 씁니다.'],
+ ['캐릭터가 멈춰 있을 때 방향 벡터를 정규화하면? 처리 안 하면 어떤 문제가 생기나요?','입력이 없으면 (0,0,0)인데 그냥 Normalize()로 나누면 NaN이 나올 수 있고, <b>NaN이 위치 계산에 섞이면</b> 캐릭터가 화면 밖으로 튕기거나 렌더링이 깨집니다. GetSafeNormal()로 0벡터를 안전하게 처리해야 합니다.'],
+ ['방향과 거리를 동시에 다뤄야 할 때 실제로 어떻게 계산하나요?','먼저 변위 벡터를 <b>정규화해 방향만</b> 뽑고, 별도로 거리(속도, 스칼라)를 계산해 방향 벡터에 곱합니다. 방향과 크기를 분리해서 다루는 게 벡터 연산의 기본 패턴입니다.']
+];
+var CK=['벡터의 크기를 피타고라스 정리와 연결해서 설명할 수 있다','정규화가 방향은 유지하고 크기만 1로 바꾼다는 걸 안다','거리 비교에 SizeSquared()를 쓰는 이유(sqrt 비용)를 설명할 수 있다','Normalize()와 GetSafeNormal()의 차이와 왜 후자를 써야 하는지 안다','대각선 이동이 빨라지는 버그의 원인과 해결법을 설명할 수 있다'];
+var KEY='gm02-check';
+
+/* 킬러: 대각선 이동 시뮬레이터 */
+(function(){
+  var MS=500,f=1,r=1,src='pad',keys={};
+  var pad=document.getElementById('pad'),svg=document.getElementById('pg'),msg=document.getElementById('simMsg');
+  var LAB={'1,-1':['↖','W+A'],'1,0':['↑','W'],'1,1':['↗','W+D'],'0,-1':['←','A'],'0,0':['●','없음'],'0,1':['→','D'],'-1,-1':['↙','S+A'],'-1,0':['↓','S'],'-1,1':['↘','S+D']};
+  [[1,-1],[1,0],[1,1],[0,-1],[0,0],[0,1],[-1,-1],[-1,0],[-1,1]].forEach(function(p){
+    var b=document.createElement('button'),l=LAB[p[0]+','+p[1]];b.innerHTML=l[0]+'<small>'+l[1]+'</small>';b.dataset.f=p[0];b.dataset.r=p[1];
+    b.addEventListener('click',function(){f=p[0];r=p[1];src='pad';draw();});pad.appendChild(b);
+  });
+  function draw(){
+    var len=Math.sqrt(f*f+r*r),nx=len>1e-4?r/len:0,ny=len>1e-4?f/len:0,S=110,cx=300,cy=170;
+    pad.querySelectorAll('button').forEach(function(b){b.classList.toggle('on',+b.dataset.f===f&&+b.dataset.r===r);});
+    var h='<defs><marker id="mr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f87171"/></marker><marker id="mg" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#34d399"/></marker></defs>';
+    h+='<rect x="'+(cx-S)+'" y="'+(cy-S)+'" width="'+2*S+'" height="'+2*S+'" fill="none" stroke="#2a3157" stroke-dasharray="4 4"/>';
+    h+='<circle cx="'+cx+'" cy="'+cy+'" r="'+S+'" fill="rgba(129,140,248,.06)" stroke="#818cf8" stroke-width="1.5"/>';
+    h+='<line x1="'+(cx-S-30)+'" y1="'+cy+'" x2="'+(cx+S+30)+'" y2="'+cy+'" stroke="#2a3157"/><line x1="'+cx+'" y1="'+(cy-S-30)+'" x2="'+cx+'" y2="'+(cy+S+30)+'" stroke="#2a3157"/>';
+    h+='<text x="'+(cx+S+34)+'" y="'+(cy+4)+'">Right</text><text x="'+(cx+6)+'" y="'+(cy-S-34)+'">Forward</text><text x="'+(cx+S*0.72)+'" y="'+(cy-S*0.72-14)+'" style="fill:#f87171">← 사각형 모서리 (1,1)</text>';
+    [[1,-1],[1,0],[1,1],[0,-1],[0,1],[-1,-1],[-1,0],[-1,1]].forEach(function(p){
+      var l=Math.sqrt(p[0]*p[0]+p[1]*p[1]);
+      h+='<circle cx="'+(cx+p[1]*S)+'" cy="'+(cy-p[0]*S)+'" r="4" fill="#6b73a0"/><circle cx="'+(cx+p[1]/l*S)+'" cy="'+(cy-p[0]/l*S)+'" r="4" fill="none" stroke="#818cf8" stroke-width="1.5"/>';
+    });
+    if(len>1e-4){
+      h+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+r*S)+'" y2="'+(cy-f*S)+'" stroke="#f87171" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#mr)"/>';
+      h+='<line x1="'+cx+'" y1="'+cy+'" x2="'+(cx+nx*S)+'" y2="'+(cy-ny*S)+'" stroke="#34d399" stroke-width="4" marker-end="url(#mg)"/>';
+    }else h+='<circle cx="'+cx+'" cy="'+cy+'" r="7" fill="#fbbf24"/><text x="'+(cx+12)+'" y="'+(cy+22)+'" style="fill:#fbbf24">(0,0) 입력 없음</text>';
+    h+='<text x="14" y="22" style="fill:#f87171">- - 정규화 안 함 |Input| = '+len.toFixed(3)+'</text><text x="14" y="40" style="fill:#34d399">━ GetSafeNormal() |N| = '+(len>1e-4?'1.000':'0.000')+'</text>';
+    svg.innerHTML=h;
+    var rawS=MS*len,normS=len>1e-4?MS:0;
+    document.getElementById('bRaw').style.width=(rawS/MS/Math.SQRT2*100).toFixed(1)+'%';
+    document.getElementById('bNorm').style.width=(normS/MS/Math.SQRT2*100).toFixed(1)+'%';
+    document.getElementById('vRaw').textContent=Math.round(rawS)+' cm/s';
+    document.getElementById('vNorm').textContent=Math.round(normS)+' cm/s';
+    var zero=len<1e-4,c=document.getElementById('chips');
+    c.innerHTML='<div class="c2"><span>Input (Forward, Right)</span>('+f+', '+r+')</div>'+
+      '<div class="c2 '+(zero?'bad':'')+'"><span>Normalize() — 안전장치 약함</span>'+(zero?'(NaN, NaN) 💥 0/0':'('+ny.toFixed(2)+', '+nx.toFixed(2)+')')+'</div>'+
+      '<div class="c2 good"><span>GetSafeNormal()</span>('+ny.toFixed(2)+', '+nx.toFixed(2)+')</div>';
+    if(zero){msg.textContent='입력이 없으면 벡터가 (0,0). Normalize()로 나누면 NaN — 이게 위치에 섞이면 캐릭터가 화면 밖으로 튕긴다. GetSafeNormal()은 (0,0)을 그대로 반환.';msg.className='simmsg bad';}
+    else if(len>1.01){msg.textContent='대각선 입력 |Input| = 1.414 → 정규화 안 하면 '+Math.round(rawS)+' cm/s. 정상 속도(500)보다 '+Math.round((len-1)*100)+'% 빠르다! 정규화하면 어느 방향이든 500.';msg.className='simmsg bad';}
+    else{msg.textContent='축 방향 입력은 크기가 이미 1이라 정규화 여부와 상관없이 500 cm/s. 문제는 대각선에서 생긴다.';msg.className='simmsg';}
+  }
+  function fromKeys(){f=(keys.w?1:0)-(keys.s?1:0);r=(keys.d?1:0)-(keys.a?1:0);src='key';draw();}
+  window.addEventListener('keydown',function(e){var k=e.key.toLowerCase();if('wasd'.indexOf(k)<0||k.length!==1)return;if(e.target&&/INPUT|TEXTAREA/.test(e.target.tagName))return;keys[k]=true;fromKeys();});
+  window.addEventListener('keyup',function(e){var k=e.key.toLowerCase();if('wasd'.indexOf(k)<0||k.length!==1)return;keys[k]=false;if(src==='key')fromKeys();});
+  draw();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

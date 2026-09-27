@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3강 · 포트와 소켓 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#22d3ee;--acc2:#67e8f9;--accrgb:34,211,238;--acc3:#6366f1}
+.btn{color:#04222b}
+nav a.chip.on{color:#04222b}
+/* 킬러: 패킷 배달 시뮬레이터 */
+.pk{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:6px}
+.pk label{display:block;font-size:11.5px;color:var(--faint);margin-bottom:4px}
+.pk select,.pk input[type=number]{width:100%;font-family:ui-monospace,monospace;font-size:14px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+.pk select:focus,.pk input:focus{outline:none;border-color:var(--acc)}
+.srvbox{margin-top:16px;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--dim)}
+.srvbox b{color:var(--txt);font-family:ui-monospace,monospace}
+.srvbox .pill{background:rgba(var(--accrgb),.12);border:1px solid rgba(var(--accrgb),.4);color:var(--acc);border-radius:20px;padding:2px 12px;font-family:ui-monospace,monospace;font-size:12.5px}
+.ctwrap{max-height:270px;overflow:auto;margin-top:12px;border:1px solid var(--line);border-radius:12px}
+.ct{width:100%;border-collapse:collapse;font-family:ui-monospace,monospace;font-size:12.5px}
+.ct th{position:sticky;top:0;background:var(--card2);color:var(--dim);font-family:inherit;font-weight:700;padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:11.5px}
+.ct td{padding:7px 10px;border-bottom:1px solid var(--line);color:var(--txt)}
+.ct td.same{color:var(--faint)}
+.ct td.diff{color:var(--acc);font-weight:700}
+.ct tr.hit td{background:rgba(52,211,153,.16)}
+.ct tr.new td{background:rgba(var(--accrgb),.18);animation:pop .3s}
+.res{margin-top:14px;padding:12px 14px;border-radius:12px;font-size:13.5px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);min-height:48px}
+.res.ok{border-color:rgba(52,211,153,.5);color:var(--grn)}
+.res.no{border-color:rgba(248,113,113,.5);color:var(--red)}
+.res.info{border-color:rgba(var(--accrgb),.5);color:var(--acc)}
+.res b{color:var(--txt)}
+.presets{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.presets button{font-family:inherit;font-size:12px;font-weight:700;padding:7px 12px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.presets button:hover{border-color:var(--acc);color:var(--txt)}
+@keyframes pop{from{opacity:.2}to{opacity:1}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>3강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#port">포트</a>
+    <a class="chip" href="#sock">소켓</a>
+    <a class="chip" href="#sim">4-tuple 시뮬</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 1 · 기초 · 소켓의 출발점</span>
+  <h1>포트와 <span class="g">소켓</span></h1>
+  <p class="sub">IP는 "어느 컴퓨터"까지만 정한다. 그 안의 어느 프로그램에 줄지는 포트가, 그리고 연결 하나를 유일하게 가리키는 건 네 개의 값이다. 패킷을 직접 만들어 던져보며 서버가 어떻게 수천 명을 구분하는지 확인한다.</p>
+  <div class="meta">
+    <div class="m">🏢 IP는 동, 포트는 호수</div>
+    <div class="m">🧩 선수지식 <b>2강</b></div>
+    <div class="m">⏱️ 약 15분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>IP만으론 부족하다</h2>
+  <p class="lead">내 PC에서 게임 클라이언트, 크롬(유튜브), 디스코드가 동시에 돈다. 셋 다 <b>같은 공인 IP</b> 하나를 쓴다. 서버가 보낸 패킷이 우리 집에 도착했을 때, 이걸 누구한테 줘야 할까?</p>
+  <div class="card">
+    <pre class="code">게임 서버 → (우리 집 공인 IP 1.2.3.4로 패킷 도착) → <span class="bad">???</span>
+                                                  게임? 크롬? 디스코드?</pre>
+    <p class="hint">IP는 "어느 컴퓨터"까지만 정한다. 그 컴퓨터 안의 <b>어느 프로그램</b>한테 줄지는 IP만으로는 모른다. 이걸 정하는 게 <b>포트(Port)</b>다.</p>
+  </div>
+</div></section>
+
+<section id="port"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 포트</div>
+  <h2 class="sec"><span class="n">2</span>포트 — 프로그램의 번호표</h2>
+  <p class="lead">포트는 컴퓨터 안에서 <b>프로그램을 구분하는 번호</b>다. 16비트라서 <code>0 ~ 65535</code>. 4계층(전송 계층)에서 쓴다.</p>
+  <div class="card">
+    <div class="two">
+      <div class="box"><h4>🏢 IP = 아파트 동</h4><p>어느 컴퓨터(건물)인지. 동만 알면 어느 집인지 모른다.</p></div>
+      <div class="box"><h4>🚪 포트 = 호수</h4><p>그 컴퓨터의 어느 프로그램(집)인지. 호수만 알면 어느 아파트인지 모른다.</p></div>
+    </div>
+    <pre class="code">패킷이 도착하면 OS가 포트 번호를 보고 분배:
+
+1.2.3.4 : <span class="hl">7777</span>   → 게임 클라이언트
+1.2.3.4 : <span class="hl">50123</span>  → 크롬 (유튜브 탭)
+1.2.3.4 : <span class="hl">50124</span>  → 디스코드
+   ↑        ↑
+  IP       포트
+(어느 PC)  (어느 프로그램)</pre>
+    <p class="hint">각 프로그램은 자기 포트를 "내 거"라고 OS에 등록(<code>bind</code>)해두고, OS는 그 포트로 온 패킷만 그 프로그램에 넘긴다.</p>
+    <table class="tbl">
+      <tr><th>Well-known 포트 (0~1023)</th><th>용도</th></tr>
+      <tr><td><code>80</code></td><td>HTTP (웹)</td></tr>
+      <tr><td><code>443</code></td><td>HTTPS (보안 웹)</td></tr>
+      <tr><td><code>53</code></td><td>DNS</td></tr>
+      <tr><td><code>22</code></td><td>SSH</td></tr>
+    </table>
+    <p class="hint">게임은 이 예약 구간을 피해서 <code>7777</code>, <code>27015</code> 같은 높은 번호를 쓴다. 언리얼 기본 게임 포트가 <b>7777</b>이다.</p>
+  </div>
+</div></section>
+
+<section id="sock"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 소켓</div>
+  <h2 class="sec"><span class="n">3</span>소켓 — 통신의 손잡이, 그리고 4-tuple</h2>
+  <p class="lead">소켓은 <b>"IP + 포트" 한 쌍으로 만들어지는 통신의 끝점(endpoint)</b>이다. 프로그램 입장에선 파일 핸들처럼 다루는 창구 — 여기에 <code>send</code>/<code>recv</code>한다.</p>
+  <div class="card">
+    <pre class="code">소켓 = IP 주소 + 포트 번호
+
+내 게임 클라:  192.168.0.5   : 50200   ← 내 쪽 소켓
+게임 서버:     203.0.113.10  : 7777    ← 서버 쪽 소켓
+
+이 두 소켓을 잇는 게 "연결(connection)"</pre>
+    <p class="hint"><b>OS 강의와 연결:</b> 소켓은 OS가 핸들로 관리하는 자원이다. 파일 디스크립터처럼 다 쓰면 닫아줘야 한다(<code>close</code>). 안 닫으면 누수된다.</p>
+  </div>
+  <div class="card">
+    <h3 style="font-size:17px">클라 100명이 전부 7777로 접속하면 서버는 어떻게 구분할까?</h3>
+    <p class="lead" style="font-size:14.5px">연결 하나는 <b>4개 값(4-tuple)</b>으로 유일하게 식별된다.</p>
+    <pre class="code"><span class="hl">( 출발지 IP, 출발지 포트, 목적지 IP, 목적지 포트 )</span>
+
+플레이어A: (1.1.1.1, 50200, 203.0.113.10, 7777)
+플레이어B: (2.2.2.2, 51000, 203.0.113.10, 7777)
+            └─ 클라마다 IP/포트가 달라서 ─┘
+            서버 포트는 같아도 연결은 구분된다</pre>
+    <p class="hint">서버는 포트 하나(7777)로 듣고 있지만, 접속해오는 클라마다 IP·포트 조합이 다르니 연결은 전부 구분된다. <b>이게 "서버 하나가 수천 명을 받는 원리"의 답이다.</b></p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>패킷 배달 시뮬레이터 — 서버는 이걸 어떻게 가르나</h2>
+  <p class="lead">아래 서버는 <code>203.0.113.10:7777</code>에서 듣고 있다. 출발지 IP·포트, 목적지 포트, 종류(접속 요청 SYN / 데이터)를 골라 패킷을 던져보자. 서버 OS가 <b>4-tuple 표</b>를 보고 어떻게 처리하는지가 결과로 나온다.</p>
+  <div class="card">
+    <div class="srvbox"><span>🖥️ 서버 <b>203.0.113.10</b></span><span>듣는 포트 <span class="pill">7777</span></span><span>연결 <b id="cnt">0</b>개</span><span>서로 다른 4-tuple <b id="cnt2">0</b>개</span></div>
+    <div class="ctwrap"><table class="ct" id="ct"></table></div>
+    <div class="pk" style="margin-top:16px">
+      <div><label>출발지 IP</label><select id="sip"><option>1.1.1.1</option><option>2.2.2.2</option><option>3.3.3.3</option><option>4.4.4.4</option></select></div>
+      <div><label>출발지 포트</label><input type="number" id="spt" min="1024" max="65535" value="50200"></div>
+      <div><label>목적지 포트</label><select id="dpt"><option>7777</option><option>80</option><option>443</option></select></div>
+      <div><label>종류</label><select id="kind"><option value="syn">SYN (접속 요청)</option><option value="data">DATA (데이터)</option></select></div>
+    </div>
+    <div class="btnrow" style="margin-top:14px"><button class="btn" id="send">📦 패킷 보내기</button><button class="btn ghost" id="reset">↺ 초기화</button></div>
+    <div class="presets">
+      <button data-p="natdup">같은 집 2대 접속 (1.1.1.1:50201)</button>
+      <button data-p="same">이미 있는 조합으로 다시 SYN</button>
+      <button data-p="p80">80번 포트로 보내기</button>
+      <button data-p="ghost">모르는 조합으로 DATA 보내기</button>
+      <button data-p="hundred">100명 접속시키기</button>
+    </div>
+    <div class="res" id="res">패킷을 보내면 서버 OS의 판단이 여기 표시된다.</div>
+    <p class="hint">① 표에서 <b>목적지 IP·포트는 모든 행이 같다</b>(회색). 구분해주는 건 <b>출발지</b>(청록)뿐이다. ② 같은 집(1.1.1.1)에서 두 프로그램이 접속해도 <b>출발지 포트가 다르면</b> 별개 연결이다. ③ 이미 있는 4-tuple로 SYN을 또 보내도 새 연결은 안 생긴다. ④ <b>100명</b>을 접속시켜도 서버 포트는 7777 하나다.</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 코드</div>
+  <h2 class="sec"><span class="n">5</span>언리얼 FSocket으로 보면</h2>
+  <p class="lead">엔진이 가려주지만, 그 아래에서 소켓은 이렇게 생겼다. 핵심은 <b>"어느 컴퓨터(IP) + 어느 프로그램(포트)"를 둘 다 지정</b>한다는 것.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">// 소켓 하나 생성 — OS에 "통신 창구 하나 줘" 요청</span>
+FSocket* Socket = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)
+    -&gt;CreateSocket(NAME_Stream, TEXT(<span class="str">"MySocket"</span>), <span class="kw">false</span>);
+<span class="cm">//                 ↑ NAME_Stream = TCP용 (4강에서 다룸)</span>
+
+<span class="cm">// 목적지 주소(소켓 끝점) 구성: IP + 포트</span>
+TSharedRef&lt;FInternetAddr&gt; ServerAddr =
+    ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)-&gt;CreateInternetAddr();
+<span class="kw">bool</span> bValid;
+ServerAddr-&gt;SetIp(TEXT(<span class="str">"203.0.113.10"</span>), bValid);   <span class="cm">// 어느 컴퓨터 (IP)</span>
+ServerAddr-&gt;SetPort(<span class="hl">7777</span>);                          <span class="cm">// 어느 프로그램 (포트)</span>
+
+<span class="cm">// 연결 시도 — 내 소켓과 서버 소켓을 잇는다</span>
+<span class="kw">bool</span> bConnected = Socket-&gt;Connect(*ServerAddr);
+
+<span class="cm">// 다 쓰면 반드시 닫기 (OS 자원 해제)</span>
+Socket-&gt;Close();
+ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM)-&gt;DestroySocket(Socket);</pre>
+    <p class="hint">실무에서 raw 소켓 코드를 직접 쓰는 일은 드물다. 보통 <code>Replication</code>(14강)이나 HTTP 모듈(11강)을 쓴다. 다만 "그 아래에서 소켓이 이렇게 돈다"는 건 알아야 면접에서 막히지 않는다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"소켓을 만들 때 TCP랑 UDP를 고르던데, 둘은 뭐가 다른가요?"</i> → 4강(TCP)·5강(UDP)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="02강_IP주소와_라우팅.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 2강 — IP 주소와 라우팅</div></div></a>
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="04강_TCP_신뢰성의_대가.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">4강 — TCP, 신뢰성의 대가 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 3강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"포트는 물리적인 구멍이다"','USB 포트나 랜선 꽂는 <b>물리 포트</b>와 헷갈리기 쉽다. 네트워크의 포트는 <span class="truth">소프트웨어상의 논리 번호</span>다. 물리적으로 존재하는 게 아니라, OS가 패킷을 어느 프로그램에 줄지 구분하려고 쓰는 숫자일 뿐이다.'],
+ ['"한 포트는 한 연결만 쓸 수 있다"','서버는 포트 하나(예: 7777)로 <span class="truth">수천 개의 연결</span>을 동시에 처리한다. 연결은 포트 하나가 아니라 <b>4-tuple</b>(출발지 IP·포트 + 목적지 IP·포트)로 구분되기 때문이다. "포트 하나 = 연결 하나"는 틀렸다.'],
+ ['"소켓이랑 포트는 같은 말이다"','포트는 <b>번호</b>고, 소켓은 <span class="truth">IP+포트로 만들어진 통신 끝점(객체)</span>이다. 소켓이 포트를 포함한다. 우리가 <code>send</code>/<code>recv</code> 하는 실제 손잡이가 소켓이고, 포트는 그걸 식별하는 번호 중 하나다.'],
+ ['"소켓은 닫을 필요 없다"','소켓은 OS 자원이다. 안 닫으면 파일 핸들 누수처럼 쌓인다. 서버에서 끊긴 소켓을 안 닫으면 시간이 지나며 <span class="truth">더 이상 소켓을 못 만드는 상태</span>가 된다. 반드시 닫아야 한다.']
+];
+var QA=[
+ ['포트가 뭔가요?','한 컴퓨터 안에서 <b>프로그램을 구분하는 16비트 번호</b>입니다. IP가 어느 컴퓨터인지 정한다면, 포트는 그 컴퓨터의 어느 프로그램으로 데이터를 보낼지를 정합니다. 0부터 65535까지 있고, 0~1023은 HTTP의 80, HTTPS의 443처럼 용도가 정해진 well-known 포트입니다.'],
+ ['소켓이 뭔가요?','네트워크 통신의 <b>끝점</b>으로, IP 주소와 포트 번호 한 쌍으로 만들어집니다. 프로그램은 이 소켓을 통해 데이터를 보내고 받는데, 파일 핸들처럼 OS가 관리하는 자원이라 다 쓰면 닫아줘야 합니다.'],
+ ['IP와 포트와 소켓의 관계를 설명해보세요.','IP는 어느 컴퓨터, 포트는 그 안의 어느 프로그램을 가리키고, 이 둘을 합친 <b>통신 끝점이 소켓</b>입니다. 아파트로 치면 IP가 동, 포트가 호수, 소켓이 그 집의 현관문 정도입니다.'],
+ ['서버 하나가 어떻게 수천 명을 동시에 처리하나요?','서버는 포트 하나로 듣지만, 연결은 <b>출발지 IP·포트와 목적지 IP·포트, 네 개 값의 조합(4-tuple)</b>으로 구분됩니다. 클라이언트마다 IP나 포트가 다르기 때문에 서버 포트가 같아도 각 연결은 고유하게 식별되어 동시에 여러 연결을 유지할 수 있습니다.'],
+ ['well-known 포트를 아는 대로 말해보세요.','HTTP가 <b>80</b>, HTTPS가 <b>443</b>, DNS가 <b>53</b>, SSH가 <b>22</b>입니다. 0~1023번이 이런 시스템 예약 포트라서 게임 같은 일반 애플리케이션은 그 위의 번호, 예를 들어 7777번 같은 걸 씁니다.']
+];
+var CK=['IP만으로 부족하고 포트가 왜 필요한지 설명할 수 있다','포트 번호 범위(0~65535)와 well-known 포트 몇 개를 안다','소켓이 "IP+포트 끝점"이라는 걸 한 문장으로 말할 수 있다','연결이 4-tuple로 식별되고, 그래서 서버가 수천 명을 받는다는 걸 설명할 수 있다','소켓이 OS 자원이라 닫아야 한다는 걸 안다'];
+var KEY='net03-check';
+
+/* 킬러: 패킷 배달 시뮬레이터 */
+(function(){
+  var SRV='203.0.113.10',LISTEN=7777;
+  var conns,seq;
+  var ctEl=document.getElementById('ct'),resEl=document.getElementById('res');
+  function key(ip,p){return ip+':'+p;}
+  function init(){
+    conns=[];seq=0;
+    add('1.1.1.1',50200);add('2.2.2.2',51000);add('3.3.3.3',49888);
+    resEl.className='res';resEl.textContent='패킷을 보내면 서버 OS의 판단이 여기 표시된다.';
+    draw(null,null);
+  }
+  function add(ip,p){conns.push({ip:ip,p:p,id:++seq});}
+  function find(ip,p){for(var i=0;i<conns.length;i++)if(conns[i].ip===ip&&conns[i].p===p)return conns[i];return null;}
+  function draw(hitId,newId){
+    var h='<tr><th>#</th><th>출발지 IP</th><th>출발지 포트</th><th>목적지 IP</th><th>목적지 포트</th><th>연결 소켓</th></tr>';
+    conns.forEach(function(c){
+      var cls=c.id===hitId?'hit':(c.id===newId?'new':'');
+      h+='<tr class="'+cls+'"><td class="same">'+c.id+'</td><td class="diff">'+c.ip+'</td><td class="diff">'+c.p+'</td><td class="same">'+SRV+'</td><td class="same">'+LISTEN+'</td><td>conn#'+c.id+'</td></tr>';
+    });
+    ctEl.innerHTML=h;
+    document.getElementById('cnt').textContent=conns.length;
+    document.getElementById('cnt2').textContent=conns.length;
+    var w=ctEl.parentNode;
+    if(newId)w.scrollTop=w.scrollHeight;
+  }
+  function say(cls,html){resEl.className='res '+cls;resEl.innerHTML=html;}
+  function send(ip,sp,dp,kind){
+    var t=key(ip,sp)+' → '+SRV+':'+dp;
+    if(dp!==LISTEN){
+      draw(null,null);
+      say('no','<b>'+t+'</b> ('+(kind==='syn'?'SYN':'DATA')+')<br>❌ <b>RST(거부)</b> — 서버에 포트 '+dp+'번을 듣는 프로그램이 없다. 포트가 열려 있어야(bind+listen) 받는다.');
+      return;
+    }
+    var ex=find(ip,sp);
+    if(kind==='syn'){
+      if(ex){draw(ex.id,null);say('info','<b>'+t+'</b> (SYN)<br>↩️ 이미 있는 4-tuple이다. 새 연결은 <b>생기지 않는다</b>(재전송 SYN 취급). 같은 4-tuple 연결은 하나뿐.');}
+      else{add(ip,sp);var c=conns[conns.length-1];draw(null,c.id);say('ok','<b>'+t+'</b> (SYN)<br>✅ 새 4-tuple → <b>accept</b>로 연결 소켓 conn#'+c.id+' 생성. 서버 포트는 그대로 '+LISTEN+', 연결만 하나 늘었다.');}
+    }else{
+      if(ex){draw(ex.id,null);say('ok','<b>'+t+'</b> (DATA)<br>✅ 4-tuple이 소켓 conn#'+ex.id+'의 것과 일치 → <b>그 연결 소켓의 수신 버퍼</b>로 전달. 다른 연결엔 영향 없음.');}
+      else{draw(null,null);say('no','<b>'+t+'</b> (DATA)<br>❌ <b>RST</b> — 이 4-tuple로 맺어진 연결이 없다. 연결(handshake) 없이 온 데이터는 버려진다.');}
+    }
+  }
+  function setForm(ip,sp,dp,kind){
+    document.getElementById('sip').value=ip;document.getElementById('spt').value=sp;
+    document.getElementById('dpt').value=dp;document.getElementById('kind').value=kind;
+  }
+  document.getElementById('send').addEventListener('click',function(){
+    var sp=parseInt(document.getElementById('spt').value,10);
+    if(!(sp>=1&&sp<=65535)){say('no','출발지 포트는 1~65535 사이여야 한다(포트는 16비트).');return;}
+    send(document.getElementById('sip').value,sp,parseInt(document.getElementById('dpt').value,10),document.getElementById('kind').value);
+  });
+  document.getElementById('reset').addEventListener('click',function(){init();setForm('1.1.1.1',50200,7777,'syn');});
+  document.querySelectorAll('.presets button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var p=b.dataset.p;
+      if(p==='natdup'){setForm('1.1.1.1',50201,7777,'syn');send('1.1.1.1',50201,7777,'syn');}
+      else if(p==='same'){setForm('1.1.1.1',50200,7777,'syn');send('1.1.1.1',50200,7777,'syn');}
+      else if(p==='p80'){setForm('2.2.2.2',51000,80,'data');send('2.2.2.2',51000,80,'data');}
+      else if(p==='ghost'){setForm('4.4.4.4',60000,7777,'data');send('4.4.4.4',60000,7777,'data');}
+      else if(p==='hundred'){
+        var n=0,ip=['5.5.5.','6.6.6.','7.7.7.'];
+        for(var i=0;i<100;i++){var a=ip[i%3]+(10+i),pp=40000+i*7;if(!find(a,pp)){add(a,pp);n++;}}
+        draw(null,conns[conns.length-1].id);
+        say('ok','✅ 클라 <b>'+n+'명</b>이 전부 <b>서버 포트 '+LISTEN+' 하나</b>로 접속했다. 서버 포트는 그대로 하나, 연결(4-tuple)만 <b>'+conns.length+'개</b>. 표를 스크롤해서 확인해보자.');
+      }
+    });
+  });
+  init();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

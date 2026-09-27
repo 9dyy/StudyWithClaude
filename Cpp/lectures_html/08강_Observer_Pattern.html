@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8강 · Observer Pattern — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: HP 이벤트 Broadcast */
+.hpline{display:flex;align-items:center;gap:14px;justify-content:center;flex-wrap:wrap}
+.hpline .num{font-family:ui-monospace,monospace;font-size:34px;font-weight:800;color:var(--acc)}
+.subgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:18px}
+.sub{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;transition:.2s}
+.sub.off{opacity:.4}
+.sub.dead{border-color:var(--red)}
+.sub .nm{font-weight:700;font-size:13.5px}
+.sub .tg{font-size:11.5px;color:var(--faint);margin-top:2px}
+.sub .rx{margin-top:10px;font-size:12.5px;color:var(--dim);min-height:36px}
+.sub .hb{height:10px;background:var(--bg2);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.sub .hb i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.3s}
+.sub .dot{display:inline-block;width:16px;height:16px;border-radius:50%;vertical-align:middle;margin-right:6px;transition:.3s}
+.sub button{margin-top:10px;font-family:inherit;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);cursor:pointer}
+.sub button:hover{border-color:var(--acc)}
+.dierow{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:16px;font-size:13px;color:var(--dim)}
+.dierow label{display:flex;gap:6px;align-items:center;cursor:pointer}
+.dierow input{accent-color:var(--acc)}
+.crash{margin-top:14px;text-align:center;font-weight:800;padding:12px;border-radius:10px;background:rgba(248,113,113,.15);color:var(--red);display:none}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>8강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#idea">발상 전환</a>
+    <a class="chip" href="#sim">Broadcast 시뮬</a>
+    <a class="chip" href="#delegate">Delegate</a>
+    <a class="chip" href="#types">종류</a>
+    <a class="chip" href="#unsub">구독 해제</a>
+    <a class="chip" href="#raw">AddRaw</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 디자인 패턴 · 게임 특화 단골</span>
+  <h1>Observer <span class="g">Pattern</span></h1>
+  <p class="sub">HP가 바뀔 때마다 UI를 갱신하는 코드를 여기저기 심고 있다면? 발행자가 구독자를 모르게 만드는 "느슨한 결합"을 언리얼 Delegate로 구현한다.</p>
+  <div class="meta">
+    <div class="m">📣 알리기만 하면 알아서 반응</div>
+    <div class="m">🧩 선수지식 <b>7강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>HP 바뀌는 곳마다 UI 갱신 코드를 심어야 했던 코드</h2>
+  <p class="lead">캐릭터가 데미지를 받으면 HP바를 갱신해야 한다. 처음엔 HP를 바꾸는 곳마다 직접 UI를 갱신했다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> ACharacter::TakeDamage(<span class="kw">float</span> Damage)      { HP -= Damage; <span class="bad">HPBarWidget-&gt;UpdateHP(HP);</span> }   <span class="cm">// 여기서도</span>
+<span class="kw">void</span> ACharacter::ApplyPoisonTick(<span class="kw">float</span> Damage) { HP -= Damage; <span class="bad">HPBarWidget-&gt;UpdateHP(HP);</span> }   <span class="cm">// 여기서도</span>
+<span class="kw">void</span> ACharacter::Heal(<span class="kw">float</span> Amount)            { HP += Amount; <span class="bad">HPBarWidget-&gt;UpdateHP(HP);</span> }   <span class="cm">// 여기서도... 반복</span></pre>
+    <p style="margin-top:16px">하나라도 빠뜨리면 UI가 안 갱신된다. 게다가 "미니맵 체력 아이콘도 바꿔라"는 요구가 오면 <b style="color:var(--red)">모든 데미지/힐 함수를 다시 찾아다니며</b> 코드를 추가해야 한다. <code>ACharacter</code>가 자기와 상관없어야 할 UI 클래스를 전부 알고 있는 <b>강한 결합</b>이다.</p>
+  </div>
+</div></section>
+
+<section id="idea"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 발상 전환</div>
+  <h2 class="sec"><span class="n">2</span>"바뀌었다고 알리기만 하면, 관심 있는 쪽이 알아서 반응한다"</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">[직접 호출]                              [Observer Pattern]</span>
+Character                                 Character
+   │ UpdateHP()                              │ "HP 바뀜!" 이벤트 발행 (Broadcast)
+   ├──→ HPBarWidget                          │  <span class="hl">(누가 듣는지 Character는 모른다)</span>
+   ├──→ MinimapIcon                      ┌───┴────┬───────────┐
+   └──→ (새 UI 생길 때마다 추가)        HPBar   MinimapIcon   (새 Observer)
+                                        (구독)    (구독)     (구독만 추가)</pre>
+    <p class="hint"><b>방향이 뒤집힌다.</b> 이게 <b>느슨한 결합(Loose Coupling)</b> — 발행자가 구독자의 존재를 몰라도 협력할 수 있는 구조다. 새 UI가 생겨도 <code>ACharacter</code>는 한 줄도 안 바뀐다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>HP 이벤트 Broadcast 시뮬레이터</h2>
+  <p class="lead">시스템을 추가/제거해보면서 <b>Character 쪽 코드가 몇 곳 바뀌는지</b> 비교하고, <code>AddRaw</code> 구독자를 소멸시켜 댕글링 콜백까지 터뜨려보자.</p>
+  <div class="card">
+    <div class="modetoggle"><button data-m="direct">📞 직접 호출 (강한 결합)</button><button class="on" data-m="obs">📣 Observer / Broadcast</button></div>
+    <div class="hpline"><span style="color:var(--dim)">ACharacter HP</span><span class="num" id="hpNum">100</span><span style="color:var(--faint)">/ 100</span></div>
+    <div class="btnrow">
+      <button class="btn" id="bDmg">💥 TakeDamage(20)</button>
+      <button class="btn" id="bPoi">☠️ PoisonTick(5)</button>
+      <button class="btn" id="bHeal">💚 Heal(15)</button>
+      <button class="btn ghost" id="bReset">↺ 초기화</button>
+    </div>
+    <div class="subgrid" id="subGrid"></div>
+    <div class="dierow" id="dieRow">
+      <button class="btn ghost" id="bDie" style="padding:8px 14px;font-size:13px">🗑️ FDamageLogger 스코프 종료 (소멸)</button>
+      <label><input type="checkbox" id="ckUnsub"> 소멸자에서 RemoveAll(this) 호출</label>
+    </div>
+    <div class="crash" id="crashBox"></div>
+    <div class="stats">
+      <div class="s"><div class="v" id="stChar">0</div><div class="l">Character 코드 수정 (곳)</div></div>
+      <div class="s"><div class="v" id="stSub">0</div><div class="l">구독자 쪽 수정 (줄)</div></div>
+      <div class="s"><div class="v" id="stCnt">1</div><div class="l">현재 연결된 시스템</div></div>
+    </div>
+    <div class="simmsg" id="simMsg"></div>
+    <p class="hint">① 직접 호출 모드에서 시스템을 하나 추가할 때마다 Character 함수 3곳(Take/Poison/Heal)을 고쳐야 한다. ② Observer 모드에서는 Character는 0곳, 구독자가 자기 쪽에 1줄만 넣으면 된다. ③ 로거를 <b>구독 상태로 소멸</b>시킨 뒤 데미지를 주면 이미 죽은 객체의 함수를 호출해 크래시한다 — 체크박스를 켜고 다시 해보면 안전하다.</p>
+  </div>
+</div></section>
+
+<section id="delegate"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 구현</div>
+  <h2 class="sec"><span class="n">4</span>언리얼 Delegate로 구현하기</h2>
+  <div class="card">
+    <pre class="code"><span class="cm">// Character.h — 발행하는 쪽</span>
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnHPChanged, <span class="kw">float</span> <span class="cm">/*NewHP*/</span>);
+
+<span class="kw">class</span> ACharacter : <span class="kw">public</span> AActor
+{
+<span class="kw">public</span>:
+    FOnHPChanged OnHPChanged;   <span class="cm">// "HP가 바뀌면 알려줄게" 창구</span>
+
+    <span class="kw">void</span> TakeDamage(<span class="kw">float</span> Damage) { HP -= Damage; <span class="hl">OnHPChanged.Broadcast(HP);</span> }   <span class="cm">// 알림만 — 누가 듣는지 모른다</span>
+    <span class="kw">void</span> Heal(<span class="kw">float</span> Amount)       { HP += Amount; <span class="hl">OnHPChanged.Broadcast(HP);</span> }   <span class="cm">// 데미지든 힐이든 알림 하나로 통일</span>
+<span class="kw">private</span>:
+    <span class="kw">float</span> HP = 100.0f;
+};</pre>
+    <pre class="code"><span class="cm">// HPBarWidget.h — 구독하는 쪽</span>
+<span class="kw">void</span> UHPBarWidget::BindToCharacter(ACharacter* Character)
+{
+    Character-&gt;OnHPChanged.<span class="hl">AddUObject</span>(<span class="kw">this</span>, &amp;UHPBarWidget::HandleHPChanged);   <span class="cm">// 구독</span>
+}
+<span class="kw">void</span> UHPBarWidget::HandleHPChanged(<span class="kw">float</span> NewHP) { ProgressBar-&gt;SetPercent(NewHP / MaxHP); }
+
+<span class="cm">// MinimapIcon — 나중에 추가된 새 Observer. Character 코드는 한 줄도 안 바뀐다.</span>
+Character-&gt;OnHPChanged.AddUObject(<span class="kw">this</span>, &amp;UMinimapIcon::HandleHPChanged);
+
+<span class="cm">// UQuestManager — 같은 이벤트로 "HP 30% 이하면 위기 퀘스트" 추가도 가능</span>
+<span class="kw">void</span> UQuestManager::HandleHPChanged(<span class="kw">float</span> NewHP) { <span class="kw">if</span> (NewHP / MaxHP &lt; 0.3f) { TriggerCrisisQuest(); } }</pre>
+    <p class="hint"><code>TakeDamage</code>, <code>Heal</code>, <code>ApplyPoisonTick</code> 어디에도 <code>HPBarWidget</code>이나 <code>MinimapIcon</code>이라는 이름이 안 나온다. 도입부의 "빠뜨리면 버그", "요구사항마다 캐릭터 수정"이 둘 다 사라진다.</p>
+  </div>
+</div></section>
+
+<section id="types"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 종류</div>
+  <h2 class="sec"><span class="n">5</span>Multicast vs Single — 몇 명이 들을 수 있나</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>종류</th><th>구독자 수</th><th>쓰는 곳</th></tr>
+      <tr><td><code>DECLARE_DELEGATE_...</code> (싱글)</td><td><b>1명</b>만 바인딩</td><td>응답을 딱 한 곳에서만 처리한다고 명확할 때</td></tr>
+      <tr><td><code>DECLARE_MULTICAST_DELEGATE_...</code></td><td><b>여러 명</b></td><td>Observer처럼 "몇 명이 들을지 모르는" 상황</td></tr>
+      <tr><td><code>DECLARE_DYNAMIC_MULTICAST_DELEGATE_...</code></td><td>여러 명 + <b>블루프린트</b></td><td>디자이너가 BP에서 이벤트에 반응하게 하고 싶을 때</td></tr>
+    </table>
+    <p class="hint">Observer 구현엔 거의 항상 <b>Multicast</b> 계열을 쓴다. 구독자가 0명이든 10명이든 <code>Broadcast</code> 쪽 코드는 똑같다.</p>
+  </div>
+</div></section>
+
+<section id="unsub"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정 1</div>
+  <h2 class="sec"><span class="n">6</span>구독 해제를 깜빡하면</h2>
+  <p class="lead">Observer의 흔한 함정은 <b>구독은 하는데 해제를 안 하는 것</b>이다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> UHPBarWidget::NativeDestruct()
+{
+    <span class="kw">if</span> (BoundCharacter)
+    {
+        BoundCharacter-&gt;OnHPChanged.<span class="good">RemoveAll(<span class="kw">this</span>);</span>   <span class="cm">// 위젯이 사라지기 전에 구독 해제</span>
+    }
+    Super::NativeDestruct();
+}</pre>
+    <p class="hint">위젯이 파괴됐는데 구독 해제를 안 했다면 Character가 Broadcast할 때 <b>이미 없어진 객체의 함수를 부르려는 시도</b>가 일어나 크래시로 이어질 수 있다. 소멸 시점에 자동 호출되는 곳(3강 RAII의 발상)에서 해제를 자동화하자.</p>
+  </div>
+</div></section>
+
+<section id="raw"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 함정 2 · 시뮬레이터에서 직접 터뜨린 것</div>
+  <h2 class="sec"><span class="n">7</span>UObject가 아닌 Observer — AddRaw와 댕글링 콜백</h2>
+  <p class="lead"><code>AddUObject</code>는 대상 UObject의 생존 여부를 어느 정도 추적해준다. 하지만 <b>일반 C++ 클래스를 <code>AddRaw</code>로 묶으면 이 안전망이 없다.</b></p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> SomeFunction()
+{
+    FDamageLogger Logger;                                       <span class="cm">// 지역(스택) 객체 — 스코프 종료 시 소멸</span>
+    Logger.SubscribeTo(PlayerCharacter);                        <span class="cm">// 내부에서 AddRaw(this, ...) — 원시 포인터 그대로 저장</span>
+}   <span class="bad">// Logger는 소멸됐지만 Character는 여전히 죽은 주소를 들고 있다!</span>
+
+<span class="cm">// 나중에 PlayerCharacter-&gt;TakeDamage(...) → Broadcast → 사라진 Logger의 함수 호출 → 미정의 동작(크래시)</span>
+
+FDamageLogger::~FDamageLogger()
+{
+    <span class="kw">if</span> (SubscribedCharacter) { SubscribedCharacter-&gt;OnHPChanged.<span class="good">RemoveAll(<span class="kw">this</span>);</span> }   <span class="cm">// 소멸자에서 반드시 해제</span>
+}</pre>
+    <p class="hint"><b>RAII가 스코프 종료 때 자원을 자동 정리해준다는 그 성질이, 구독 해제를 안 챙기면 오히려 댕글링 콜백이라는 위험으로 돌아온다.</b></p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">8</span>흔한 오해 6가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 면접 대비</div>
+  <h2 class="sec"><span class="n">9</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"이런 이벤트 시스템을 게임 전역에서 하나만 두고 관리하고 싶다면 어떻게 설계하겠어요?"</i> → 9강(Singleton과 Factory)에서 다룰 GameInstance/Subsystem 패턴으로 이어지는 질문이다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 마무리</div>
+  <h2 class="sec"><span class="n">10</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 6 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="07강_Object_Pooling.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 7강 — Object Pooling</div></div></a>
+  <a class="nx" href="09강_Singleton과_Factory.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">9강 — Singleton과 Factory →</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 8강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"Observer Pattern은 언리얼 Delegate가 있어야만 쓸 수 있다"','Observer는 <span class="truth">개념</span>이고 Delegate는 언리얼이 제공하는 구현 도구일 뿐이다. 표준 C++에서도 함수 포인터, <code>std::function</code> 목록, 콜백 인터페이스(가상 함수)로 같은 패턴을 만들 수 있다.'],
+ ['"Broadcast하면 구독자 실행 순서가 항상 보장된다"','보통 구독 순서대로 불리지만 <span class="truth">그 순서에 로직을 의존하면 안 된다.</span> Observer들은 서로 독립적이어야 하는 게 전제다. "A가 먼저, 그다음 B"가 필요하면 애초에 이 패턴이 안 맞는다.'],
+ ['"구독자가 많아져도 성능은 신경 안 써도 된다"','Broadcast는 <span class="truth">구독자 수만큼 함수 호출을 순회</span>한다. 대부분의 게임 이벤트(HP 변화, 아이템 획득)는 빈도가 낮아 괜찮지만 매 프레임 도는 이벤트에 무분별하게 붙이면 비용이 된다.'],
+ ['"구독 해제는 언리얼이 알아서 처리해준다"','UObject 기반은 어느 정도 안전 장치가 있지만 믿고 생략하면 안 된다. <span class="truth">명시적으로 <code>RemoveAll</code>/<code>Remove</code></span>를 호출하는 습관이 안전하다. 일반 객체를 바인딩할 땐 안전장치 자체가 없다.'],
+ ['"Observer를 쓰면 결합도가 0이 된다"','0이 아니다. 구독하는 쪽은 여전히 <code>OnHPChanged</code>의 이름과 시그니처를 알아야 한다. 느슨한 결합이란 <span class="truth">"발행자가 구독자를 모른다"</span>는 뜻이다.'],
+ ['"AddRaw로 바인딩해도 AddUObject처럼 안전하다"','아니다. <code>AddRaw</code>는 원시 포인터를 저장할 뿐이라 객체가 소멸해도 발행자는 모른다. <span class="truth">소멸자에서 <code>RemoveAll(this)</code>를 잊으면 댕글링 콜백</span>이다.']
+];
+var QA=[
+ ['Observer Pattern에 대해 설명해주세요.','어떤 객체(Subject)의 상태가 바뀌면 관심 있는 여러 객체(Observer)에게 <b>알림을 보내 각자 알아서 반응</b>하게 하는 패턴입니다. Subject는 Observer가 누구인지 몇 명인지 몰라도 돼서 두 쪽이 <b>느슨하게 결합</b>됩니다.'],
+ ['HP가 바뀔 때 UI가 자동으로 갱신되는 구조를 어떻게 만드시겠어요?','캐릭터에 HP 변화 <b>멀티캐스트 델리게이트</b>를 두고, 데미지/힐 로직은 Broadcast만 합니다. HP바·미니맵 같은 UI는 이 이벤트를 구독해 각자 갱신합니다. 캐릭터가 특정 UI 클래스를 몰라도 됩니다.'],
+ ['느슨한 결합이 왜 중요한가요?','새 기능(UI, 시스템)을 추가할 때 <b>기존 코드를 수정하지 않아도</b> 되기 때문입니다. 강결합이면 요구사항마다 원본 클래스를 찾아가 고쳐야 하지만, 느슨하면 새 Observer가 구독만 추가하면 됩니다.'],
+ ['언리얼에서 어떤 Delegate를 쓰나요?','구독자가 여러 명일 수 있으니 <b>Multicast Delegate</b>를 씁니다. 블루프린트에서도 받아야 하면 Dynamic Multicast, 응답이 딱 한 곳이면 싱글 Delegate로 충분합니다.'],
+ ['구독 해제를 깜빡하면 어떤 문제가 생기나요?','구독한 객체가 이미 파괴됐는데 발행자가 여전히 Broadcast하면 <b>크래시</b>로 이어질 수 있습니다. 소멸되는 시점에 명시적으로 구독을 해제해야 합니다.'],
+ ['Observer가 수백 개고 매 프레임 Broadcast된다면 문제 없을까요?','문제될 수 있습니다. Broadcast는 <b>구독자 수만큼 호출을 순회</b>하니 매 프레임 이벤트에 구독자가 많으면 비용입니다. 이벤트 빈도를 줄이거나 매 프레임 반응이 필요한 대상만 따로 관리합니다.'],
+ ['직접 호출 방식을 계속 써도 되는 경우는 언제인가요?','관심 대상이 <b>명확히 하나뿐이고 늘어날 가능성이 거의 없으면</b> 직접 호출이 단순하고 디버깅도 쉽습니다. Observer는 구독자가 여러 개거나 자주 늘 때 이득이 큽니다. 무조건 쓰는 게 능사는 아닙니다.'],
+ ['UObject가 아닌 클래스를 Observer로 쓸 때 조심할 점은요?','AddRaw는 원시 포인터를 그대로 저장해 <b>생존 추적 안전장치가 없습니다.</b> 소멸자에서 RemoveAll로 직접 해제하지 않으면 발행자가 사라진 객체를 호출하는 댕글링 콜백이 생깁니다.']
+];
+var CK=['기존 직접 호출 방식과 Observer Pattern의 차이를 결합도 관점에서 설명할 수 있다','언리얼 Multicast Delegate로 Observer를 구현하는 코드를 짤 수 있다','Broadcast하는 쪽이 구독자를 몰라도 되는 게 왜 유리한지 새 기능 추가 시나리오로 설명할 수 있다','구독 해제를 깜빡하면 왜 위험한지, 언제 해제해야 하는지 안다','AddRaw로 묶은 non-UObject 구독자가 왜 댕글링 콜백에 취약한지 설명할 수 있다','Observer가 항상 정답이 아닌 경우(구독자가 명확히 하나뿐)를 판단할 수 있다'];
+var KEY='cpp08-check';
+
+/* 킬러: HP 이벤트 Broadcast 시뮬레이터 */
+(function(){
+  var mode='obs',hp,subs,editsChar,editsSub,crashed,broadcasts;
+  var hpNum=document.getElementById('hpNum'),grid=document.getElementById('subGrid'),msgEl=document.getElementById('simMsg'),crashBox=document.getElementById('crashBox');
+  var ckUnsub=document.getElementById('ckUnsub'),bDie=document.getElementById('bDie'),dieRow=document.getElementById('dieRow');
+  function mk(id,name,tag,on){return {id:id,name:name,tag:tag,on:on,dead:false,note:'',hp:100};}
+  function reset(){
+    hp=100;editsChar=0;editsSub=0;crashed=false;broadcasts=0;
+    subs=[mk('bar','HPBarWidget','UObject · AddUObject',true),mk('mini','MinimapIcon','UObject · AddUObject',false),
+          mk('quest','UQuestManager','UObject · AddUObject',false),mk('log','FDamageLogger','일반 C++ · AddRaw',false)];
+    ckUnsub.checked=false;crashBox.style.display='none';msgEl.textContent='';msgEl.className='simmsg';
+    render();
+  }
+  function react(s,h,prev){
+    s.hp=h;
+    if(s.id==='quest'){s.note=(h/100<0.3)?'🚨 위기 퀘스트 발동!':'대기 중';}
+    if(s.id==='log'){s.note='로그: '+prev+' → '+h;}
+  }
+  function fire(delta,label){
+    if(crashed)return;
+    var prev=hp;hp=Math.max(0,Math.min(100,hp+delta));broadcasts++;
+    var m='';
+    for(var i=0;i<subs.length;i++){
+      var s=subs[i];if(!s.on)continue;
+      if(s.dead){
+        crashed=true;
+        crashBox.style.display='block';
+        crashBox.textContent='💥 크래시! Broadcast가 이미 소멸된 '+s.name+'의 함수를 호출했다 (댕글링 콜백 · 미정의 동작)';
+        m='구독을 해제하지 않은 채 소멸한 객체가 남아 있었다.';
+        break;
+      }
+      react(s,hp,prev);
+    }
+    if(!crashed){m=label+' → HP '+prev+' → '+hp+(mode==='obs'?' · Broadcast 1회로 '+subs.filter(function(x){return x.on;}).length+'곳에 전달':' · Character 함수가 각 시스템을 직접 호출');}
+    msgEl.textContent=m;msgEl.className='simmsg'+(crashed?' bad':'');
+    render();
+  }
+  function toggle(s){
+    if(crashed||s.dead)return;
+    s.on=!s.on;
+    if(mode==='direct'){editsChar+=3;}else{editsSub+=1;}
+    if(s.on){react(s,hp,hp);}
+    render();
+  }
+  function render(){
+    hpNum.textContent=hp;
+    grid.innerHTML='';
+    subs.forEach(function(s){
+      var d=document.createElement('div');d.className='sub'+(s.on?'':' off')+(s.dead?' dead':'');
+      var rx='';
+      if(s.id==='bar')rx='<div class="hb"><i style="width:'+s.hp+'%"></i></div><div style="margin-top:6px">'+s.hp+' / 100</div>';
+      else if(s.id==='mini'){var col=s.hp>60?'var(--grn)':(s.hp>30?'var(--amber)':'var(--red)');rx='<span class="dot" style="background:'+col+'"></span>체력 아이콘 '+s.hp;}
+      else rx=s.note||'대기 중';
+      if(s.dead)rx=(s.on?'⚠ 소멸됨 · 구독은 남아있음(댕글링)':'소멸됨 · 구독 해제 완료');
+      var btn='';
+      if(!s.dead){
+        btn='<button>'+(s.on?'구독 해제 / 제거':(mode==='direct'?'+ 시스템 추가 (Character 3곳 수정)':'+ 구독 (구독자 1줄)'))+'</button>';
+      }
+      d.innerHTML='<div class="nm">'+s.name+'</div><div class="tg">'+s.tag+'</div><div class="rx">'+rx+'</div>'+btn;
+      var b=d.querySelector('button');if(b)b.addEventListener('click',function(){toggle(s);});
+      grid.appendChild(d);
+    });
+    document.getElementById('stChar').textContent=editsChar;
+    document.getElementById('stSub').textContent=editsSub;
+    document.getElementById('stCnt').textContent=subs.filter(function(s){return s.on&&!s.dead;}).length;
+    var log=subs[3];
+    bDie.disabled=(mode==='direct'||log.dead||crashed);
+    ckUnsub.disabled=(mode==='direct'||log.dead);
+    dieRow.style.opacity=mode==='direct'?.4:1;
+  }
+  document.querySelectorAll('.modetoggle button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.modetoggle button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');mode=b.dataset.m;reset();
+    });
+  });
+  document.getElementById('bDmg').addEventListener('click',function(){fire(-20,'TakeDamage(20)');});
+  document.getElementById('bPoi').addEventListener('click',function(){fire(-5,'PoisonTick(5)');});
+  document.getElementById('bHeal').addEventListener('click',function(){fire(15,'Heal(15)');});
+  document.getElementById('bReset').addEventListener('click',reset);
+  bDie.addEventListener('click',function(){
+    var s=subs[3];if(s.dead)return;
+    s.dead=true;
+    if(ckUnsub.checked&&s.on){s.on=false;msgEl.textContent='소멸자에서 RemoveAll(this) 호출 → 안전하게 구독 해제됨.';msgEl.className='simmsg good';}
+    else if(s.on){msgEl.textContent='구독을 해제하지 않고 스코프를 벗어났다. 이제 HP를 바꿔보자…';msgEl.className='simmsg bad';}
+    else{msgEl.textContent='구독 중이 아니었으니 아무 일도 없다.';msgEl.className='simmsg';}
+    render();
+  });
+  reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

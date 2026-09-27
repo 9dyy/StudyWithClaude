@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>9강 · Singleton과 Factory — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러 A: 생명주기 실험 */
+.lcs{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:16px}
+.lc{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px;transition:.2s}
+.lc.dead{opacity:.45}
+.lc h4{font-size:13.5px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+.lc h4 small{font-weight:500;color:var(--faint);font-size:11px}
+.lc .life{font-size:11.5px;color:var(--faint);margin-top:2px}
+.lc .row{margin-top:10px;font-size:12px;color:var(--dim);display:flex;justify-content:space-between}
+.lc .row b{font-family:ui-monospace,monospace;color:var(--txt)}
+.snds{display:flex;gap:4px;flex-wrap:wrap;min-height:28px;margin-top:8px}
+.snd{font-family:ui-monospace,monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:7px;background:rgba(52,211,153,.14);border:1px solid rgba(52,211,153,.5);color:var(--grn)}
+.snd.stale{background:rgba(248,113,113,.15);border-color:var(--red);color:var(--red)}
+.tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:12px;background:var(--bg2);border:1px solid var(--line);color:var(--faint);white-space:nowrap}
+.tag.on{color:var(--grn);border-color:rgba(52,211,153,.5)}
+.tag.warn{color:var(--red);border-color:rgba(248,113,113,.5)}
+.logb{margin-top:14px;background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;max-height:170px;overflow:auto;min-height:56px}
+.logb .ok{color:var(--grn)}.logb .err{color:var(--red)}.logb .inf{color:var(--cyan)}.logb div{color:var(--dim)}
+/* 킬러 B: Factory */
+.sps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:14px}
+.sp{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;color:var(--dim)}
+.sp b{color:var(--txt);font-size:12.5px}
+.sp pre{font-family:ui-monospace,monospace;font-size:11px;background:#0a0d18;border:1px solid var(--line);border-radius:8px;padding:7px 9px;margin-top:6px;white-space:pre;overflow-x:auto;color:var(--dim);line-height:1.5}
+.sp pre .hp{color:var(--amber);font-weight:800}.sp pre .fx{color:var(--grn);font-weight:800}
+.sp button{margin-top:8px;font-family:inherit;font-size:12px;font-weight:700;padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);cursor:pointer}
+.sp button:hover:not(:disabled){border-color:var(--acc)}
+.sp button:disabled{opacity:.45;cursor:default}
+.sp.done{border-color:rgba(52,211,153,.5)}
+.sp.factory{border-color:rgba(168,85,247,.6);background:rgba(168,85,247,.08)}
+.res2{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+.res2 span{font-family:ui-monospace,monospace;font-size:12px;padding:4px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--dim)}
+.res2 span.ok{border-color:rgba(52,211,153,.6);color:var(--grn)}
+.res2 span.no{border-color:rgba(248,113,113,.6);color:var(--red)}
+.pill{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:var(--bg2)}
+.pill button{font-family:inherit;font-size:12.5px;font-weight:700;padding:7px 14px;border:none;background:none;color:var(--dim);cursor:pointer}
+.pill button.on{background:var(--acc);color:#fff}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>9강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#meyer">Singleton</a>
+    <a class="chip" href="#why">언리얼의 문제</a>
+    <a class="chip" href="#sub">Subsystem</a>
+    <a class="chip" href="#factory">Factory</a>
+    <a class="chip" href="#both">함께</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 디자인 패턴 · 게임 특화</span>
+  <h1>Singleton과 <span class="g">Factory</span></h1>
+  <p class="sub">"딱 하나만 존재해야 한다"를 강제하는 Singleton, "만드는 방법"을 한 곳에 모으는 Factory. 전통적인 Singleton이 언리얼에서 왜 삐걱대는지를 PIE를 여러 번 돌려보며 확인하고, Factory의 진짜 가치는 "수정 지점 수"로 잰다.</p>
+  <div class="meta">
+    <div class="m">1️⃣ 하나만, 그것도 수명을 정해서</div>
+    <div class="m">🧩 선수지식 <b>1강 · 8강</b></div>
+    <div class="m">⏱️ 약 25분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>전역 사운드 매니저를 여기저기서 new 하다가 생긴 혼란</h2>
+  <p class="lead">배경음악과 효과음을 관리하는 <code>SoundManager</code>가 필요했다. 처음엔 각 시스템(UI, 전투, 대화)이 자기 인스턴스를 만들어 썼다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> UMenuWidget : <span class="kw">public</span> UUserWidget
+{
+    USoundManager* SoundManager = NewObject&lt;USoundManager&gt;();   <span class="bad">// 여기서도 하나</span>
+};
+
+<span class="kw">class</span> ACombatSystem : <span class="kw">public</span> AActor
+{
+    USoundManager* SoundManager = NewObject&lt;USoundManager&gt;();   <span class="bad">// 여기서도 또 하나</span>
+};</pre>
+    <p class="hint">인스턴스가 여러 개 생기니 "지금 재생 중인 사운드 목록"이 인스턴스마다 따로 관리돼서, 전투 시스템이 재생한 사운드를 메뉴 시스템이 끌 수가 없다. <b>딱 하나만 존재해야 하는 게 명확한 대상</b>인데 여러 개가 생겨버린 거다. 이럴 때 쓰는 게 <b>Singleton 패턴</b> — "이 클래스의 인스턴스는 프로그램 전체에서 딱 하나만 존재하게 강제한다."</p>
+  </div>
+</div></section>
+
+<section id="meyer"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 전통적인 Singleton</div>
+  <h2 class="sec"><span class="n">2</span>Meyer's Singleton (1강 복습)</h2>
+  <p class="lead">지역 static 변수는 "최초 호출 때 딱 한 번만 생성"된다(1강). 이걸 이용한다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FSoundManager
+{
+<span class="kw">public</span>:
+    <span class="kw">static</span> FSoundManager&amp; Get()
+    {
+        <span class="kw">static</span> FSoundManager Instance;   <span class="cm">// 최초 호출 때 딱 한 번 생성. C++11부터 초기화 자체는 스레드 안전</span>
+        <span class="kw">return</span> Instance;
+    }
+
+    <span class="kw">void</span> PlaySound(USoundBase* Sound) { <span class="cm">/* ... */</span> }
+
+<span class="kw">private</span>:
+    FSoundManager() = <span class="kw">default</span>;                              <span class="cm">// 생성자를 private으로 막아 외부에서 new 못하게</span>
+    FSoundManager(<span class="kw">const</span> FSoundManager&amp;) = <span class="kw">delete</span>;            <span class="cm">// 복사도 막아야 진짜 "하나"가 보장됨</span>
+    FSoundManager&amp; <span class="kw">operator</span>=(<span class="kw">const</span> FSoundManager&amp;) = <span class="kw">delete</span>;
+};
+
+FSoundManager::Get().PlaySound(ExplosionSound);   <span class="cm">// 어디서든 항상 같은 인스턴스</span></pre>
+    <p class="hint"><b>생성자를 <code>private</code>으로 막고, 복사 생성자/대입 연산자까지 <code>delete</code>로 막는 게 핵심이다.</b> 빼먹으면 <code>FSoundManager Copy = FSoundManager::Get();</code>처럼 실수로 복사본을 만들어 "딱 하나"가 깨질 수 있다.</p>
+  </div>
+</div></section>
+
+<section id="why"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 문제</div>
+  <h2 class="sec"><span class="n">3</span>이 방식이 언리얼에서 골치 아픈 이유</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>문제</th><th>설명</th></tr>
+      <tr><td>레벨/월드 전환과 생명주기가 안 맞음</td><td>프로그램이 끝날 때까지 살아있는데, 사운드 매니저는 "이 플레이 세션 동안만" 살아야 할 수도 있음</td></tr>
+      <tr><td>언리얼 객체 시스템(GC, 리플렉션)과 안 맞음</td><td><code>UObject</code>가 아니라서 블루프린트 노출, 가비지 컬렉션 추적이 안 됨</td></tr>
+      <tr><td>테스트/PIE에서 상태가 안 초기화됨</td><td>에디터에서 플레이를 여러 번 실행해도 static 인스턴스는 그대로 남아 <b>이전 세션 상태가 남을 수 있음</b></td></tr>
+      <tr><td>유닛 테스트가 어려움</td><td>전역 상태라서 테스트마다 깨끗한 상태로 리셋하기 까다로움</td></tr>
+    </table>
+    <p class="hint"><b>요약:</b> 전통적인 Singleton은 "프로그램 생명주기"에 묶이는데, 게임은 "월드/세션 생명주기"가 그것과 다르다. 세 번째 행을 바로 다음 절에서 직접 재현한다.</p>
+  </div>
+</div></section>
+
+<section id="sub"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>GameInstance/Subsystem — "생명주기가 명확한 Singleton"</h2>
+  <p class="lead">언리얼은 이미 <b>생명주기가 정의된 전역 객체 계층</b>을 갖고 있다. 아래는 같은 사운드 관리자를 <b>세 가지 방식</b>으로 만든 세 개의 인스턴스가 에디터 PIE 세션에서 어떻게 사는지 보여준다. 버튼을 눌러 <b>PIE를 시작하고, 사운드를 재생하고, PIE를 종료하고, 다시 시작</b>해보자.</p>
+  <div class="card">
+    <pre class="code">GameInstance          — 게임 실행 시작부터 종료까지 (레벨을 넘나들어도 유지) — 딱 하나
+  └─ GameInstanceSubsystem  — GameInstance와 생명주기를 같이함
+
+World                 — 레벨 하나가 로드되어 있는 동안만 (레벨 전환 시 새로 생성)
+  └─ WorldSubsystem        — World와 생명주기를 같이함</pre>
+    <div class="btnrow" style="margin-top:14px"><button class="btn" id="aPie">▶ PIE 시작</button><button class="btn ghost" id="aPlay">🔊 사운드 재생</button><button class="btn ghost" id="aLvl">🗺️ 레벨 전환</button><button class="btn ghost" id="aStop">■ PIE 종료</button><button class="btn ghost" id="aKill">⏻ 에디터 종료</button></div>
+    <div class="lcs" id="lcs"></div>
+    <div class="simmsg" id="aMsg"></div>
+    <div class="logb" id="aLog"></div>
+    <p class="hint">해볼 것 ① <b>PIE 시작 → 사운드 재생 몇 번 → PIE 종료 → 다시 PIE 시작</b>. 전통 Singleton(왼쪽)만 <b>이전 세션의 사운드가 빨간색으로 남아 있다</b> — GameInstance/World는 새로 만들어져 깨끗하다. 이게 "PIE에서 상태가 초기화 안 됨"이다. ② <b>레벨 전환</b>은 WorldSubsystem만 새로 만든다(재생 목록이 비어짐) — GameInstanceSubsystem은 레벨을 넘어 살아남는다. 사운드 매니저가 "세션 동안 살아야 한다"면 GameInstanceSubsystem, "레벨마다 리셋돼야 한다"면 WorldSubsystem으로 <b>수명을 고르는 것</b>이 요점이다. ③ <b>에디터 종료</b>를 눌러야 비로소 static이 사라진다.</p>
+  </div>
+  <div class="card">
+    <pre class="code">UCLASS()
+<span class="kw">class</span> USoundManagerSubsystem : <span class="kw">public</span> UGameInstanceSubsystem
+{
+    GENERATED_BODY()
+
+<span class="kw">public</span>:
+    <span class="kw">virtual void</span> Initialize(FSubsystemCollectionBase&amp; Collection) <span class="kw">override</span>
+    {
+        Super::Initialize(Collection);
+        UE_LOG(LogTemp, Log, TEXT(<span class="str">"SoundManager 초기화 — GameInstance가 생성될 때 자동 호출"</span>));
+    }
+
+    <span class="kw">virtual void</span> Deinitialize() <span class="kw">override</span>
+    {
+        UE_LOG(LogTemp, Log, TEXT(<span class="str">"SoundManager 정리 — GameInstance가 파괴될 때 자동 호출"</span>));
+        Super::Deinitialize();
+    }
+
+    <span class="kw">void</span> PlaySound(USoundBase* Sound) { <span class="cm">/* ... */</span> }
+};
+
+<span class="cm">// 어디서든 GameInstance를 거쳐 딱 하나뿐인 인스턴스에 접근</span>
+USoundManagerSubsystem* SoundManager = GetGameInstance()-&gt;GetSubsystem&lt;USoundManagerSubsystem&gt;();
+SoundManager-&gt;PlaySound(ExplosionSound);</pre>
+    <p class="hint"><b>"딱 하나"라는 Singleton의 본질은 그대로다</b> — <code>GetSubsystem&lt;T&gt;()</code>는 항상 같은 인스턴스를 리턴한다. 다만 그 하나의 생명주기가 프로그램 전체가 아니라 <b>GameInstance나 World에 명확히 묶여서</b>, PIE를 껐다 켜면 자동으로 새로 초기화되고, <code>UObject</code>라서 GC 추적과 블루프린트 노출도 공짜로 딸려온다. 8강 Observer와 조합하면 Subsystem이 전역 이벤트 허브 역할을 하기도 한다.</p>
+  </div>
+</div></section>
+
+<section id="factory"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">5</span>Factory Pattern — "생성 로직을 한 곳에 몰아넣기"</h2>
+  <p class="lead">Singleton이 "인스턴스 개수"를 통제한다면 Factory는 <b>"생성 방법과 절차"</b>를 한 곳에 모은다. 적을 스폰하는 곳이 5군데 있다고 하자. 요구사항이 왔다 — <b>"오크 초기 체력을 120에서 150으로 올려주세요."</b> 몇 군데를 고쳐야 할까?</p>
+  <div class="card">
+    <div class="ctlrow" style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-content:center;font-size:13px;color:var(--dim)">
+      <span>구조 <span class="pill" id="fMode"><button data-v="0" class="on">Factory 없음 (흩어진 if-else)</button><button data-v="1">Factory로 모음</button></span></span>
+    </div>
+    <div class="sps" id="sps"></div>
+    <div class="stats" id="fStats"></div>
+    <div class="res2" id="fRes"></div>
+    <div class="simmsg" id="fMsg"></div>
+    <div class="btnrow"><button class="btn" id="fTest">🧪 5개 스폰 지점에서 오크 스폰 테스트</button><button class="btn ghost" id="fReset">↺ 초기화</button></div>
+    <p class="hint">① <b>Factory 없음</b>에서 각 스폰 지점의 <b>"체력 150으로 수정"</b>을 눌러 고쳐보자. 하나라도 빠뜨린 채 <b>스폰 테스트</b>를 하면 그 지점의 오크만 <b>120으로 남은 일관성 버그</b>가 드러난다. ② <b>Factory로 모음</b>으로 바꾸면 수정 지점이 <b>1곳</b>이고, 스폰 지점 5곳은 "뭘 만들지"만 안다. 스폰 지점이 몇 개든 상관없다. ③ Factory는 상태가 없으니 인스턴스 없이 호출하는 <b>static 함수</b>(1강)로 만드는 게 자연스럽다. ④ 간단한 경우엔 함수 하나로 충분하고, 복잡해지면 그때 클래스 계층으로 확장해도 늦지 않다.</p>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="kw">class</span> FEnemyFactory
+{
+<span class="kw">public</span>:
+    <span class="kw">static</span> AEnemy* CreateEnemy(UWorld* World, EEnemyType Type, <span class="kw">const</span> FTransform&amp; SpawnTransform)
+    {
+        <span class="kw">switch</span> (Type)
+        {
+        <span class="kw">case</span> EEnemyType::Goblin:
+        {
+            AGoblin* Goblin = World-&gt;SpawnActor&lt;AGoblin&gt;(SpawnTransform.GetLocation(), SpawnTransform.Rotator());
+            Goblin-&gt;SetHealth(50.f);
+            Goblin-&gt;EquipWeapon(GoblinClub);
+            <span class="kw">return</span> Goblin;
+        }
+        <span class="kw">case</span> EEnemyType::Orc:
+        {
+            AOrc* Orc = World-&gt;SpawnActor&lt;AOrc&gt;(SpawnTransform.GetLocation(), SpawnTransform.Rotator());
+            Orc-&gt;SetHealth(<span class="hl">120.f</span>);
+            Orc-&gt;EquipWeapon(OrcAxe);
+            <span class="kw">return</span> Orc;
+        }
+        <span class="kw">default</span>: <span class="kw">return</span> <span class="kw">nullptr</span>;
+        }
+    }
+};
+
+<span class="cm">// 스폰하는 곳은 이제 "뭘 만들지"만 알면 되고, "어떻게 만들지"는 몰라도 됨</span>
+<span class="kw">void</span> ASpawnPoint::SpawnEnemy(EEnemyType Type)
+{
+    AEnemy* NewEnemy = FEnemyFactory::CreateEnemy(GetWorld(), Type, GetActorTransform());
+}</pre>
+  </div>
+</div></section>
+
+<section id="both"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함께 쓰기</div>
+  <h2 class="sec"><span class="n">6</span>Singleton + Factory + Observer</h2>
+  <p class="lead">실전에선 셋이 한 시스템 안에서 겹친다. "적 생성 로직은 Factory로 몰고, 그 창구는 Subsystem(사실상 Singleton)으로 둔다."</p>
+  <div class="card">
+    <pre class="code">UCLASS()
+<span class="kw">class</span> UEnemySpawnSubsystem : <span class="kw">public</span> UWorldSubsystem
+{
+    GENERATED_BODY()
+
+<span class="kw">public</span>:
+    AEnemy* SpawnEnemy(EEnemyType Type, <span class="kw">const</span> FTransform&amp; SpawnTransform)
+    {
+        AEnemy* NewEnemy = FEnemyFactory::CreateEnemy(GetWorld(), Type, SpawnTransform);
+        OnEnemySpawned.Broadcast(NewEnemy);   <span class="cm">// 8강 — 스폰 이벤트를 구독자들에게 알림</span>
+        <span class="kw">return</span> NewEnemy;
+    }
+
+    FOnEnemySpawned OnEnemySpawned;
+};</pre>
+    <div class="two">
+      <div class="box"><h4>Subsystem</h4><p>"이 월드에서 적 스폰은 딱 한 창구" 보장</p></div>
+      <div class="box"><h4>Factory</h4><p>실제로 어떻게 만들지 담당</p></div>
+      <div class="box"><h4>Delegate</h4><p>만들어졌다는 걸 누구에게 알릴지 담당</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">7</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 면접 대비</div>
+  <h2 class="sec"><span class="n">8</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"캐릭터가 여러 상태(대기, 이동, 공격, 사망)를 오가는 로직에 if-else가 계속 쌓인다면 어떻게 정리하시겠어요?"</i> → 10강(State Pattern)으로 이어진다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 마무리</div>
+  <h2 class="sec"><span class="n">9</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="08강_Observer_Pattern.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 8강 — Observer Pattern</div></div></a>
+  <a class="nx" href="10강_State_Pattern.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">10강 — State Pattern →</div></div></a>
+  <div class="cap">게임 개발자를 위한 C++ 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 9강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"Singleton은 그냥 static 변수 하나 두는 것과 같다"','비슷해 보이지만 다르다. Singleton은 <span class="truth">"생성자를 막아서 외부에서 직접 인스턴스를 못 만들게 강제"</span>하는 게 핵심이다. 그냥 <code>static USoundManager* GlobalManager;</code>처럼 전역 포인터만 두면 누군가 실수로 또 다른 인스턴스를 <code>new</code>로 만들 수 있어서 "딱 하나"가 보장되지 않는다.'],
+ ['"언리얼에서는 Singleton을 아예 안 쓴다"','정확히는 "전통적인 방식의 Singleton 클래스"를 잘 안 쓴다는 거고, <span class="truth">GameInstance/Subsystem 자체가 사실상 Singleton 역할</span>을 한다. "딱 하나만 존재"라는 목적은 똑같이 달성하되 언리얼 프레임워크의 생명주기 관리에 올라탄 형태로 구현하는 것뿐이다.'],
+ ['"Factory는 무조건 클래스로 만들어야 한다"','간단한 경우엔 <span class="truth">함수 하나로도 충분</span>하다. 조건 분기가 몇 가지뿐이면 static 함수 하나로 시작하고, 생성 로직이 복잡해지고 여러 종류의 Factory가 필요해지면 그때 클래스 계층으로 확장해도 늦지 않다.'],
+ ['"Singleton은 언제나 전역 상태라서 나쁘다"','무조건 나쁜 건 아니다. "이 개념이 게임 안에 진짜로 딱 하나만 존재해야 하는가"(사운드 매니저, 세이브 시스템, 입력 매니저)가 명확하면 적절한 선택이다. 문제는 <span class="truth">"일단 편하니까" 아무 클래스나 Singleton으로 만드는 습관</span>이지 패턴 자체가 아니다.'],
+ ['"GetSubsystem을 호출할 때마다 새로 초기화 비용이 든다"','아니다. Subsystem은 GameInstance/World가 생성될 때 <span class="truth">딱 한 번 Initialize</span>가 호출되고, 이후 <code>GetSubsystem&lt;T&gt;()</code>는 이미 만들어진 인스턴스의 포인터를 바로 리턴할 뿐이다.']
+];
+var QA=[
+ ['Singleton 패턴을 C++로 어떻게 구현하나요?','<b>생성자를 private으로 막고</b>, 복사 생성자와 대입 연산자도 삭제해서 외부에서 직접 인스턴스를 못 만들게 합니다. 정적 멤버 함수 안에 지역 static 객체를 두고 그 참조를 리턴하는 <b>Meyer\'s Singleton</b> 방식이 흔한데, C++11부터 이 지역 static의 초기화 자체가 스레드 안전하게 보장됩니다.'],
+ ['언리얼에서는 전통적인 Singleton 클래스를 잘 안 쓴다고 하는데, 왜 그런가요?','전통적인 Singleton은 <b>프로그램 전체 생명주기</b>에 묶이는데 게임은 레벨/플레이 세션 단위로 생명주기가 다릅니다. UObject가 아니라서 가비지 컬렉션이나 블루프린트 노출도 안 되고, 에디터에서 플레이를 여러 번 돌리면 이전 상태가 남는 문제도 생깁니다.'],
+ ['GameInstance나 Subsystem이 Singleton과 어떤 관계가 있나요?','GetSubsystem으로 가져오는 인스턴스는 항상 같은 하나이기 때문에 <b>사실상 Singleton 역할</b>을 합니다. 다만 생명주기가 GameInstance나 World에 명확히 묶여서 자동으로 초기화/정리되고, UObject라 GC 추적과 블루프린트 노출이 자연스럽게 되는 게 전통적인 Singleton과의 차이입니다.'],
+ ['Factory Pattern이 왜 필요한가요?','객체를 <b>생성하는 로직</b>(어떤 초기값을 주고 어떤 컴포넌트를 붙이는지)을 여러 곳에 흩어놓지 않고 한 곳에 모아두기 위해서입니다. 생성 방식이 바뀌어야 할 때 그 한 곳만 고치면 되고, 사용하는 쪽은 구체적인 생성 절차를 몰라도 됩니다.'],
+ ['적 종류가 늘어날수록 스폰 로직에 if-else가 계속 늘어난다면 어떻게 개선하시겠어요?','생성 로직을 <b>Factory 클래스나 함수로 몰아서</b> 스폰 지점 코드는 어떤 타입을 만들지만 알고 실제 생성 절차는 Factory에 위임하겠습니다. 새 적 타입이 추가돼도 스폰 지점 코드를 건드릴 필요 없이 Factory 한 곳만 확장하면 됩니다.'],
+ ['Singleton을 쓰면 안 좋은 경우는 언제인가요?','실제로는 여러 인스턴스가 필요할 수도 있는 대상을 <b>성급하게 Singleton으로</b> 만드는 경우입니다. 예를 들어 나중에 멀티플레이어에서 플레이어별로 따로 관리해야 하는 상태를 Singleton으로 박아두면 구조를 다시 뜯어고쳐야 합니다. "진짜로 하나만 존재해야 하는가"를 먼저 판단해야 합니다.'],
+ ['Singleton과 Factory를 같이 쓰는 경우도 있나요?','네, 생성 로직 자체는 <b>Factory</b>에 맡기고, 그 Factory를 어디서나 같은 창구로 접근하게 하기 위해 <b>Subsystem 같은 Singleton</b> 형태로 감싸는 경우가 있습니다. 스폰 시스템을 Subsystem으로 두고 내부에서 Factory로 실제 생성을 처리하는 구조가 대표적입니다.']
+];
+var CK=['Meyer\'s Singleton을 C++로 구현하고 복사 생성자를 막아야 하는 이유를 설명할 수 있다','전통적인 Singleton이 언리얼에서 문제가 되는 이유(생명주기 불일치, GC/블루프린트 미지원)를 안다','GameInstance/Subsystem이 왜 "사실상 Singleton"인지, 전통적인 방식과 뭐가 다른지 설명할 수 있다','Factory Pattern이 생성 로직을 어떻게 한 곳에 몰아주는지 코드로 설명할 수 있다','Singleton과 Factory를 함께 쓰는 실전 구조를 예로 들 수 있다'];
+var KEY='cpp09-check';
+
+/* 킬러 A: 생명주기 실험 */
+(function(){
+  var st,logs;
+  var lcs=document.getElementById('lcs'),logEl=document.getElementById('aLog'),msgEl=document.getElementById('aMsg');
+  function reset(){st={sInit:0,sList:[],pie:0,cur:null,snd:0,giInit:0,wInit:0,piesRun:0};logs=[];log('inf','[에디터 시작] 아직 아무것도 생성되지 않았다.');msg('','▶ PIE 시작을 눌러보자.');draw();}
+  function log(c,t){logs.unshift({c:c,t:t});if(logs.length>40)logs.pop();}
+  function msg(c,t){msgEl.className='simmsg '+c;msgEl.innerHTML=t;}
+  function stale(){return st.sList.filter(function(s){return !st.cur||s.p!==st.cur.id;}).length;}
+  function pieStart(){
+    if(st.cur){log('err','[PIE] 이미 실행 중이다. 먼저 종료하자.');return;}
+    st.piesRun++;st.cur={id:st.piesRun,gi:[],w:[],level:'Level_A'};st.giInit++;st.wInit++;
+    log('ok','[PIE #'+st.piesRun+' 시작] GameInstance 생성 → GameInstanceSubsystem::Initialize / World 생성 → WorldSubsystem::Initialize');
+    if(!st.sInit){st.sInit=1;log('ok','[Meyer Singleton] 최초 Get() 호출 → 생성됨 (프로세스 수명 시작)');msg('','PIE #'+st.piesRun+' 시작. 전통 Singleton은 첫 Get() 호출 때 만들어졌다.');}
+    else{var n=st.sList.length;log(n?'err':'ok','[Meyer Singleton] 이미 존재 → 재생성 안 됨. 재생 목록에 이전 세션 사운드 '+n+'개'+(n?' 남아있음!':' 없음.'));
+      msg(n?'bad':'',n?'⚠️ PIE #'+st.piesRun+' 시작 — 전통 Singleton은 <b>이전 PIE의 사운드 '+n+'개를 그대로 들고 있다</b>. GameInstance/World 쪽은 새로 만들어져 비어 있다.':'PIE #'+st.piesRun+' 시작. (전통 Singleton은 재생성되지 않고 그대로다)');}
+  }
+  function play(){
+    if(!st.cur){log('err','[사운드] PIE가 실행 중이 아니다. 먼저 PIE 시작.');return;}
+    var s={n:++st.snd,p:st.cur.id};st.sList.push(s);st.cur.gi.push(s);st.cur.w.push(s);
+    log('','[PlaySound] BGM#'+s.n+' → 세 관리자 모두에 등록');msg('','BGM#'+s.n+' 재생. 세 관리자가 각자 재생 목록에 기록했다.');
+  }
+  function lvl(){
+    if(!st.cur){log('err','[레벨 전환] PIE가 실행 중이 아니다.');return;}
+    var old=st.cur.w.length;st.cur.w=[];st.wInit++;st.cur.level=st.cur.level==='Level_A'?'Level_B':'Level_A';
+    log('ok','[레벨 전환 → '+st.cur.level+'] World 파괴/생성 → WorldSubsystem Deinitialize+Initialize (재생 목록 '+old+'개 소멸). GameInstanceSubsystem·static은 그대로.');
+    msg('','레벨 전환 — WorldSubsystem만 새로 태어났다. 세션/프로세스 수명 객체는 유지된다.');
+  }
+  function pieStop(){
+    if(!st.cur){log('err','[PIE] 실행 중이 아니다.');return;}
+    var n=st.sList.filter(function(s){return s.p===st.cur.id;}).length;
+    log('ok','[PIE #'+st.cur.id+' 종료] GameInstance/World 파괴 → Deinitialize 자동 호출, 두 Subsystem 소멸.');
+    log(n?'err':'inf','[Meyer Singleton] 그대로 살아있다 (재생 목록 '+st.sList.length+'개 유지)');
+    st.cur=null;
+    msg(st.sList.length?'bad':'','PIE 종료 — Subsystem 둘은 사라졌지만 전통 Singleton은 <b>재생 목록 '+st.sList.length+'개를 든 채 남아있다</b>.');
+  }
+  function kill(){reset();log('inf','[에디터 종료] 프로세스가 끝나서야 static 객체도 소멸했다. 새 에디터를 켠 상태.');draw();}
+  function draw(){
+    var sl=st.sList,cur=st.cur;
+    function chips(list,curId,alwaysStale){return list.length?list.map(function(s){var isSt=alwaysStale||(cur?s.p!==cur.id:true);return '<span class="snd'+(isSt?' stale':'')+'">BGM#'+s.n+'</span>';}).join(''):'<span style="font-size:11.5px;color:var(--faint)">(비어 있음)</span>';}
+    var h='';
+    h+='<div class="lc'+(st.sInit?'':' dead')+'"><h4>전통 Singleton<span class="tag'+(st.sInit?' on':'')+'">'+(st.sInit?'살아있음':'미생성')+'</span></h4><div class="life">수명: 프로세스 전체 (에디터 종료까지)</div>'+
+      '<div class="row"><span>생성/Initialize 횟수</span><b>'+st.sInit+'</b></div><div class="row"><span>재생 목록</span><b>'+sl.length+'개'+(stale()?' <span style="color:var(--red)">(잔재 '+stale()+')</span>':'')+'</b></div><div class="snds">'+chips(sl)+'</div></div>';
+    h+='<div class="lc'+(cur?'':' dead')+'"><h4>GameInstanceSubsystem<span class="tag'+(cur?' on':'')+'">'+(cur?'살아있음':'없음')+'</span></h4><div class="life">수명: GameInstance = PIE 세션 동안</div>'+
+      '<div class="row"><span>Initialize 누적 횟수</span><b>'+st.giInit+'</b></div><div class="row"><span>재생 목록</span><b>'+(cur?cur.gi.length:0)+'개</b></div><div class="snds">'+(cur?chips(cur.gi,cur.id):'<span style="font-size:11.5px;color:var(--faint)">(PIE 종료로 소멸)</span>')+'</div></div>';
+    h+='<div class="lc'+(cur?'':' dead')+'"><h4>WorldSubsystem<span class="tag'+(cur?' on':'')+'">'+(cur?'살아있음':'없음')+'</span></h4><div class="life">수명: World = 레벨 하나가 로드된 동안'+(cur?' ('+cur.level+')':'')+'</div>'+
+      '<div class="row"><span>Initialize 누적 횟수</span><b>'+st.wInit+'</b></div><div class="row"><span>재생 목록</span><b>'+(cur?cur.w.length:0)+'개</b></div><div class="snds">'+(cur?chips(cur.w,cur.id):'<span style="font-size:11.5px;color:var(--faint)">(PIE 종료로 소멸)</span>')+'</div></div>';
+    lcs.innerHTML=h;
+    logEl.innerHTML=logs.map(function(l){return '<div class="'+l.c+'">'+l.t+'</div>';}).join('');
+  }
+  document.getElementById('aPie').addEventListener('click',function(){pieStart();draw();});
+  document.getElementById('aPlay').addEventListener('click',function(){play();draw();});
+  document.getElementById('aLvl').addEventListener('click',function(){lvl();draw();});
+  document.getElementById('aStop').addEventListener('click',function(){pieStop();draw();});
+  document.getElementById('aKill').addEventListener('click',kill);
+  reset();
+})();
+
+/* 킬러 B: Factory 수정 지점 */
+(function(){
+  var NAMES=['웨이브 스포너','보스룸','랜덤 인카운터','튜토리얼','이벤트 던전'];
+  var mode=0,sp,fHp,tested=null;
+  var spsEl=document.getElementById('sps'),msg=document.getElementById('fMsg');
+  function reset(){sp=NAMES.map(function(){return {hp:120};});fHp=120;tested=null;msg.className='simmsg';msg.textContent='요구사항: 오크 초기 체력 120 → 150. 수정 버튼을 눌러 반영해보자.';draw();}
+  function need(){if(mode===0)return sp.filter(function(s){return s.hp!==150;}).length;return fHp!==150?1:0;}
+  function editSp(i){if(sp[i].hp===150)return;sp[i].hp=150;tested=null;report();draw();}
+  function editF(){if(fHp===150)return;fHp=150;tested=null;report();draw();}
+  function report(){
+    var n=need(),total=mode===0?NAMES.length:1;
+    if(n===0){msg.className='simmsg good';msg.textContent=mode===0?'✅ 5군데를 전부 고쳤다. 이제 스폰 테스트로 확인해보자.':'✅ Factory 한 곳만 고쳤다. 스폰 지점 5곳은 손도 안 댔다.';}
+    else{msg.className='simmsg';msg.textContent='남은 수정 지점 '+n+'곳...';}
+  }
+  function test(){
+    tested=sp.map(function(s){return mode===0?s.hp:fHp;});
+    var bad=tested.filter(function(h){return h!==150;}).length;
+    if(bad){msg.className='simmsg bad';msg.textContent='❌ 스폰 지점 '+bad+'곳의 오크가 여전히 옛 체력(120)이다 — 같은 종족인데 어디서 나왔느냐에 따라 체력이 다르다. 흩어진 생성 로직의 전형적인 버그.';}
+    else{msg.className='simmsg good';msg.textContent='✅ 5곳 모두 체력 150 — 일관되게 반영됨.';}
+    draw();
+  }
+  function draw(){
+    var h='';
+    if(mode===0){
+      NAMES.forEach(function(nm,i){
+        var done=sp[i].hp===150;
+        h+='<div class="sp'+(done?' done':'')+'"><b>'+nm+'</b><pre>if (Type == Orc)\n{\n  Orc = SpawnActor&lt;AOrc&gt;(...);\n  Orc-&gt;SetHealth(<span class="'+(done?'fx':'hp')+'">'+sp[i].hp+'</span>);\n  Orc-&gt;EquipWeapon(OrcAxe);\n}</pre><button data-i="'+i+'"'+(done?' disabled':'')+'>'+(done?'✔ 수정됨':'체력 150으로 수정')+'</button></div>';
+      });
+    }else{
+      NAMES.forEach(function(nm){h+='<div class="sp"><b>'+nm+'</b><pre>NewEnemy =\n  FEnemyFactory::CreateEnemy(\n    GetWorld(), Type, Transform);</pre><div style="margin-top:8px;font-size:11.5px;color:var(--faint)">고칠 게 없다 (뭘 만들지만 안다)</div></div>';});
+      var done=fHp===150;
+      h+='<div class="sp factory'+(done?' done':'')+'"><b>🏭 FEnemyFactory::CreateEnemy</b><pre>case Orc:\n  Orc = SpawnActor&lt;AOrc&gt;(...);\n  Orc-&gt;SetHealth(<span class="'+(done?'fx':'hp')+'">'+fHp+'</span>);\n  Orc-&gt;EquipWeapon(OrcAxe);</pre><button id="fEdit"'+(done?' disabled':'')+'>'+(done?'✔ 수정됨':'체력 150으로 수정')+'</button></div>';
+    }
+    spsEl.innerHTML=h;
+    spsEl.querySelectorAll('button[data-i]').forEach(function(b){b.addEventListener('click',function(){editSp(+b.dataset.i);});});
+    var fe=document.getElementById('fEdit');if(fe)fe.addEventListener('click',editF);
+    var n=need(),tot=mode===0?NAMES.length:1;
+    document.getElementById('fStats').innerHTML=
+      '<div class="s"><div class="v">'+tot+'곳</div><div class="l">고쳐야 하는 지점 수</div></div>'+
+      '<div class="s"><div class="v'+(n?' warn':'')+'">'+n+'곳</div><div class="l">아직 안 고친 곳</div></div>'+
+      '<div class="s"><div class="v">'+(mode===0?'5×(N종)':'1')+'</div><div class="l">적 타입이 늘 때 수정 규모</div></div>';
+    var r='';
+    if(tested){r=tested.map(function(hp,i){return '<span class="'+(hp===150?'ok':'no')+'">'+NAMES[i]+' → 오크 HP '+hp+'</span>';}).join('');}
+    document.getElementById('fRes').innerHTML=r;
+  }
+  document.getElementById('fTest').addEventListener('click',test);
+  document.getElementById('fReset').addEventListener('click',reset);
+  var pill=document.getElementById('fMode');
+  pill.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){pill.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});b.classList.add('on');mode=+b.dataset.v;reset();});});
+  reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

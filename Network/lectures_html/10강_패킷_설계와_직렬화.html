@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10강 · 패킷 설계와 직렬화 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#fb923c;--acc2:#fdba74;--accrgb:251,146,60;--acc3:#fbbf24}
+.btn{color:#2a1300}
+nav a.chip.on{color:#2a1300}
+/* 바이트 셀 */
+.by{display:inline-flex;align-items:center;justify-content:center;min-width:24px;height:28px;padding:0 3px;border-radius:6px;font-family:ui-monospace,monospace;font-size:12.5px;font-style:normal;font-weight:800;background:rgba(34,211,238,.12);border:1px solid rgba(34,211,238,.45);color:var(--cyan)}
+.by.h{background:rgba(251,191,36,.16);border-color:var(--amber);color:var(--amber)}
+.by.pad{background:rgba(248,113,113,.14);border-color:var(--red);color:var(--red);font-size:10.5px}
+.by.f0{background:rgba(99,102,241,.16);border-color:#6366f1;color:#a5b4fc}
+.by.f1{background:rgba(52,211,153,.14);border-color:var(--grn);color:var(--grn)}
+.by.f2{background:rgba(168,85,247,.16);border-color:var(--pur);color:#d8b4fe}
+.by.f3{background:rgba(34,211,238,.12);border-color:var(--cyan);color:var(--cyan)}
+.by.f4{background:rgba(251,146,60,.16);border-color:var(--orange);color:var(--orange)}
+.rowlab{font-size:11.5px;color:var(--faint);margin:14px 0 6px}
+.strm{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.grp{display:inline-flex;gap:2px;padding:4px;border:1px dashed var(--line);border-radius:9px;position:relative;transition:.2s}
+.grp .gl{position:absolute;top:-8px;left:6px;font-size:9.5px;color:var(--faint);background:var(--card);padding:0 4px}
+.grp.dim{opacity:.35}
+.grp.got{border-style:solid;border-color:var(--grn);opacity:1}
+.grp.cur{box-shadow:0 0 0 2px var(--acc)}
+.msgg{display:inline-flex;gap:2px;padding:4px;border:1px solid rgba(251,191,36,.35);border-radius:9px;background:rgba(251,191,36,.05)}
+.two2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:16px}
+.rp{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.rp h4{font-size:13.5px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.rp.bad h4{color:var(--red)}.rp.good h4{color:var(--grn)}
+.rp h4 small{font-weight:500;color:var(--faint);font-size:11px}
+.rl{font-family:ui-monospace,monospace;font-size:12.5px;padding:5px 8px;border-radius:7px;margin-top:5px;background:var(--bg2);border:1px solid var(--line);color:var(--dim);word-break:break-all}
+.rl.no{border-color:rgba(248,113,113,.55);color:var(--red)}
+.rl.ok{border-color:rgba(52,211,153,.55);color:var(--grn)}
+.rl small{display:block;font-family:inherit;font-size:11px;color:var(--faint);margin-top:2px}
+.rl.st{border-style:dashed}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:8px;font-size:13px;color:var(--dim)}
+.ctl select,.ctl input[type=text]{font-family:inherit;font-size:13px;color:var(--txt);background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px 10px}
+.ctl input[type=text]{width:130px;font-family:ui-monospace,monospace}
+.mini{display:inline-flex;align-items:center;gap:4px;font-family:ui-monospace,monospace;font-size:12px;background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:3px 6px 3px 10px;color:var(--txt)}
+.mini button{border:none;background:none;color:var(--faint);cursor:pointer;font-size:14px;padding:0 4px}
+.mini button:hover{color:var(--red)}
+.addrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.addrow button{font-family:ui-monospace,monospace;font-size:12px;font-weight:700;padding:6px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);cursor:pointer}
+.addrow button:hover{border-color:var(--acc);color:var(--acc)}
+.szline{margin-top:10px;font-size:13px;color:var(--dim)}
+.szline b{font-family:ui-monospace,monospace;color:var(--txt)}
+.szline .w{color:var(--red)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>10강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#ser">직렬화</a>
+    <a class="chip" href="#trap">함정</a>
+    <a class="chip" href="#sim">조립 시뮬</a>
+    <a class="chip" href="#design">패킷 설계</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 소켓 프로그래밍 · 면접 단골</span>
+  <h1>패킷 설계와 <span class="g">직렬화</span></h1>
+  <p class="sub">분명 한 번에 보냈는데 반만 왔다. TCP는 메시지가 아니라 바이트 스트림이기 때문이다. 스트림이 합쳐지고 쪼개지는 걸 직접 재생하고, 길이 접두사와 조립 버퍼로 다시 메시지를 복원한다.</p>
+  <div class="meta">
+    <div class="m">🧵 TCP는 스트림, 경계는 우리가</div>
+    <div class="m">🧩 선수지식 <b>4강 · 8강</b></div>
+    <div class="m">⏱️ 약 25분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>"분명 한 번에 보냈는데 반만 왔다"</h2>
+  <p class="lead">채팅 메시지를 TCP로 보내는 코드를 짰다.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">// 보내는 쪽: "Hello"와 "GG"를 따로 두 번 보냄</span>
+Socket-&gt;Send((uint8*)<span class="str">"Hello"</span>, 5, Sent);
+Socket-&gt;Send((uint8*)<span class="str">"GG"</span>, 2, Sent);
+
+<span class="cm">기대:  "Hello"  그리고  "GG"      (보낸 단위 그대로)</span>
+<span class="bad">현실:  "HelloGG"                  (합쳐져서 한 번에)</span>
+<span class="bad">또는:  "Hel"  그리고  "loGG"      (엉뚱하게 쪼개져서)</span></pre>
+    <p class="hint">버그가 아니다. <b>TCP는 "메시지"가 아니라 "바이트 스트림"</b>이다(4강). 보낸 단위를 기억해주지 않고 바이트가 순서대로 흐를 뿐 — 어디까지가 한 메시지인지는 <b>우리가 직접 표시하고 잘라내야</b> 한다. 이 강의의 핵심이다.</p>
+  </div>
+</div></section>
+
+<section id="ser"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 직렬화</div>
+  <h2 class="sec"><span class="n">2</span>직렬화 — 데이터를 바이트로</h2>
+  <p class="lead">네트워크는 바이트만 안다. <code>FVector</code>, <code>FString</code>, 구조체를 그대로 못 보낸다. <b>직렬화(Serialization)</b>로 바이트 배열로 펴고, 받는 쪽은 <b>역직렬화</b>로 복원한다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">struct</span> FMovePacket
+{
+    int32   PlayerId;
+    FVector Location;
+    <span class="kw">float</span>   Yaw;
+};
+
+<span class="cm">// 직렬화: 구조체 → 바이트</span>
+FMovePacket Packet { 7, FVector(100,50,0), 90.f };
+TArray&lt;uint8&gt; Bytes;
+Bytes.Append((uint8*)&amp;Packet, <span class="kw">sizeof</span>(FMovePacket));   <span class="cm">// 메모리를 그대로 복사</span>
+
+<span class="cm">// 역직렬화: 바이트 → 구조체</span>
+FMovePacket Restored;
+FMemory::Memcpy(&amp;Restored, Bytes.GetData(), <span class="kw">sizeof</span>(FMovePacket));</pre>
+    <p class="hint">⚠️ 구조체를 통째로 memcpy하는 건 <b>같은 컴파일러/플랫폼끼리만 안전</b>하다. 실무에선 멤버를 하나씩 명시적으로 쓰거나 언리얼 <code>FArchive</code>(<code>&lt;&lt;</code> 연산자)를 쓴다. 이유가 바로 다음 절의 함정들이다.</p>
+  </div>
+</div></section>
+
+<section id="trap"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 함정 셋 · 엔디안과 패딩은 직접 확인</div>
+  <h2 class="sec"><span class="n">3</span>함정 셋 — 엔디안, 정렬, 경계</h2>
+  <p class="lead">함정 3(경계)은 다음 절의 시뮬레이터에서 본다. 먼저 함정 1·2를 손으로 만져보자.</p>
+  <div class="card">
+    <h3 style="font-size:17px">함정 1 · 엔디안 (바이트 순서)</h3>
+    <p class="hint" style="margin-top:6px"><code>int32</code> 같은 다바이트 숫자를 메모리에 저장하는 순서가 CPU마다 다르다. x86(대부분 PC)은 <b>리틀 엔디안</b>(낮은 자리부터), 네트워크 표준은 <b>빅 엔디안</b>(높은 자리부터, network byte order)이다. 값을 바꿔보자.</p>
+    <div class="ctl">16진수 32비트 값 0x<input type="text" id="hexIn" value="12345678" maxlength="8"></div>
+    <div class="rowlab">주소(낮음 → 높음)   [0] [1] [2] [3]</div>
+    <div class="rowlab" style="margin-top:6px;color:var(--amber)">리틀 엔디안 (x86 PC의 메모리)</div><div class="strm" id="leRow"></div>
+    <div class="rowlab" style="color:var(--grn)">빅 엔디안 (네트워크 바이트 오더 · htonl 결과)</div><div class="strm" id="beRow"></div>
+    <p class="hint" id="endMsg"></p>
+  </div>
+  <div class="card">
+    <h3 style="font-size:17px">함정 2 · 구조체 패딩 (sizeof가 합이 아니다)</h3>
+    <p class="hint" style="margin-top:6px">컴파일러가 성능을 위해 멤버 사이에 <b>빈 공간(패딩)</b>을 넣는다. 각 멤버는 <b>자기 크기의 배수 주소</b>에 놓이고, 구조체 전체 크기는 가장 큰 멤버 크기의 배수가 된다. 멤버를 추가하거나 순서를 바꿔 <code>sizeof</code>가 어떻게 변하는지 보자.</p>
+    <div class="addrow" id="addRow"></div>
+    <div id="fieldList" style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"></div>
+    <div class="rowlab">메모리 배치 (한 칸 = 1바이트, 빨간 칸 = 패딩)</div>
+    <div class="strm" id="padRow"></div>
+    <div class="szline" id="szLine"></div>
+    <div class="btnrow"><button class="btn ghost" id="padSort">↕ 큰 것부터 정렬</button><button class="btn ghost" id="padReset">↺ 초기화 (uint8, int32, uint8)</button></div>
+    <p class="hint">기본 <code>{ uint8, int32, uint8 }</code>는 <b>12바이트</b>(내용은 6바이트). <b>큰 것부터 정렬</b>하면 8바이트로 줄어든다. 그래서 <code>sizeof</code>로 통째 복사하면 <b>패딩까지 같이 전송</b>되고, 컴파일러 설정이 다른 양쪽에선 패딩이 달라 깨질 수 있다 → 멤버를 하나씩 명시적으로 직렬화하는 게 안전하다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">4</span>TCP 스트림 조립기 — 합쳐지고 쪼개진 바이트에서 메시지 복원</h2>
+  <p class="lead">함정 3: TCP는 "여기까지가 한 패킷"을 안 알려준다. 그래서 패킷 맨 앞에 <b>"몸통이 몇 바이트인지"(길이 접두사)</b>를 박는다. 아래에서 메시지를 보내고 <b>네트워크가 바이트를 어떻게 쪼개 전달하는지</b>를 골라, 두 수신 방식을 비교해보자.</p>
+  <div class="card">
+    <div class="ctl">네트워크 전달 방식
+      <select id="mode"><option value="split">3바이트씩 쪼개짐</option><option value="merge">전부 합쳐서 한 번에</option><option value="rand">불규칙하게 쪼개짐/합쳐짐</option><option value="ideal">보낸 그대로 (이상적, 현실엔 없음)</option></select>
+      &nbsp;메시지 추가 <input type="text" id="msgIn" placeholder="영문/숫자" maxlength="10"><button class="btn ghost" id="msgAdd" style="padding:7px 12px">추가</button></div>
+    <div class="rowlab">① 보낸 것 — 메시지마다 [길이 1바이트(노랑) + 몸통(청록)]</div>
+    <div class="strm" id="sentRow"></div>
+    <div class="rowlab">② 네트워크가 실제로 나눠 전달한 recv 단위 (초록 테두리 = 이미 도착)</div>
+    <div class="strm" id="chunkRow"></div>
+    <div class="two2">
+      <div class="rp bad"><h4>❌ 순진한 수신 <small>recv 1번 = 메시지 1개라고 가정</small></h4><div id="naive"></div></div>
+      <div class="rp good"><h4>✅ 조립 버퍼 <small>쌓고 → 길이 보고 → 자르고 → 남기고</small></h4><div id="asm"></div></div>
+    </div>
+    <div class="simmsg" id="simMsg"></div>
+    <div class="btnrow"><button class="btn" id="bStep">▶ recv 1번</button><button class="btn ghost" id="bAll">⏩ 끝까지</button><button class="btn ghost" id="bReset">↺ 처음부터</button><button class="btn ghost" id="bDefault">기본 메시지로</button></div>
+    <p class="hint">① <b>3바이트씩</b>으로 돌려보자 — 순진한 수신은 메시지가 반토막 나고 길이 바이트가 글자 사이에 끼어 <b>다 깨진다.</b> ② <b>전부 합쳐서</b>면 순진한 수신은 메시지 여러 개를 하나로 착각한다. ③ 어떤 방식이든 <b>조립 버퍼는 항상 원래 메시지를 복원</b>한다 — 부족하면 기다리고, 남으면 다음 패킷의 시작으로 보관하기 때문이다. ④ <b>보낸 그대로</b>일 때만 순진한 수신도 맞지만, 그건 우연이지 보장이 아니다.</p>
+  </div>
+</div></section>
+
+<section id="design"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 패킷 설계</div>
+  <h2 class="sec"><span class="n">5</span>헤더 + 몸통, 그리고 조립 버퍼 패턴 코드</h2>
+  <p class="lead">실전 패킷은 <b>헤더(메타정보) + 몸통(실제 데이터)</b>이다. 헤더의 길이는 경계를 위해, 패킷 타입(ID)은 이동/채팅/거래를 구분해 알맞은 핸들러로 보내기 위해 있다.</p>
+  <div class="card">
+    <pre class="code">┌─────────────────────────┬────────────────┐
+│          헤더           │      몸통      │
+├──────────┬──────────────┼────────────────┤
+│ 길이(4B) │ 패킷타입(2B) │ 타입별 데이터  │
+└──────────┴──────────────┴────────────────┘
+   얼마나        뭔지          내용</pre>
+    <p class="hint">경계 표시 방법 두 가지: <b>A. 길이 접두사</b>(가장 흔함, 위 시뮬레이터) / <b>B. 구분자</b>(끝에 <code>\n</code> 같은 특수 문자 — 텍스트 프로토콜에 적합, 바이너리는 데이터에 구분자가 섞일 수 있어 부적합). 게임 바이너리 패킷은 거의 <b>길이 접두사</b>를 쓴다.</p>
+  </div>
+  <div class="card">
+    <pre class="code">TArray&lt;uint8&gt; RecvBuffer;   <span class="cm">// 수신 버퍼에 계속 누적</span>
+
+<span class="kw">void</span> OnDataReceived(<span class="kw">const</span> uint8* Data, int32 Size)
+{
+    RecvBuffer.Append(Data, Size);        <span class="cm">// 일단 다 쌓는다</span>
+
+    <span class="kw">while</span> (RecvBuffer.Num() &gt;= 4)         <span class="cm">// 최소 길이 헤더는 있어야</span>
+    {
+        int32 BodyLen = 0;                <span class="cm">// 1) 앞 4바이트 = 몸통 길이</span>
+        FMemory::Memcpy(&amp;BodyLen, RecvBuffer.GetData(), 4);
+
+        <span class="kw">if</span> (RecvBuffer.Num() &lt; 4 + BodyLen)   <span class="cm">// 2) 몸통이 아직 다 안 왔으면 대기 (부분 수신)</span>
+            <span class="kw">break</span>;
+
+        <span class="kw">const</span> uint8* Body = RecvBuffer.GetData() + 4;   <span class="cm">// 3) 완성된 패킷 하나 꺼내 처리</span>
+        ProcessPacket(Body, BodyLen);
+
+        RecvBuffer.RemoveAt(0, 4 + BodyLen);   <span class="cm">// 4) 처리한 만큼 제거 (남은 건 다음 패킷)</span>
+    }
+}</pre>
+    <p class="hint">이 패턴이 "HelloGG로 합쳐지거나 Hel/loGG로 쪼개지는" 문제를 전부 해결한다. <b>쌓고 → 길이 보고 → 완성되면 자르고 → 남기고</b>의 반복 — 시뮬레이터의 오른쪽 패널이 정확히 이 루프다.</p>
+  </div>
+  <div class="card">
+    <pre class="code"><span class="kw">enum class</span> EPacketType : uint16 { Move = 1, Chat = 2, Trade = 3 };
+
+<span class="kw">void</span> ProcessPacket(<span class="kw">const</span> uint8* Body, int32 Len)
+{
+    uint16 Type = 0;
+    FMemory::Memcpy(&amp;Type, Body, 2);
+    <span class="kw">switch</span> ((EPacketType)Type)
+    {
+        <span class="kw">case</span> EPacketType::Move:  HandleMove(Body + 2, Len - 2);  <span class="kw">break</span>;
+        <span class="kw">case</span> EPacketType::Chat:  HandleChat(Body + 2, Len - 2);  <span class="kw">break</span>;
+        <span class="kw">case</span> EPacketType::Trade: HandleTrade(Body + 2, Len - 2); <span class="kw">break</span>;
+    }
+}</pre>
+    <p class="hint">참고: 언리얼 <code>Replication</code>/RPC를 쓰면 이 패킷 설계·직렬화·경계 처리를 엔진이 다 해준다(14강). 직접 소켓으로 커스텀 프로토콜을 짤 때만 손으로 한다. 면접에선 "TCP 경계 문제를 어떻게 푸나"가 단골이라 원리는 알아야 한다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 로그인이나 랭킹 같은 건 이런 커스텀 패킷을 쓰나요, 아니면 HTTP를 쓰나요?"</i> → 11강(HTTP/HTTPS)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="09강_블로킹_논블로킹_IO멀티플렉싱.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 9강 — 블로킹·논블로킹·IO 멀티플렉싱</div></div></a>
+  <a class="nx" href="11강_HTTP_HTTPS.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">11강 — HTTP와 HTTPS →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 10강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"send 한 번 = recv 한 번"','TCP에선 <span class="truth">절대 아니다.</span> send 한 번이 recv 여러 번으로 쪼개지거나, send 여러 번이 recv 한 번으로 합쳐진다. 길이 접두사로 직접 경계를 잡아야 한다. UDP는 데이터그램 단위라 경계가 유지되지만 대신 유실·순서가 보장 안 된다.'],
+ ['"구조체를 memcpy로 보내면 끝이다"','같은 컴파일러·플랫폼끼리 테스트할 땐 되는 것처럼 보이지만, <span class="truth">패딩과 엔디안</span> 때문에 환경이 다르면 깨진다. 멤버별 명시적 직렬화나 <code>FArchive</code>를 쓰는 게 안전하다.'],
+ ['"UDP는 경계 문제가 없으니 더 쉽다"','UDP는 데이터그램 단위라 경계는 유지된다. 하지만 <span class="truth">유실·순서·중복을 직접 처리</span>해야 해서 다른 종류의 복잡함이 생긴다. "경계 문제 없음"이 "더 쉬움"은 아니다.'],
+ ['"엔디안은 신경 안 써도 된다"','PC(x86)끼리만 통신하면 대부분 문제없다. 하지만 콘솔·모바일 등 다른 아키텍처가 섞이거나 정석대로 가려면 <span class="truth">네트워크 바이트 오더(빅 엔디안)</span>로 맞춰야 한다. 면접에서 "엔디안 처리는 어떻게 하나" 물으면 모른다고 하면 안 된다.']
+];
+var QA=[
+ ['TCP에서 메시지 경계 문제가 뭔가요?','TCP는 메시지 단위가 아니라 <b>바이트 스트림</b>이라 보낸 단위와 받는 단위가 일치하지 않습니다. 두 번 보낸 게 한 번에 합쳐 오거나, 한 번 보낸 게 쪼개져 올 수 있습니다. 그래서 패킷 앞에 길이를 붙이는 <b>길이 접두사</b> 방식으로 직접 경계를 표시하고 잘라내야 합니다.'],
+ ['길이 접두사 방식으로 어떻게 패킷을 자르나요?','받은 바이트를 <b>버퍼에 계속 쌓아두고</b>, 먼저 앞쪽 길이 필드를 읽어 몸통 크기를 확인합니다. 그 크기만큼 데이터가 다 모이면 한 패킷으로 잘라 처리하고, <b>남은 바이트는 다음 패킷의 시작으로 버퍼에 남겨둡니다.</b> 이 과정을 완성된 패킷이 없을 때까지 반복합니다.'],
+ ['직렬화가 뭔가요?','구조체나 객체 같은 데이터를 <b>네트워크로 보낼 수 있는 바이트 배열로 변환</b>하는 과정입니다. 받는 쪽은 역직렬화로 원래 형태로 복원합니다. 이때 엔디안과 구조체 패딩 때문에 통째로 memcpy하기보다 멤버를 명시적으로 직렬화하는 게 안전합니다.'],
+ ['엔디안이 뭔가요? 왜 문제가 되나요?','다바이트 숫자를 메모리에 저장하는 <b>바이트 순서</b>입니다. x86 PC는 리틀 엔디안이고 네트워크 표준은 빅 엔디안인데, 서로 다른 아키텍처끼리 통신할 때 변환하지 않으면 숫자가 깨집니다. 그래서 크로스 플랫폼 통신은 네트워크 바이트 오더로 맞춥니다.'],
+ ['UDP도 메시지 경계 문제가 있나요?','UDP는 <b>데이터그램 단위</b>로 주고받아서 경계는 유지됩니다. 보낸 한 덩어리가 그대로 한 번에 도착합니다. 대신 유실·순서·중복을 보장하지 않아서 그 부분을 애플리케이션에서 직접 처리해야 합니다.']
+];
+var CK=['TCP가 스트림이라 send/recv 단위가 안 맞는다는 걸 예로 설명할 수 있다','길이 접두사로 패킷을 자르는 흐름(쌓고→길이 보고→자르고→남기고)을 안다','직렬화/역직렬화가 뭔지 말할 수 있다','엔디안과 구조체 패딩이 왜 함정인지 안다','UDP는 경계가 유지되지만 유실·순서는 직접 처리해야 한다는 걸 안다'];
+var KEY='net10-check';
+
+/* 엔디안 */
+(function(){
+  var inp=document.getElementById('hexIn');
+  function cells(bytes){return bytes.map(function(b,i){return '<span style="display:inline-flex;flex-direction:column;align-items:center;gap:2px"><i class="by f'+(i%5)+'" style="min-width:34px">'+b+'</i><small style="font-size:10px;color:var(--faint)">['+i+']</small></span>';}).join('');}
+  function run(){
+    var s=inp.value.replace(/[^0-9a-fA-F]/g,'').toUpperCase();
+    if(!s){document.getElementById('leRow').innerHTML='';document.getElementById('beRow').innerHTML='';document.getElementById('endMsg').textContent='16진수 1~8자리를 입력해보자.';return;}
+    while(s.length<8)s='0'+s;
+    var be=[s.slice(0,2),s.slice(2,4),s.slice(4,6),s.slice(6,8)];
+    var le=be.slice().reverse();
+    document.getElementById('leRow').innerHTML=cells(le);
+    document.getElementById('beRow').innerHTML=cells(be);
+    var same=le.join('')===be.join('');
+    document.getElementById('endMsg').innerHTML='값 <b>0x'+s+'</b> — '+(same?'바이트가 전부 같아서 순서를 바꿔도 결과가 같다(대칭 값). 다른 값으로 바꿔보자.':'리틀 엔디안 PC가 이 메모리를 그대로 <b>send</b>하면 상대는 <b>0x'+le.join('')+'</b>로 읽어버린다(수신 측이 빅 엔디안 기준일 때). 그래서 보내기 전에 <code>htonl</code>로 빅 엔디안으로 맞춘다.');
+  }
+  inp.addEventListener('input',run);run();
+})();
+
+/* 패딩 계산기 */
+(function(){
+  var T={u8:['uint8',1],u16:['uint16',2],i32:['int32',4],i64:['int64',8]};
+  var F;
+  var addRow=document.getElementById('addRow');
+  Object.keys(T).forEach(function(k){var b=document.createElement('button');b.textContent='+ '+T[k][0]+' ('+T[k][1]+'B)';b.addEventListener('click',function(){if(F.length<8){F.push(k);draw();}});addRow.appendChild(b);});
+  function reset(){F=['u8','i32','u8'];draw();}
+  function draw(){
+    var list=document.getElementById('fieldList');
+    list.innerHTML=F.map(function(k,i){return '<span class="mini">'+T[k][0]+' m'+(i+1)+'<button data-i="'+i+'" title="삭제">✕</button></span>';}).join('')||'<span style="font-size:12.5px;color:var(--faint)">멤버를 추가해보자.</span>';
+    list.querySelectorAll('button').forEach(function(b){b.addEventListener('click',function(){F.splice(+b.dataset.i,1);draw();});});
+    var off=0,maxA=1,cells='',content=0;
+    F.forEach(function(k,i){
+      var sz=T[k][1];if(sz>maxA)maxA=sz;
+      var pad=(sz-off%sz)%sz;
+      for(var p=0;p<pad;p++)cells+='<i class="by pad">pad</i>';
+      off+=pad;
+      for(var b=0;b<sz;b++)cells+='<i class="by f'+(i%5)+'">m'+(i+1)+'</i>';
+      off+=sz;content+=sz;
+    });
+    var tail=(maxA-off%maxA)%maxA;
+    for(var t=0;t<tail;t++)cells+='<i class="by pad">pad</i>';
+    off+=tail;
+    document.getElementById('padRow').innerHTML=cells||'';
+    document.getElementById('szLine').innerHTML=F.length?'<b>sizeof = '+off+'바이트</b> (실제 내용 '+content+'B + <span class="w">패딩 '+(off-content)+'B</span>) · 정렬 기준 '+maxA+'바이트':'';
+  }
+  document.getElementById('padSort').addEventListener('click',function(){F.sort(function(a,b){return T[b][1]-T[a][1];});draw();});
+  document.getElementById('padReset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 킬러: 스트림 조립기 */
+(function(){
+  var DEF=['Hello','GG','Ready','OK'];
+  var msgs=DEF.slice(),chunks,k,seed;
+  var elSent=document.getElementById('sentRow'),elChunk=document.getElementById('chunkRow'),elNaive=document.getElementById('naive'),elAsm=document.getElementById('asm'),elMsg=document.getElementById('simMsg');
+  function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  function bytesOf(){
+    var out=[];
+    msgs.forEach(function(m,mi){out.push({v:m.length,h:1,m:mi});for(var i=0;i<m.length;i++)out.push({v:m.charAt(i),h:0,m:mi});});
+    return out;
+  }
+  function build(){
+    seed=7;k=0;
+    var B=bytesOf(),mode=document.getElementById('mode').value;chunks=[];
+    var i,sz;
+    if(mode==='ideal'){var s=0;msgs.forEach(function(m){chunks.push(B.slice(s,s+1+m.length));s+=1+m.length;});}
+    else if(mode==='merge'){chunks.push(B.slice());}
+    else if(mode==='split'){for(i=0;i<B.length;i+=3)chunks.push(B.slice(i,i+3));}
+    else{i=0;while(i<B.length){sz=1+Math.floor(rnd()*7);chunks.push(B.slice(i,i+sz));i+=sz;}}
+    draw();
+  }
+  function cell(b){return '<i class="by'+(b.h?' h':'')+'">'+(b.h?b.v:b.v)+'</i>';}
+  function draw(){
+    var B=bytesOf(),s='',off=0;
+    msgs.forEach(function(m,mi){s+='<span class="msgg">'+B.slice(off,off+1+m.length).map(cell).join('')+'</span>';off+=1+m.length;});
+    elSent.innerHTML=s;
+    elChunk.innerHTML=chunks.map(function(c,i){return '<span class="grp '+(i<k?'got':'dim')+(i===k-1?' cur':'')+'"><span class="gl">recv #'+(i+1)+'</span>'+c.map(cell).join('')+'</span>';}).join('');
+    // 순진한 수신
+    var nh='',bad=0;
+    for(var i=0;i<k;i++){
+      var c=chunks[i],txt=c.map(function(b){return b.h?'▯':b.v;}).join('');
+      var nm={};c.forEach(function(b){nm[b.m]=1;});
+      var whole=c.length===1+msgs[c[0].m].length&&c[0].h===1&&Object.keys(nm).length===1;
+      var why=whole?'메시지 1개 (우연히 맞음)':(Object.keys(nm).length>1?'여러 메시지가 합쳐짐 → 한 메시지로 착각':'메시지 일부만 도착 → 반토막');
+      if(!whole)bad++;
+      nh+='<div class="rl '+(whole?'ok':'no')+'">recv #'+(i+1)+' → "'+txt+'"<small>'+(whole?'✅ ':'❌ ')+why+'</small></div>';
+    }
+    elNaive.innerHTML=nh||'<div class="rl st">아직 아무것도 안 받음</div>';
+    // 조립
+    var buf=[],out=[],ah='';
+    for(var j=0;j<k;j++){
+      buf=buf.concat(chunks[j]);
+      var got=[];
+      while(buf.length>=1){
+        var L=buf[0].v;
+        if(buf.length<1+L)break;
+        var body=buf.slice(1,1+L).map(function(b){return b.v;}).join('');
+        got.push(body);out.push(body);buf=buf.slice(1+L);
+      }
+      var stMsg;
+      if(buf.length===0)stMsg='버퍼 비었음';
+      else stMsg=(function(){var L2=buf[0].v;return '길이='+L2+' → '+(1+L2)+'바이트 필요, 현재 '+buf.length+'바이트 → '+(buf.length<1+L2?'대기(부분 수신)':'');})();
+      ah+='<div class="rl '+(got.length?'ok':'')+'">recv #'+(j+1)+' 쌓음 → '+(got.length?'완성: '+got.map(function(g){return '"'+g+'"';}).join(', ')+' 추출':'완성된 패킷 없음')+'<small>'+stMsg+(buf.length?'  · 버퍼: '+buf.map(function(b){return b.h?'⟨'+b.v+'⟩':b.v;}).join(''):'')+'</small></div>';
+    }
+    elAsm.innerHTML=ah||'<div class="rl st">아직 아무것도 안 받음</div>';
+    var done=k>=chunks.length;
+    if(!k){elMsg.className='simmsg';elMsg.textContent='▶ recv 1번을 눌러 한 덩어리씩 받아보자.';}
+    else if(done){
+      var ok=out.length===msgs.length&&out.every(function(x,i){return x===msgs[i];});
+      elMsg.className='simmsg '+(ok?'good':'bad');
+      elMsg.textContent='끝. 순진한 수신: recv '+k+'번 중 '+bad+'번 깨짐 · 조립 버퍼: 원래 메시지 '+out.length+'/'+msgs.length+'개 '+(ok?'모두 정확히 복원 ✅':'복원 실패');
+    }else{elMsg.className='simmsg';elMsg.textContent='recv '+k+'/'+chunks.length+' — 순진한 수신 깨짐 '+bad+'회, 조립 버퍼는 지금까지 '+out.length+'개 복원.';}
+  }
+  document.getElementById('bStep').addEventListener('click',function(){if(k<chunks.length){k++;draw();}});
+  document.getElementById('bAll').addEventListener('click',function(){k=chunks.length;draw();});
+  document.getElementById('bReset').addEventListener('click',function(){k=0;draw();});
+  document.getElementById('bDefault').addEventListener('click',function(){msgs=DEF.slice();build();});
+  document.getElementById('mode').addEventListener('change',build);
+  function addMsg(){
+    var inp=document.getElementById('msgIn'),v=inp.value.replace(/[^A-Za-z0-9]/g,'');
+    if(!v){elMsg.className='simmsg bad';elMsg.textContent='영문/숫자 1~10글자를 입력해보자(바이트 수를 눈으로 세기 쉽게 ASCII만).';return;}
+    if(msgs.length>=7){elMsg.className='simmsg bad';elMsg.textContent='메시지는 7개까지.';return;}
+    msgs.push(v);inp.value='';build();
+  }
+  document.getElementById('msgAdd').addEventListener('click',addMsg);
+  document.getElementById('msgIn').addEventListener('keydown',function(e){if(e.key==='Enter')addMsg();});
+  build();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

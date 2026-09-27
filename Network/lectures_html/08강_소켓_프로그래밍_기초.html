@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8강 · 소켓 프로그래밍 기초 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+:root{--acc:#fb923c;--acc2:#fdba74;--accrgb:251,146,60;--acc3:#fbbf24}
+.btn{color:#2a1300}
+nav a.chip.on{color:#2a1300}
+/* 킬러: 소켓 함수 호출 시뮬레이터 */
+.cols{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:6px}
+@media(max-width:700px){.cols{grid-template-columns:1fr}}
+.side{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:14px}
+.side h4{font-size:14px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+.side h4 small{font-weight:500;color:var(--faint);font-size:11.5px}
+.side.srv h4{color:var(--cyan)}.side.cli h4{color:var(--pur)}
+.fnrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.fn{font-family:ui-monospace,monospace;font-size:12.5px;font-weight:800;cursor:pointer;padding:8px 11px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);transition:.15s}
+.fn:hover{border-color:var(--acc);color:var(--acc)}
+.side.srv .fn{border-color:rgba(34,211,238,.35)}
+.side.cli .fn{border-color:rgba(168,85,247,.4)}
+.sk{border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-top:8px;background:var(--bg2);font-size:12.5px;color:var(--dim)}
+.sk .t{display:flex;justify-content:space-between;gap:8px;font-weight:700;color:var(--txt);font-size:13px}
+.sk .st{font-family:ui-monospace,monospace;font-size:11.5px;padding:1px 9px;border-radius:14px;background:var(--card);border:1px solid var(--line);color:var(--faint);white-space:nowrap}
+.sk .st.on{color:var(--grn);border-color:rgba(52,211,153,.5)}
+.sk.lis{border-color:rgba(34,211,238,.45)}
+.sk.conn{border-color:rgba(52,211,153,.45);background:rgba(52,211,153,.06)}
+.qslots{display:flex;gap:6px;margin-top:8px;align-items:center;font-size:11.5px;color:var(--faint)}
+.qslots i{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;border:1px dashed var(--line);font-style:normal;font-family:ui-monospace,monospace;font-weight:800;color:var(--pur)}
+.qslots i.f{border-style:solid;border-color:var(--pur);background:rgba(168,85,247,.14)}
+.logbox{margin-top:14px;background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-family:ui-monospace,monospace;font-size:12px;line-height:1.7;max-height:190px;overflow:auto;min-height:60px}
+.logbox div{color:var(--dim)}
+.logbox .ok{color:var(--grn)}.logbox .err{color:var(--red)}.logbox .wait{color:var(--amber)}.logbox .inf{color:var(--cyan)}
+.goal{margin-top:14px;text-align:center;font-size:13.5px;color:var(--dim)}
+.goal b{color:var(--acc)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Network · <b>8강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#api">함수 7개</a>
+    <a class="chip" href="#sim">호출 시뮬</a>
+    <a class="chip" href="#code">코드</a>
+    <a class="chip" href="#trap">함정</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 3 · 소켓 프로그래밍</span>
+  <h1>소켓 <span class="g">프로그래밍 기초</span></h1>
+  <p class="sub">언리얼 클라 개발자가 <code style="font-family:ui-monospace,monospace;color:var(--cyan)">socket()</code>을 직접 부를 일은 드물다. 그래도 면접관은 묻는다 — "서버랑 클라가 각각 어떤 함수를 어떤 순서로 호출하나요?" 서버와 클라를 직접 조작하며 그 흐름을 손에 익힌다.</p>
+  <div class="meta">
+    <div class="m">🔌 서버는 bind→listen→accept, 클라는 connect</div>
+    <div class="m">🧩 선수지식 <b>3강 · 4강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>엔진이 다 해주는데 이걸 왜 배우나</h2>
+  <p class="lead">언리얼에선 <code>Replication</code>이 다 해준다. 그런데 면접관은 이렇게 묻는다.</p>
+  <div class="card">
+    <p style="font-size:17px;font-weight:700;color:var(--txt)">"소켓 통신 흐름을 설명해보세요. 서버랑 클라이언트가 각각 어떤 함수를 호출하나요?"</p>
+    <p class="hint">이걸 못 답하면 "네트워크 안다"고 말하기 어렵다. 목표는 직접 서버를 구현하는 게 아니라 <b>흐름을 그릴 수 있는 것</b>이다.</p>
+    <p class="hint" style="margin-top:10px"><b>소켓 API의 뿌리:</b> 1980년대 유닉스의 <b>Berkeley Socket(BSD 소켓)</b>. 리눅스/맥은 거의 그대로, 윈도우는 <b>Winsock</b>(<code>WSAStartup()</code>으로 초기화, <code>closesocket()</code>으로 닫는 등 약간 다름). 언리얼 <code>FSocket</code>은 이걸 플랫폼별로 감싼 추상화다.</p>
+  </div>
+</div></section>
+
+<section id="api"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · 개념</div>
+  <h2 class="sec"><span class="n">2</span>함수 7개 — 이게 전부다</h2>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>함수</th><th>하는 일</th><th>누가</th></tr>
+      <tr><td><code>socket()</code></td><td>소켓 하나 생성</td><td>서버·클라 둘 다</td></tr>
+      <tr><td><code>bind()</code></td><td>소켓에 IP·포트 묶기</td><td>서버 (듣는 주소 고정)</td></tr>
+      <tr><td><code>listen()</code></td><td>"연결 받을 준비 됨" 표시</td><td>서버</td></tr>
+      <tr><td><code>accept()</code></td><td>들어온 연결 수락, <b>연결 소켓 반환</b></td><td>서버</td></tr>
+      <tr><td><code>connect()</code></td><td>서버로 연결 시도 (handshake)</td><td>클라</td></tr>
+      <tr><td><code>send()</code> / <code>recv()</code></td><td>데이터 보내기 / 받기</td><td>서버·클라 둘 다</td></tr>
+      <tr><td><code>close()</code></td><td>소켓 닫기 (자원 반납)</td><td>서버·클라 둘 다</td></tr>
+    </table>
+    <pre class="code">       서버                                클라이언트
+        │                                     │
+   socket()   소켓 생성                    socket()   소켓 생성
+        │                                     │
+   bind()     "나 7777번 포트 쓸게"            │
+        │                                     │
+   listen()   "연결 받을 준비 됨"              │
+        │                                     │
+   accept()   ←──── 연결 대기 ────       connect()   "연결하자"
+        │     ← ─ ─ 3-way handshake ─ ─ →     │   (SYN/SYN+ACK/ACK)
+   (연결 소켓                                  │
+    하나 생김) ────── 연결 성립 ──────────────  │
+        │                                     │
+   recv()/send() ←──── 데이터 교환 ────→  send()/recv()
+        │                                     │
+   close()    연결 종료                     close()</pre>
+    <p class="hint">서버는 <b>bind → listen → accept</b>(받는 쪽 준비), 클라는 <b>connect</b> 하나(거는 쪽). 그리고 <code>accept()</code>가 반환하는 건 <b>새 연결 소켓</b>이다 — 이 비대칭이 핵심. 아래에서 직접 확인한다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>소켓 호출 시뮬레이터 — 순서를 틀리면 어떻게 되나</h2>
+  <p class="lead">서버와 클라 함수 버튼을 <b>마음대로 눌러보자.</b> 정석 순서는 물론이고, <b>순서를 틀렸을 때</b> 무슨 일이 생기는지가 이 위젯의 핵심이다. (예: listen 전에 connect / accept를 안 했는데 연결은? / 대기열이 차면?) 서버는 <code>listen(3)</code> — 대기열 3칸.</p>
+  <div class="card">
+    <div class="cols">
+      <div class="side srv">
+        <h4>🖥️ 서버 <small>포트 7777</small></h4>
+        <div class="fnrow"><button class="fn" data-f="socket">socket()</button><button class="fn" data-f="bind">bind(7777)</button><button class="fn" data-f="listen">listen(3)</button><button class="fn" data-f="accept">accept()</button><button class="fn" data-f="close">close(연결)</button></div>
+        <div id="srvView"></div>
+      </div>
+      <div class="side cli">
+        <h4>💻 클라이언트들 <small>최대 6명</small></h4>
+        <div class="fnrow"><button class="fn" data-f="csocket">socket() 새 클라</button><button class="fn" data-f="connect">connect()</button></div>
+        <div id="cliView"></div>
+      </div>
+    </div>
+    <div class="goal" id="goal"></div>
+    <div class="logbox" id="log"></div>
+    <div class="btnrow"><button class="btn ghost" id="auto">▶ 정석 순서로 서버 준비 (socket→bind→listen)</button><button class="btn ghost" id="reset">↺ 초기화</button></div>
+    <p class="hint">해볼 것 ① <b>서버 준비 전에 connect()</b> → 거부(RST). ② <b>bind 없이 listen()</b> → 막힌다. ③ 서버 준비 후 클라 3명 connect() → <b>accept()를 안 했는데도 연결은 이미 성립</b>해 대기열에 들어가 있다. ④ 대기열이 찬 상태에서 4번째 connect() → 밀려난다. ⑤ accept()를 누를 때마다 <b>연결 소켓이 새로 생기고</b>, listen 소켓은 그대로다. ⑥ 대기열이 빈데 accept() → 블로킹(9강의 문제).</p>
+  </div>
+</div></section>
+
+<section id="code"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · 코드</div>
+  <h2 class="sec"><span class="n">4</span>언리얼 FSocket으로 — 클라이언트와 서버</h2>
+  <p class="lead">클라가 제일 단순하다. <code>socket → connect → send/recv → close</code>.</p>
+  <div class="card">
+    <pre class="code">ISocketSubsystem* SocketSub = ISocketSubsystem::Get(PLATFORM_SOCKETSUBSYSTEM);
+
+<span class="cm">// 1) socket() — TCP 소켓 생성</span>
+FSocket* Socket = SocketSub-&gt;CreateSocket(NAME_Stream, TEXT(<span class="str">"Client"</span>), <span class="kw">false</span>);
+
+<span class="cm">// 2) 서버 주소 구성 (IP + 포트)</span>
+TSharedRef&lt;FInternetAddr&gt; ServerAddr = SocketSub-&gt;CreateInternetAddr();
+<span class="kw">bool</span> bValid;
+ServerAddr-&gt;SetIp(TEXT(<span class="str">"203.0.113.10"</span>), bValid);
+ServerAddr-&gt;SetPort(7777);
+
+<span class="cm">// 3) connect() — 내부적으로 3-way handshake 발생</span>
+<span class="kw">if</span> (Socket-&gt;Connect(*ServerAddr))
+{
+    <span class="cm">// 4) send() — 데이터 보내기</span>
+    FString Msg = TEXT(<span class="str">"Login:Koo"</span>);
+    int32 Sent = 0;
+    Socket-&gt;Send((uint8*)TCHAR_TO_UTF8(*Msg), Msg.Len(), Sent);
+
+    <span class="cm">// 5) recv() — 응답 받기</span>
+    uint8 Buffer[1024]; int32 Read = 0;
+    <span class="kw">if</span> (Socket-&gt;Recv(Buffer, <span class="kw">sizeof</span>(Buffer), Read)) { <span class="cm">/* 처리 */</span> }
+}
+
+<span class="cm">// 6) close() — 자원 반납 (3강에서 강조한 것)</span>
+Socket-&gt;Close();
+SocketSub-&gt;DestroySocket(Socket);</pre>
+  </div>
+  <p class="lead" style="margin-top:26px">서버는 <code>socket → bind → listen → accept → recv/send → close</code>. 직접 짤 일은 드물지만 읽을 줄은 알아야 한다.</p>
+  <div class="card">
+    <pre class="code">FSocket* ListenSocket = SocketSub-&gt;CreateSocket(NAME_Stream, TEXT(<span class="str">"Server"</span>), <span class="kw">false</span>);   <span class="cm">// 1) socket()</span>
+
+TSharedRef&lt;FInternetAddr&gt; BindAddr = SocketSub-&gt;CreateInternetAddr();
+BindAddr-&gt;SetAnyAddress();      <span class="cm">// 모든 인터페이스에서</span>
+BindAddr-&gt;SetPort(7777);
+ListenSocket-&gt;Bind(*BindAddr);  <span class="cm">// 2) bind() — "나 7777번 포트로 들을게"</span>
+
+ListenSocket-&gt;Listen(8);        <span class="cm">// 3) listen() — 연결 대기열 준비 (인자 = 대기 큐 크기)</span>
+
+<span class="kw">bool</span> bPending = <span class="kw">false</span>;
+<span class="kw">if</span> (ListenSocket-&gt;HasPendingConnection(bPending) &amp;&amp; bPending)
+{
+    <span class="cm">// 4) accept() — 들어온 연결을 수락, "연결 소켓"을 새로 반환</span>
+    FSocket* ClientSocket = ListenSocket-&gt;Accept(TEXT(<span class="str">"ClientConn"</span>));
+    <span class="cm">//       ↑ 이 소켓으로 이 클라와 통신. ListenSocket은 계속 새 연결을 받음</span>
+
+    uint8 Buffer[1024]; int32 Read = 0;
+    ClientSocket-&gt;Recv(Buffer, <span class="kw">sizeof</span>(Buffer), Read);   <span class="cm">// 5) recv()/send()</span>
+
+    ClientSocket-&gt;Close();                                <span class="cm">// 6) close()</span>
+    SocketSub-&gt;DestroySocket(ClientSocket);
+}</pre>
+    <p class="hint"><b>면접용 비유:</b> listen 소켓은 <b>문 앞에서 손님을 맞는 직원</b>, accept가 만든 연결 소켓은 <b>그 손님 전담 직원</b>이다. 손님(클라)마다 전담 소켓이 생기니 동시에 여럿을 처리할 수 있다(3강의 4-tuple).</p>
+  </div>
+</div></section>
+
+<section id="trap"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · 함정</div>
+  <h2 class="sec"><span class="n">5</span>손님 한 명 받는 동안 다른 손님은?</h2>
+  <p class="lead">위 서버 코드엔 함정이 있다. <code>accept()</code>로 한 명을 받아 <code>recv()</code>로 그 사람 데이터를 기다리는 동안 <b>다른 클라는 접속을 못 한다.</b> <code>recv()</code>가 데이터 올 때까지 멈춰 있기(블로킹) 때문이다. (시뮬레이터에서 대기열이 빈 채 <code>accept()</code>를 눌렀을 때 나온 그 메시지다.)</p>
+  <div class="card">
+    <p style="font-size:14.5px">손님 100명을 동시에 받으려면 —</p>
+    <div class="two">
+      <div class="box"><h4>① 블로킹을 안 쓴다</h4><p>논블로킹 소켓</p></div>
+      <div class="box"><h4>② 한 스레드로 여러 소켓 감시</h4><p><code>select</code>, IOCP</p></div>
+      <div class="box"><h4>③ 연결마다 스레드</h4><p>수백 명까진 OK</p></div>
+    </div>
+    <p class="hint">게임 서버가 수천 명을 받는 비밀이 거기 있다. 이 강의는 "함수 흐름"까지, 동시 처리는 <b>9강</b>에서 본다.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">6</span>흔한 오해 4가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 면접 대비</div>
+  <h2 class="sec"><span class="n">7</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"서버가 recv에서 멈춰 있으면 다른 클라는 어떻게 받나요?"</i> → 9강(블로킹/논블로킹, I/O 멀티플렉싱)에서 다룬다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 마무리</div>
+  <h2 class="sec"><span class="n">8</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="07강_흐름제어_혼잡제어_Nagle.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 7강 — 흐름·혼잡 제어와 Nagle</div></div></a>
+  <a class="nx" href="09강_블로킹_논블로킹_IO멀티플렉싱.html"><div style="text-align:left"><div class="s">다음 강의</div><div class="t">9강 — 블로킹·논블로킹·IO 멀티플렉싱 →</div></div></a>
+  <div class="cap">게임 개발자를 위한 네트워크 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 8강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"서버랑 클라가 같은 함수를 똑같이 호출한다"','다르다. 서버는 <span class="truth">bind → listen → accept</span>로 "받는 쪽" 준비를 하고, 클라는 <span class="truth">connect</span>로 "거는 쪽" 역할을 한다. <code>socket</code>, <code>send</code>, <code>recv</code>, <code>close</code>는 공통이지만 연결을 맺는 과정이 비대칭이다.'],
+ ['"accept()가 반환하는 소켓이 원래 listen 소켓이다"','아니다. <code>accept()</code>는 <span class="truth">새 연결 전용 소켓</span>을 만들어 반환한다. listen 소켓은 그대로 두고 계속 새 연결을 받는다. 둘을 헷갈리면 "서버가 어떻게 여러 명을 받나"를 설명 못 한다.'],
+ ['"bind는 클라이언트도 꼭 해야 한다"','클라는 보통 <code>bind</code>를 명시적으로 안 한다. <code>connect</code>할 때 OS가 알아서 빈 포트를 하나 골라 붙여준다(<span class="truth">임시 포트, ephemeral port</span>). 서버만 "정해진 포트"가 필요해서 <code>bind</code>를 명시한다.'],
+ ['"UDP도 listen/accept를 한다"','UDP는 연결이 없으니 <code>listen</code>/<code>accept</code>/<code>connect</code>가 없다. <code>socket → bind</code>(서버) 후 바로 <code>sendto</code>/<code>recvfrom</code>으로 주고받는다. <span class="truth">listen/accept는 연결 지향인 TCP만의 절차</span>다.']
+];
+var QA=[
+ ['TCP 소켓 통신의 흐름을 설명해보세요.','서버는 <b>socket으로 소켓을 만들고, bind로 포트를 묶고, listen으로 연결 받을 준비를 한 뒤 accept로</b> 들어온 연결을 수락합니다. 클라이언트는 socket을 만들고 <b>connect</b>로 서버에 연결하는데 이때 3-way handshake가 일어납니다. 연결이 맺어지면 양쪽이 send와 recv로 주고받고, 끝나면 close로 닫습니다.'],
+ ['accept()는 뭘 반환하나요?','들어온 연결을 위한 <b>새 소켓</b>을 반환합니다. 원래 listen하던 소켓은 계속 새 연결을 받고, accept가 만든 연결 소켓으로 그 클라이언트와 실제 통신을 합니다. 그래서 서버가 여러 클라이언트를 동시에 처리할 수 있습니다.'],
+ ['bind는 왜 서버만 하나요?','서버는 클라이언트가 찾아올 수 있도록 <b>정해진 포트</b>에서 기다려야 하기 때문에 bind로 포트를 고정합니다. 클라이언트는 자기 포트가 뭐든 상관없어서 connect할 때 OS가 <b>임시 포트를 자동 할당</b>해줍니다.'],
+ ['listen 소켓과 연결 소켓의 차이는?','listen 소켓은 <b>새 연결 요청을 받는 전용</b> 소켓이고, accept가 반환하는 연결 소켓은 <b>특정 클라이언트와 데이터를 주고받는</b> 소켓입니다. 문 앞에서 손님을 맞는 직원과 손님별 전담 직원의 차이로 보면 됩니다.'],
+ ['Berkeley 소켓과 Winsock의 차이는?','둘 다 거의 같은 소켓 API인데 Berkeley 소켓은 유닉스 계열 표준이고 <b>Winsock은 윈도우 버전</b>입니다. Winsock은 WSAStartup으로 초기화하고 closesocket으로 닫는 등 세부가 조금 다릅니다. 언리얼의 FSocket이 이런 플랫폼 차이를 감싸줍니다.']
+];
+var CK=['소켓 함수 7개의 역할을 한 줄씩 말할 수 있다','서버 흐름(socket→bind→listen→accept)과 클라 흐름(socket→connect)을 그릴 수 있다','accept가 새 연결 소켓을 반환한다는 걸, 그게 왜 중요한지와 함께 안다','클라는 보통 bind를 안 한다는 걸(임시 포트) 안다','UDP엔 listen/accept/connect가 없다는 걸 안다'];
+var KEY='net08-check';
+
+/* 킬러: 소켓 호출 시뮬레이터 */
+(function(){
+  var BACK=3,MAXC=6,S,logs;
+  var srvEl=document.getElementById('srvView'),cliEl=document.getElementById('cliView'),logEl=document.getElementById('log'),goalEl=document.getElementById('goal');
+  function reset(){S={sock:false,bound:false,lis:false,q:[],conns:[],cl:[],nextFd:4};logs=[];say('inf','[안내] 서버/클라 함수 버튼을 눌러보자. 정석 순서는 왼쪽 위에서 아래로.');draw();}
+  function say(cls,t){logs.unshift({c:cls,t:t});if(logs.length>40)logs.pop();}
+  function letter(i){return String.fromCharCode(65+i);}
+  function eph(i){return 50200+i*17;}
+  function srvSocket(){
+    if(S.sock){say('err','[서버] socket(): 이 데모의 서버는 listen 소켓을 하나만 만든다(이미 fd=3 있음).');return;}
+    S.sock=true;say('ok','[서버] socket() → fd=3 (listen 소켓 후보). 아직 주소도, 듣는 상태도 아님.');
+  }
+  function srvBind(){
+    if(!S.sock){say('err','[서버] bind(): 소켓이 없다. 먼저 socket()부터.');return;}
+    if(S.bound){say('err','[서버] bind(): 이미 7777에 묶여 있다.');return;}
+    S.bound=true;say('ok','[서버] bind(0.0.0.0:7777) → 성공. "나 7777번 쓸게"를 OS에 등록. 아직 손님을 받는 상태는 아니다.');
+  }
+  function srvListen(){
+    if(!S.sock){say('err','[서버] listen(): 소켓이 없다. 먼저 socket()부터.');return;}
+    if(!S.bound){say('err','[서버] listen(): bind 없이 listen하면 OS가 임의 포트를 골라줘서 클라가 7777로 못 찾는다. 이 데모에선 막아둔다 — bind(7777)부터.');return;}
+    if(S.lis){say('err','[서버] listen(): 이미 LISTEN 상태다.');return;}
+    S.lis=true;say('ok','[서버] listen(3) → LISTEN. 이제 handshake를 커널이 대신 처리하고, 완료된 연결을 대기열(3칸)에 쌓는다.');
+  }
+  function srvAccept(){
+    if(!S.lis){say('err','[서버] accept(): LISTEN 상태가 아니다(EINVAL). socket→bind→listen 순서를 먼저.');return;}
+    if(!S.q.length){say('wait','[서버] accept(): 대기열이 비어 있다 → 블로킹! 손님이 올 때까지 이 함수에서 멈춘다. 그동안 서버는 아무것도 못 한다(→ 9강).');return;}
+    var c=S.q.shift(),fd=S.nextFd++;
+    S.conns.push({fd:fd,cl:c});c.fd=fd;
+    say('ok','[서버] accept() → 새 연결 소켓 fd='+fd+' 반환 (클라 '+letter(c.i)+'와 통신 전담). listen 소켓 fd=3은 그대로 남아 계속 새 손님을 받는다.');
+  }
+  function srvClose(){
+    if(!S.conns.length){say('err','[서버] close(연결): 닫을 연결 소켓이 없다.');return;}
+    var c=S.conns.pop();c.cl.state='closed';
+    say('ok','[서버] close(fd='+c.fd+') → 클라 '+letter(c.cl.i)+'와의 연결 종료, 소켓 자원 반납. (안 닫으면 소켓이 누수된다 — 3강)');
+  }
+  function cliSocket(){
+    if(S.cl.length>=MAXC){say('err','[클라] 이 데모는 클라 '+MAXC+'명까지.');return;}
+    var i=S.cl.length;S.cl.push({i:i,state:'socket',fd:0});
+    say('ok','[클라 '+letter(i)+'] socket() → 소켓 생성. 아직 서버와 연결 전. (bind는 안 한다 — 포트는 connect 때 OS가 정해준다)');
+  }
+  function cliConnect(){
+    var c=null;for(var i=0;i<S.cl.length;i++)if(S.cl[i].state==='socket'){c=S.cl[i];break;}
+    if(!c){say('err','[클라] connect(): 연결을 시도할 소켓이 없다. 먼저 "socket() 새 클라".');return;}
+    var n=letter(c.i);
+    if(!S.lis){say('err','[클라 '+n+'] connect(203.0.113.10:7777) → ECONNREFUSED. 서버가 listen 중이 아니라 RST로 거절당했다.');return;}
+    if(S.q.length>=BACK){say('err','[클라 '+n+'] connect() → 밀림. 서버 대기열('+BACK+'칸)이 가득 차서 SYN이 무시된다(재전송하다 타임아웃). accept()로 대기열을 비워줘야 한다.');return;}
+    c.state='connected';c.port=eph(c.i);S.q.push(c);
+    say('ok','[클라 '+n+'] connect() 성공 (3-way handshake). OS가 임시 포트 '+c.port+' 자동 할당. 서버가 accept()를 안 했어도 연결은 이미 성립 → 서버 대기열에 들어감.');
+  }
+  function draw(){
+    var h='';
+    h+='<div class="sk lis"><div class="t"><span>listen 소켓 (fd=3)</span><span class="st'+(S.lis?' on':'')+'">'+(!S.sock?'없음':(S.lis?'LISTEN :7777':(S.bound?'BOUND :7777':'CREATED')))+'</span></div>';
+    h+='<div class="qslots">대기열(backlog='+BACK+') ';for(var i=0;i<BACK;i++){var q=S.q[i];h+='<i class="'+(q?'f':'')+'">'+(q?letter(q.i):'')+'</i>';}h+='<span style="margin-left:6px">← accept 대기 중인 연결</span></div></div>';
+    S.conns.forEach(function(c){h+='<div class="sk conn"><div class="t"><span>연결 소켓 (fd='+c.fd+')</span><span class="st on">ESTABLISHED</span></div><div>→ 클라 '+letter(c.cl.i)+' (203.0.113.10:7777 ⇄ 클라IP:'+c.cl.port+')</div></div>';});
+    var total=(S.sock?1:0)+S.conns.length;
+    h+='<div style="margin-top:10px;font-size:12px;color:var(--faint)">서버 소켓 총 <b style="color:var(--txt)">'+total+'</b>개 = listen '+(S.sock?1:0)+' + 연결 '+S.conns.length+'</div>';
+    srvEl.innerHTML=h;
+    var c2='';
+    if(!S.cl.length)c2='<div style="font-size:12.5px;color:var(--faint)">"socket() 새 클라"로 클라를 만들어보자.</div>';
+    S.cl.forEach(function(c){
+      var st,cls='';
+      if(c.state==='socket')st='소켓 생성됨 (미연결)';
+      else if(c.state==='closed')st='종료됨';
+      else if(c.fd){st='연결됨 → 서버 fd='+c.fd;cls=' on';}
+      else{st='연결됨 (서버 accept 대기 중)';cls=' on';}
+      c2+='<div class="sk"><div class="t"><span>클라 '+letter(c.i)+'</span><span class="st'+cls+'">'+st+'</span></div>'+(c.port?'<div>임시 포트 '+c.port+'</div>':'')+'</div>';
+    });
+    cliEl.innerHTML=c2;
+    var acc=S.conns.length;
+    goalEl.innerHTML=acc>=3?'🎉 <b>연결 소켓 '+acc+'개</b> — listen 소켓 하나로 여러 클라를 받고 있다. (서버 소켓 총 '+(acc+1)+'개)':'🎯 목표: 서버를 준비하고 <b>클라 3명을 accept</b>해서 서버 소켓 4개(listen 1 + 연결 3)를 만들어보자. (현재 연결 '+acc+'개)';
+    logEl.innerHTML=logs.map(function(l){return '<div class="'+l.c+'">'+l.t+'</div>';}).join('');
+  }
+  var F={socket:srvSocket,bind:srvBind,listen:srvListen,accept:srvAccept,close:srvClose,csocket:cliSocket,connect:cliConnect};
+  document.querySelectorAll('.fn').forEach(function(b){b.addEventListener('click',function(){F[b.dataset.f]();draw();});});
+  document.getElementById('auto').addEventListener('click',function(){if(!S.sock)srvSocket();if(!S.bound)srvBind();if(!S.lis)srvListen();draw();});
+  document.getElementById('reset').addEventListener('click',reset);
+  reset();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>

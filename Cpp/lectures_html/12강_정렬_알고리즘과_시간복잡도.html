@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12강 · 정렬 알고리즘과 시간복잡도 — 인터랙티브 강의</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --bg:#0b0e1a;--bg2:#11152a;--card:#161b33;--card2:#1c2243;--line:#2a3157;
+  --txt:#e7ecff;--dim:#9aa3c7;--faint:#6b73a0;
+  --ind:#6366f1;--ind2:#818cf8;--pur:#a855f7;--cyan:#22d3ee;
+  --grn:#34d399;--red:#f87171;--amber:#fbbf24;--orange:#fb923c;
+  --acc:#a855f7;--acc2:#c084fc;--accrgb:168,85,247;--acc3:#f87171;
+  --shadow:0 10px 40px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard',system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 20px}
+#bar{position:fixed;top:0;left:0;height:3px;width:0;z-index:99;background:linear-gradient(90deg,var(--acc),var(--acc3))}
+nav{position:fixed;top:0;left:0;right:0;height:56px;z-index:80;background:rgba(11,14,26,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+nav .wrap{display:flex;align-items:center;gap:14px;width:100%}
+nav .logo{font-weight:800;letter-spacing:-.02em}nav .logo b{color:var(--acc)}
+nav .chips{display:flex;gap:6px;margin-left:auto;overflow-x:auto;scrollbar-width:none}
+nav .chips::-webkit-scrollbar{display:none}
+nav a.chip{font-size:12.5px;color:var(--dim);text-decoration:none;padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s;border:1px solid transparent}
+nav a.chip:hover{color:var(--txt);background:var(--card)}
+nav a.chip.on{color:#fff;background:var(--acc);border-color:var(--acc)}
+nav a.home{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;font-size:12.5px;font-weight:700;text-decoration:none;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:6px 11px;border-radius:20px;white-space:nowrap;transition:.15s}
+nav a.home:hover{color:var(--txt);background:var(--card2);border-color:var(--faint)}
+header.hero{padding:120px 0 50px;position:relative;overflow:hidden}
+header.hero::before{content:"";position:absolute;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:400px;background:radial-gradient(ellipse,rgba(var(--accrgb),.16),transparent 70%);filter:blur(20px);z-index:-1}
+.kicker{display:inline-block;font-size:13px;font-weight:700;color:var(--acc);background:rgba(var(--accrgb),.1);border:1px solid rgba(var(--accrgb),.3);padding:6px 14px;border-radius:30px;margin-bottom:20px}
+header.hero h1{font-size:clamp(30px,6vw,46px);line-height:1.18;letter-spacing:-.03em;font-weight:800}
+header.hero h1 .g{background:linear-gradient(120deg,var(--acc),var(--acc3));-webkit-background-clip:text;background-clip:text;color:transparent}
+header.hero p.sub{color:var(--dim);font-size:17px;margin-top:18px;max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px}
+.meta .m{font-size:13px;color:var(--dim);background:var(--card);border:1px solid var(--line);padding:8px 14px;border-radius:10px}
+.meta .m b{color:var(--txt)}
+section{padding:46px 0;border-top:1px solid var(--line)}
+.eyebrow{font-size:13px;font-weight:700;color:var(--acc);letter-spacing:.04em;margin-bottom:8px}
+h2.sec{font-size:clamp(23px,4vw,30px);font-weight:800;letter-spacing:-.02em;line-height:1.25}
+h2.sec .n{color:var(--faint);font-weight:700;margin-right:10px}
+.lead{color:var(--dim);font-size:16px;margin-top:14px}
+.lead code,.card code,.hint code,.two code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px;margin-top:22px;box-shadow:var(--shadow)}
+.hint{font-size:13.5px;color:var(--faint);margin-top:12px}
+.hint b{color:var(--dim)}
+.btn{font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;border:none;padding:11px 18px;border-radius:11px;color:#fff;background:var(--acc);transition:.15s;display:inline-flex;align-items:center;gap:8px}
+.btn:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn.ghost{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+.btn.ghost:hover{border-color:var(--acc);background:var(--card)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.btnrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:center}
+pre.code{background:#0a0d18;border:1px solid var(--line);border-radius:12px;padding:16px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:12.5px;line-height:1.65;margin-top:14px;white-space:pre}
+pre.code .cm{color:var(--faint)}pre.code .kw{color:var(--pur)}pre.code .fn{color:var(--cyan)}pre.code .hl{color:var(--amber);font-weight:700}pre.code .bad{color:var(--red)}pre.code .good{color:var(--grn)}pre.code .str{color:#a5d6a7}
+.tbl{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+.tbl th,.tbl td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+.tbl th{background:var(--card2);color:var(--txt)}
+.tbl td{color:var(--dim)}
+.tbl td b{color:var(--txt)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:18px}
+.two .box{background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:16px}
+.two .box h4{font-size:14px;margin-bottom:6px}
+.two .box p{font-size:13.5px;color:var(--dim)}
+.two .box.bad{border-color:rgba(248,113,113,.4)}.two .box.bad h4{color:var(--red)}
+.two .box.good{border-color:rgba(52,211,153,.4)}.two .box.good h4{color:var(--grn)}
+.modetoggle{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap}
+.modetoggle button{font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.modetoggle button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:18px}
+.stats .s{background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.stats .s .v{font-family:ui-monospace,monospace;font-size:22px;font-weight:800;color:var(--acc)}
+.stats .s .v.warn{color:var(--red)}
+.stats .s .l{font-size:11.5px;color:var(--faint)}
+.slrow{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:16px;font-size:13.5px;color:var(--dim);flex-wrap:wrap}
+.slrow input[type=range]{accent-color:var(--acc);width:200px}
+.simmsg{margin-top:14px;text-align:center;font-size:13.5px;min-height:22px;color:var(--dim)}
+.simmsg.bad{color:var(--red);font-weight:700}.simmsg.good{color:var(--grn);font-weight:700}
+.mis{background:var(--card);border:1px solid var(--line);border-radius:13px;margin-top:10px;overflow:hidden}
+.mis summary{padding:16px 18px;cursor:pointer;font-weight:600;list-style:none;display:flex;align-items:center;gap:12px}
+.mis summary::-webkit-details-marker{display:none}
+.mis summary .x{color:var(--red);font-weight:800;font-size:18px;flex-shrink:0}
+.mis summary .arr{margin-left:auto;color:var(--faint);transition:.25s}
+.mis[open] summary .arr{transform:rotate(180deg)}
+.mis .body{padding:0 18px 18px;color:var(--dim);font-size:14.5px}
+.mis .body .truth{color:var(--grn);font-weight:700}
+.mis code{font-family:ui-monospace,monospace;background:var(--bg2);padding:1px 6px;border-radius:5px;color:var(--cyan);font-size:.9em}
+.qa-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:22px}
+.flip{perspective:1200px;height:250px;cursor:pointer}
+.flip .in{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.on .in{transform:rotateY(180deg)}
+.flip .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:15px;padding:20px;display:flex;flex-direction:column;border:1px solid var(--line)}
+.flip .front{background:linear-gradient(150deg,var(--card2),var(--card))}
+.flip .front .qn{font-size:12px;color:var(--acc);font-weight:700}
+.flip .front .q{font-size:15px;font-weight:700;margin-top:10px;flex:1}
+.flip .front .tap{font-size:12px;color:var(--faint)}
+.flip .back{background:linear-gradient(150deg,#1a2140,var(--card));transform:rotateY(180deg);overflow:auto}
+.flip .back .a{font-size:13px;color:var(--txt);line-height:1.6}.flip .back .a b{color:var(--cyan)}
+.check{margin-top:20px}
+.check .pbar{height:10px;background:var(--bg2);border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.check .pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:.4s}
+.check .pct{text-align:right;font-size:13px;color:var(--dim);margin-top:6px}
+.ck{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-top:10px;cursor:pointer;transition:.15s}
+.ck:hover{border-color:var(--acc)}
+.ck.done{background:rgba(52,211,153,.08);border-color:rgba(52,211,153,.4)}
+.ck .box{width:22px;height:22px;border-radius:7px;border:2px solid var(--faint);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:.15s;font-size:14px;color:transparent}
+.ck.done .box{background:var(--grn);border-color:var(--grn);color:#04221a}
+.ck span{font-size:14.5px}.ck.done span{color:var(--dim)}
+footer{padding:50px 0 70px;border-top:1px solid var(--line);text-align:center}
+footer .nx{display:inline-flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);padding:16px 24px;border-radius:14px;text-decoration:none;color:var(--txt);transition:.2s;margin:6px}
+footer .nx:hover{border-color:var(--acc);transform:translateY(-2px)}
+footer .nx .s{font-size:12px;color:var(--faint)}footer .nx .t{font-weight:700;color:var(--acc)}
+footer .cap{color:var(--faint);font-size:13px;margin-top:24px}
+@media(max-width:640px){header.hero{padding:96px 0 36px}.flip{height:290px}}
+
+/* 킬러: 정렬 비교 횟수 레이스 */
+.selrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-items:center;margin-bottom:6px}
+.selrow .lb{font-size:12.5px;color:var(--faint)}
+.pillsel{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+.pillsel button{font-family:inherit;font-size:13px;font-weight:700;padding:7px 14px;border-radius:20px;border:1px solid var(--line);background:var(--bg2);color:var(--dim);cursor:pointer;transition:.15s}
+.pillsel button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.alg{display:grid;grid-template-columns:170px 1fr 120px;gap:10px;align-items:center;margin-top:12px}
+.alg .nm{font-size:13.5px;font-weight:700}.alg .nm small{display:block;font-weight:500;color:var(--faint);font-size:11.5px}
+.alg .bar{height:22px;background:var(--bg2);border-radius:8px;border:1px solid var(--line);overflow:hidden}
+.alg .bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--grn),var(--cyan));transition:width .5s}
+.alg.slow .bar i{background:linear-gradient(90deg,var(--orange),var(--red))}
+.alg .ct{font-family:ui-monospace,monospace;font-size:13px;text-align:right;color:var(--txt)}
+.proj{margin-top:18px;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:12px 16px;font-size:13.5px;color:var(--dim);text-align:center}
+.proj b{color:var(--txt)}
+@media(max-width:640px){.alg{grid-template-columns:1fr;gap:4px}.alg .ct{text-align:left}}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<nav><div class="wrap">
+  <div class="logo">Cpp · <b>12강</b></div>
+  <a class="home" href="index.html" title="전체 강의 목록">☰ 목차</a>
+  <div class="chips">
+    <a class="chip" href="#intro">도입</a>
+    <a class="chip" href="#bigo">Big-O</a>
+    <a class="chip" href="#sim">정렬 레이스</a>
+    <a class="chip" href="#n2">O(n²)</a>
+    <a class="chip" href="#nlogn">O(n log n)</a>
+    <a class="chip" href="#worst">퀵 최악</a>
+    <a class="chip" href="#stable">안정 정렬</a>
+    <a class="chip" href="#ue">TArray::Sort</a>
+    <a class="chip" href="#misc">오해</a>
+    <a class="chip" href="#quiz">면접</a>
+    <a class="chip" href="#check">체크</a>
+  </div>
+</div></nav>
+
+<header class="hero"><div class="wrap">
+  <span class="kicker">Part 4 · 실전 보강 · 면접 단골</span>
+  <h1>정렬 알고리즘과 <span class="g">시간복잡도</span></h1>
+  <p class="sub">랭킹보드가 100명일 땐 멀쩡하다가 10만 명이 되니 프레임이 무너졌다. Big-O가 정확히 뭘 재는지, 정렬 알고리즘이 왜 이렇게 다른지 비교 횟수로 직접 세어본다.</p>
+  <div class="meta">
+    <div class="m">📈 Big-O = 증가 추세</div>
+    <div class="m">🧩 선수지식 <b>4강 · 5강</b></div>
+    <div class="m">⏱️ 약 20분</div>
+  </div>
+</div></header>
+
+<section id="intro"><div class="wrap">
+  <div class="eyebrow">SECTION 01 · 도입</div>
+  <h2 class="sec"><span class="n">1</span>랭킹보드가 100명일 땐 안 보이던 버벅임</h2>
+  <p class="lead">시즌 랭킹보드를 만들었다. 매초 점수가 바뀌는 플레이어를 점수 내림차순으로 정렬해 보여줘야 한다. 급한 대로 제일 익숙한 방식으로 짰다.</p>
+  <div class="card">
+    <pre class="code"><span class="kw">void</span> SortRankingBubble(TArray&lt;FPlayerScore&gt;&amp; Players)
+{
+    <span class="kw">for</span> (int32 i = 0; i &lt; Players.Num() - 1; ++i)
+    {
+        <span class="kw">for</span> (int32 j = 0; j &lt; Players.Num() - 1 - i; ++j)      <span class="cm">// ← 이중 루프</span>
+        {
+            <span class="kw">if</span> (Players[j].Score &lt; Players[j + 1].Score) { Players.Swap(j, j + 1); }
+        }
+    }
+}</pre>
+    <p style="margin-top:16px">100명으로 테스트할 땐 매초 정렬해도 티가 안 났다. 시즌이 진행돼 <b style="color:var(--red)">10만 명</b>이 쌓이자 프레임이 눈에 띄게 떨어졌다. 사람은 1000배 늘었는데 체감 렉은 그보다 훨씬 심하게 늘었다 — 왜?</p>
+  </div>
+</div></section>
+
+<section id="bigo"><div class="wrap">
+  <div class="eyebrow">SECTION 02 · Big-O</div>
+  <h2 class="sec"><span class="n">2</span>Big-O가 재는 것 — "정확한 시간"이 아니라 "늘어나는 추세"</h2>
+  <p class="lead">Big-O는 <b>입력 크기 n이 커질 때 연산 횟수가 어떤 속도로 늘어나는지</b>를 나타낸다. "n이 2배가 되면 연산이 몇 배가 되나"를 보는 척도다.</p>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>표기</th><th>이름</th><th>n=100 → n=10,000이면 연산 횟수는</th></tr>
+      <tr><td><b>O(1)</b></td><td>상수</td><td>그대로</td></tr>
+      <tr><td><b>O(log n)</b></td><td>로그</td><td>약 2배</td></tr>
+      <tr><td><b>O(n)</b></td><td>선형</td><td>100배</td></tr>
+      <tr><td><b>O(n log n)</b></td><td>선형 로그</td><td>약 130배</td></tr>
+      <tr><td><b>O(n²)</b></td><td>이차</td><td>10,000배</td></tr>
+    </table>
+    <p class="hint">도입의 버블 정렬은 이중 루프라 <b>O(n²)</b>. 100명이면 약 1만 번(정확히는 n²/2라 5천 번)이지만 10만 명이면 <b>100억 번 규모</b>(n²/2로 세면 50억)다. 상수 2는 Big-O가 무시하는 부분이다. 사람은 1000배, 연산은 <b>100만 배</b> — 이게 체감 렉이 사람 수보다 가파르게 나빠진 이유다. Big-O가 상수를 무시하고 추세만 보는 것도, n이 커질수록 실제 성능을 지배하는 건 상수가 아니라 추세이기 때문이다.</p>
+  </div>
+</div></section>
+
+<section id="sim"><div class="wrap">
+  <div class="eyebrow">SECTION 03 · 핵심 · 직접 돌려보기</div>
+  <h2 class="sec"><span class="n">3</span>정렬 레이스 — 비교 횟수를 직접 센다</h2>
+  <p class="lead">5가지 정렬을 <b>실제로 돌려서</b> 비교 연산 횟수를 센다. 데이터 모양과 n을 바꿔가며 어느 알고리즘이 언제 무너지는지 보자.</p>
+  <div class="card">
+    <div class="selrow"><span class="lb">데이터 모양</span>
+      <div class="pillsel" id="shapeSel">
+        <button data-s="random" class="on">🎲 랜덤</button>
+        <button data-s="sorted">📏 이미 정렬됨</button>
+        <button data-s="reverse">🔃 역순</button>
+        <button data-s="nearly">🏆 거의 정렬 (랭킹보드)</button>
+      </div>
+    </div>
+    <div class="slrow">n <input type="range" id="nSl" min="10" max="2000" step="10" value="500"><b id="nV" style="color:var(--txt);font-family:ui-monospace,monospace">500</b>명</div>
+    <div id="algBox"></div>
+    <div class="proj" id="proj"></div>
+    <div class="simmsg" id="simMsg"></div>
+    <p class="hint">① <b>이미 정렬됨</b>을 골라보자 — "첫 원소 피벗 퀵정렬"이 O(n²)로 무너지고 삽입 정렬은 O(n)으로 날아간다. ② <b>거의 정렬</b>은 랭킹보드 상황: 삽입 정렬이 의외로 강하다. ③ n을 30 정도로 줄이면 알고리즘 차이가 거의 사라진다 — Big-O는 <b>n이 클 때</b>의 추세다.</p>
+  </div>
+</div></section>
+
+<section id="n2"><div class="wrap">
+  <div class="eyebrow">SECTION 04 · O(n²) 계열</div>
+  <h2 class="sec"><span class="n">4</span>버블 / 선택 / 삽입 — 왜 전부 O(n²)일까</h2>
+  <p class="lead">셋 다 <b>"바깥 루프로 한 칸씩 훑으면서, 안쪽 루프로 나머지를 다시 훑는다"</b>는 이중 루프 구조다.</p>
+  <div class="card">
+    <table class="tbl">
+      <tr><th>알고리즘</th><th>동작</th><th>특이점</th></tr>
+      <tr><td><b>버블</b></td><td>인접한 두 원소를 비교해 순서가 틀리면 교환. 한 바퀴마다 가장 큰 값이 끝으로 "떠오른다"</td><td>구현 단순</td></tr>
+      <tr><td><b>선택</b></td><td>남은 범위에서 최솟값을 찾아 맨 앞과 교환. 매 바퀴 "찾기"가 O(n)</td><td>교환 횟수가 적음</td></tr>
+      <tr><td><b>삽입</b></td><td>이미 정렬된 앞부분에 새 원소가 들어갈 자리를 찾아 삽입</td><td><b>거의 정렬된 데이터에선 O(n)에 가깝다</b></td></tr>
+    </table>
+    <p class="hint">n이 작을 땐(수십 개 이하) 구현이 단순하고 상수 오버헤드가 적어서 O(n log n)보다 실측이 나을 수도 있다. <b>"이론 복잡도가 낮다"와 "이 상황에서 실제로 더 빠르다"는 다른 이야기</b>다.</p>
+  </div>
+</div></section>
+
+<section id="nlogn"><div class="wrap">
+  <div class="eyebrow">SECTION 05 · O(n log n) 계열</div>
+  <h2 class="sec"><span class="n">5</span>퀵 / 머지 — 분할정복이 만드는 n log n</h2>
+  <div class="card">
+    <pre class="code">[8, 3, 5, 1, 9, 2]
+        │  분할
+   ┌────┴────┐
+[8, 3, 5]  [1, 9, 2]
+   │  분할       │  분할
+ ┌─┴─┐        ┌─┴─┐
+[8][3,5]     [1][9,2]
+    │  정복 후 병합    │
+  [3,5,8] ◀──────▶ [1,2,9]
+        │  병합
+   [1, 2, 3, 5, 8, 9]</pre>
+    <p style="margin-top:14px"><b>왜 n log n인가.</b> 절반씩 쪼개니 "쪼개는 깊이"는 <b>log n</b>, 각 층에서 병합/비교하는 총 작업량은 <b>n</b> → 층 수 × 층당 작업 = <b>O(n log n)</b>. 이진 탐색이 O(log n)인 것과 같은 원리다.</p>
+    <div class="two">
+      <div class="box good"><h4>머지 정렬</h4><p>항상 O(n log n) — 최악도 보장. 대신 병합용 임시 배열로 <b>추가 메모리 O(n)</b>. 안정 정렬.</p></div>
+      <div class="box good"><h4>퀵 정렬</h4><p>피벗 기준으로 작은 것/큰 것을 나누고(파티션) 재귀. 평균 O(n log n), <b>제자리(in-place)</b>라 실무에서 가장 흔하다. 안정 정렬 아님.</p></div>
+    </div>
+  </div>
+</div></section>
+
+<section id="worst"><div class="wrap">
+  <div class="eyebrow">SECTION 06 · 함정</div>
+  <h2 class="sec"><span class="n">6</span>퀵정렬이 최악의 경우 O(n²)가 되는 이유</h2>
+  <p class="lead">평균 O(n log n)은 <b>피벗이 매번 데이터를 어느 정도 균형 있게 반으로 나눈다</b>는 전제 위에 있다. 시뮬레이터에서 "이미 정렬됨"을 고르면 그 전제가 깨지는 걸 직접 봤다.</p>
+  <div class="card">
+    <pre class="code">int32 Partition(TArray&lt;int32&gt;&amp; Arr, int32 Low, int32 High)
+{
+    <span class="bad">int32 Pivot = Arr[Low];</span>   <span class="cm">// 이미 정렬된 배열이면 항상 최솟값이 피벗 → 한 개만 떼어내고 n-1개를 다시 재귀</span>
+    <span class="cm">// ...</span>
+}</pre>
+    <p class="hint">실무 방어법: 피벗을 <b>무작위</b>로 고르거나 앞/중간/끝의 <b>중간값(median-of-three)</b>을 쓴다. "랭킹보드가 이미 어느 정도 정렬된 채 매초 재정렬"이라는 도입 상황은 바로 이 최악 케이스에 가깝다.</p>
+  </div>
+</div></section>
+
+<section id="stable"><div class="wrap">
+  <div class="eyebrow">SECTION 07 · 안정 정렬</div>
+  <h2 class="sec"><span class="n">7</span>동점자를 원래 순서대로 유지할지 말지</h2>
+  <p class="lead"><b>안정 정렬</b>은 비교 기준이 같은 원소들의 상대적 순서를 정렬 후에도 그대로 유지한다.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">정렬 전: [(김철수, 100점), (이영희, 100점), (박민수, 90점)]  ← 점수 내림차순 정렬</span>
+
+안정 정렬:   [(김철수, 100), (이영희, 100), (박민수, 90)]   <span class="good">← 100점 동점자 순서 유지</span>
+불안정 정렬: [(이영희, 100), (김철수, 100), (박민수, 90)]   <span class="bad">← 순서가 뒤바뀔 수 있음</span></pre>
+    <p class="hint">"동점이면 먼저 달성한 사람이 위"라는 규칙이 있는데 불안정 정렬로 점수만 기준 삼으면 깨질 수 있다. <b>머지 정렬은 안정, 일반적인 in-place 퀵정렬은 불안정.</b></p>
+  </div>
+</div></section>
+
+<section id="ue"><div class="wrap">
+  <div class="eyebrow">SECTION 08 · 실전</div>
+  <h2 class="sec"><span class="n">8</span>TArray::Sort는 뭘 쓰나 — 랭킹보드 개선</h2>
+  <p class="lead">언리얼 <code>TArray::Sort()</code>는 <b>Introsort 계열</b>: 퀵정렬로 시작하되 재귀가 너무 깊어지면 힙정렬로 갈아타서 최악도 O(n log n)에 가깝게 방어한다.</p>
+  <div class="card">
+    <pre class="code"><span class="cm">// ❌ 개선 전: O(n²), 매초 10만 명 재정렬</span>
+<span class="bad">SortRankingBubble(Players);</span>
+
+<span class="cm">// ✅ 개선 후: 평균 O(n log n), 최악도 Introsort가 방어</span>
+Players.Sort([](<span class="kw">const</span> FPlayerScore&amp; A, <span class="kw">const</span> FPlayerScore&amp; B)
+{
+    <span class="kw">if</span> (A.Score != B.Score) { <span class="kw">return</span> A.Score &gt; B.Score; }   <span class="cm">// 점수 내림차순</span>
+    <span class="kw">return</span> A.LastScoreTime &lt; B.LastScoreTime;            <span class="cm">// 동점이면 먼저 달성한 사람이 위 — 2차 기준을 predicate 안에 직접 명시</span>
+});</pre>
+    <p class="hint">10만 명 기준 버블은 수십억~100억 번 규모, O(n log n)은 10만 × log₂(10만) ≈ <b>170만 번</b>. 알고리즘만 바꿨을 뿐인데 수천 배 차이 — 이게 "Big-O를 챙기는 게 왜 실무에서 중요한가"의 가장 직접적인 답이다. <code>Sort()</code>는 안정성을 보장하지 않으니 동점자 규칙은 <b>비교 함수 안에서 직접</b> 챙기자.</p>
+  </div>
+</div></section>
+
+<section id="misc"><div class="wrap">
+  <div class="eyebrow">SECTION 09 · 흔한 오해</div>
+  <h2 class="sec"><span class="n">9</span>흔한 오해 5가지</h2>
+  <div id="misBox"></div>
+</div></section>
+
+<section id="quiz"><div class="wrap">
+  <div class="eyebrow">SECTION 10 · 면접 대비</div>
+  <h2 class="sec"><span class="n">10</span>면접에서 나오면 — 카드를 뒤집어보기</h2>
+  <div class="qa-grid" id="qaGrid"></div>
+  <p class="hint" style="margin-top:18px">면접관이 그 다음에 던지기 좋은 질문: <i>"그럼 이진 탐색은 왜 O(log n)인가요?"</i> → 4강에서 다룬 탐색 복잡도와 이 강의의 "절반씩 쪼개면 깊이가 log n"이라는 원리가 그대로 이어진다.</p>
+</div></section>
+
+<section id="check"><div class="wrap">
+  <div class="eyebrow">SECTION 11 · 마무리</div>
+  <h2 class="sec"><span class="n">11</span>셀프 체크</h2>
+  <div class="check">
+    <div class="pbar"><i id="ckBar"></i></div>
+    <div class="pct" id="ckPct">0 / 5 완료</div>
+    <div id="ckList"></div>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <a class="nx" href="index.html"><div style="text-align:left"><div class="s">전체 목록</div><div class="t">← 강의 목차로</div></div></a>
+  <a class="nx" href="11강_스마트_포인터.html"><div style="text-align:left"><div class="s">이전 강의</div><div class="t">← 11강 — 스마트 포인터</div></div></a>
+  <div class="cap">C++·자료구조·디자인패턴 강의 시리즈 · 언리얼 C++ 클라 개발자용 · 12강</div>
+</div></footer>
+
+<script>
+var MIS=[
+ ['"정렬 알고리즘은 다 O(n log n)이다"','아니다. 버블/선택/삽입은 이중 루프라 <span class="truth">O(n²)</span>다. O(n log n)은 분할정복(퀵/머지)에서 나온다.'],
+ ['"퀵정렬이 이론상 좋으니 항상 가장 빠르다"','아니다. 피벗을 잘못 고르면 이미 정렬된 데이터에서 <span class="truth">O(n²)</span>로 무너진다. 최악 성능을 보장하려면 머지 정렬이나 Introsort 계열을 쓴다.'],
+ ['"Big-O가 낮으면 항상 실제로 더 빠르다"','Big-O는 n이 충분히 클 때의 추세다. <span class="truth">작은 n에선 단순한 O(n²)(특히 삽입 정렬)가 상수 오버헤드가 적어 더 빠를 수 있다.</span>'],
+ ['"TArray::Sort()는 항상 안정 정렬이다"','아니다. 퀵 기반 Introsort라 <span class="truth">안정성을 보장하지 않는다.</span> 동점자 순서가 중요하면 비교 함수 안에 2차 기준을 직접 넣어야 한다.'],
+ ['"정렬은 항상 알고리즘을 직접 구현해서 써야 한다"','실무에선 <code>TArray::Sort()</code>·<code>Algo::Sort()</code> 같은 <span class="truth">검증된 표준 함수</span>가 기본이다. 직접 구현은 특수한 요구사항이나 학습 목적일 때만 의미가 있다.']
+];
+var QA=[
+ ['Big-O가 뭔가요?','입력 크기가 커질 때 연산 횟수가 어떤 속도로 늘어나는지를 나타내는 척도입니다. 정확한 실행 시간이 아니라 <b>상수항을 무시하고 n이 커질수록 지배적인 증가 추세</b>만 봅니다.'],
+ ['버블정렬과 퀵정렬의 시간복잡도 차이는 뭐고 왜 그런가요?','버블은 이중 루프로 인접 원소를 비교해 <b>O(n²)</b>, 퀵은 피벗으로 데이터를 반씩 나누는 분할정복이라 평균 <b>O(n log n)</b>입니다. 절반씩 쪼개는 깊이가 log n, 각 깊이의 작업량이 n이라 곱이 n log n입니다.'],
+ ['퀵정렬이 최악의 경우 왜 O(n²)가 되나요?','피벗이 한쪽으로 치우치면 매번 <b>한 개만 떼어내고 나머지를 재귀</b>하는 꼴이 됩니다. 이미 정렬된 배열에서 피벗을 항상 첫 원소로 고정하면 발생하기 쉽습니다.'],
+ ['10만 명 랭킹보드를 매초 정렬한다면 어떻게 정렬을 고르시겠어요?','매초 아주 조금만 바뀐다면 거의 정렬된 데이터에 빠른 <b>삽입 정렬</b>도 고려하지만, 최악 성능 보장이 필요하면 <b>TArray::Sort</b> 같은 검증된 하이브리드를 씁니다. 동점자 순서가 중요하면 안정성도 확인합니다.'],
+ ['안정 정렬이 왜 필요한 경우가 있나요?','정렬 기준이 같은 원소들의 <b>상대적 순서를 유지</b>해야 할 때입니다. 점수가 같으면 먼저 달성한 사람이 위라는 2차 규칙이 있는데 불안정 정렬로 점수만 기준 삼으면 순서가 깨질 수 있습니다.'],
+ ['이미 정렬된 배열에 퀵정렬을 그대로 쓰면 왜 위험한가요?','피벗을 고정 위치(첫 원소)로 고르는 구현이면 매번 한쪽으로만 쏠리는 최악 파티션이 나와 <b>O(n²)</b>가 됩니다. 피벗을 <b>무작위 또는 median-of-three</b>로 고르면 줄일 수 있습니다.'],
+ ['TArray::Sort() 내부에서 어떤 알고리즘을 쓰는지 아세요?','퀵정렬 기반으로 시작하되 재귀가 너무 깊어지면 힙정렬로 전환하는 <b>Introsort</b> 계열 하이브리드입니다. 평균은 퀵만큼 빠르면서 최악도 O(n log n)에 가깝게 방어됩니다.']
+];
+var CK=['Big-O가 "정확한 시간"이 아니라 "입력 크기에 따른 증가 추세"라는 걸 설명할 수 있다','버블/선택/삽입이 왜 O(n²)이고 퀵/머지가 왜 O(n log n)인지 설명할 수 있다','퀵정렬이 최악에 O(n²)가 되는 조건과 방어법(피벗 선택)을 안다','안정 정렬이 뭔지, 왜 필요한 상황이 있는지 예를 들 수 있다','TArray::Sort()가 안정 정렬을 보장하지 않는다는 걸 알고 동점자 처리를 어떻게 챙길지 설명할 수 있다'];
+var KEY='cpp12-check';
+
+/* 킬러: 정렬 비교 횟수 레이스 (실제 알고리즘 실행) */
+(function(){
+  var shape='random',seed=12345;
+  function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;var t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;}
+  function gen(n,s){
+    seed=12345;var a=[],i,j,t;for(i=0;i<n;i++)a.push(i+1);
+    if(s==='random'){for(i=n-1;i>0;i--){j=Math.floor(rnd()*(i+1));t=a[i];a[i]=a[j];a[j]=t;}}
+    else if(s==='reverse'){a.reverse();}
+    else if(s==='nearly'){var k=Math.max(2,Math.floor(n/50));for(var q=0;q<k;q++){i=Math.floor(rnd()*(n-3));j=i+1+Math.floor(rnd()*3);t=a[i];a[i]=a[j];a[j]=t;}}
+    return a;
+  }
+  function bubble(a){var c=0,n=a.length,t;for(var i=0;i<n-1;i++)for(var j=0;j<n-1-i;j++){c++;if(a[j]>a[j+1]){t=a[j];a[j]=a[j+1];a[j+1]=t;}}return c;}
+  function insertion(a){var c=0;for(var i=1;i<a.length;i++){var key=a[i],j=i-1;while(j>=0){c++;if(a[j]>key){a[j+1]=a[j];j--;}else break;}a[j+1]=key;}return c;}
+  function merge(a){
+    var c=0,tmp=new Array(a.length);
+    function ms(lo,hi){if(hi-lo<1)return;var mid=(lo+hi)>>1;ms(lo,mid);ms(mid+1,hi);
+      var i=lo,j=mid+1,k=lo;while(i<=mid&&j<=hi){c++;if(a[i]<=a[j])tmp[k++]=a[i++];else tmp[k++]=a[j++];}
+      while(i<=mid)tmp[k++]=a[i++];while(j<=hi)tmp[k++]=a[j++];for(k=lo;k<=hi;k++)a[k]=tmp[k];}
+    ms(0,a.length-1);return c;
+  }
+  function quick(a,med){
+    var c=0,st=[[0,a.length-1]],t;
+    while(st.length){var r=st.pop(),lo=r[0],hi=r[1];if(lo>=hi)continue;
+      if(med){var mid=(lo+hi)>>1,x=a[lo],y=a[mid],z=a[hi],m;
+        if((x<=y&&y<=z)||(z<=y&&y<=x))m=mid;else if((y<=x&&x<=z)||(z<=x&&x<=y))m=lo;else m=hi;
+        t=a[lo];a[lo]=a[m];a[m]=t;}
+      var p=a[lo],i=lo;
+      for(var j=lo+1;j<=hi;j++){c++;if(a[j]<p){i++;t=a[i];a[i]=a[j];a[j]=t;}}
+      t=a[lo];a[lo]=a[i];a[i]=t;
+      st.push([lo,i-1]);st.push([i+1,hi]);}
+    return c;
+  }
+  var ALGS=[
+    {nm:'버블 정렬',sub:'O(n²) · 이중 루프',fn:bubble},
+    {nm:'삽입 정렬',sub:'O(n²) · 거의 정렬이면 O(n)',fn:insertion},
+    {nm:'퀵 (첫 원소 피벗)',sub:'평균 O(n log n) · 최악 O(n²)',fn:function(a){return quick(a,false);}},
+    {nm:'퀵 (median-of-three)',sub:'피벗 방어 버전',fn:function(a){return quick(a,true);}},
+    {nm:'머지 정렬',sub:'항상 O(n log n) · 메모리 +O(n)',fn:merge}
+  ];
+  var box=document.getElementById('algBox'),nSl=document.getElementById('nSl'),nV=document.getElementById('nV');
+  function run(){
+    var n=+nSl.value;nV.textContent=n;
+    var res=ALGS.map(function(A){var a=gen(n,shape);var c=A.fn(a);
+      var ok=true;for(var i=1;i<a.length;i++){if(a[i-1]>a[i]){ok=false;break;}}return {A:A,c:c,ok:ok};});
+    var mx=Math.max.apply(null,res.map(function(r){return r.c;}));
+    var lmax=Math.log(mx+1);
+    box.innerHTML='';
+    var minc=Math.min.apply(null,res.map(function(r){return r.c;}));
+    res.forEach(function(r){
+      var d=document.createElement('div');d.className='alg'+(r.c>minc*8&&r.c>n*Math.log(n)/Math.LN2*2?' slow':'');
+      d.innerHTML='<div class="nm">'+r.A.nm+'<small>'+r.A.sub+'</small></div><div class="bar"><i style="width:'+Math.max(3,Math.log(r.c+1)/lmax*100)+'%"></i></div><div class="ct">'+r.c.toLocaleString()+'회'+(r.ok?'':' ⚠ 정렬 실패')+'</div>';
+      box.appendChild(d);
+    });
+    var n2=Math.round(1e5*(1e5-1)/2),nl=Math.round(1e5*Math.log(1e5)/Math.LN2);
+    document.getElementById('proj').innerHTML='막대는 <b>로그 스케일</b>(차이를 눈에 보이게 하려고 압축). 랭킹보드 <b>10만 명</b>으로 환산하면 O(n²)는 약 <b>'+(n2/1e8).toFixed(0)+'억 번</b>, O(n log n)은 약 <b>'+(nl/1e4).toFixed(0)+'만 번</b> — 약 '+Math.round(n2/nl).toLocaleString()+'배 차이.';
+    var q=res[2].c,qm=res[3].c,msg='',cls='simmsg';
+    if(shape==='sorted'||shape==='reverse'){if(q>qm*4){msg='⚠ 첫 원소 피벗 퀵정렬이 '+q.toLocaleString()+'회로 무너졌다. 같은 퀵인데 median-of-three는 '+qm.toLocaleString()+'회.';cls='simmsg bad';}}
+    else if(shape==='nearly'){msg='🏆 거의 정렬된 데이터: 삽입 정렬이 '+res[1].c.toLocaleString()+'회로 머지('+res[4].c.toLocaleString()+'회)와 견줄 만하다.';cls='simmsg good';}
+    else if(n<=40){msg='n이 작으면 알고리즘 차이가 크지 않다 — Big-O는 n이 클 때의 이야기다.';}
+    var m=document.getElementById('simMsg');m.textContent=msg;m.className=cls;
+  }
+  document.querySelectorAll('#shapeSel button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#shapeSel button').forEach(function(o){o.classList.remove('on');});
+      b.classList.add('on');shape=b.dataset.s;run();
+    });
+  });
+  nSl.addEventListener('input',run);
+  run();
+})();
+
+/* 흔한 오해 · 면접 · 체크 · 스파이 (공통) — MIS, QA, CK, KEY 는 위에서 정의 */
+(function(){
+  var box=document.getElementById('misBox');
+  MIS.forEach(function(d){var el=document.createElement('details');el.className='mis';
+    el.innerHTML='<summary><span class="x">✕</span><span>'+d[0]+'</span><span class="arr">⌄</span></summary><div class="body">'+d[1]+'</div>';
+    box.appendChild(el);});
+})();
+(function(){
+  var grid=document.getElementById('qaGrid');
+  QA.forEach(function(d,i){var c=document.createElement('div');c.className='flip';
+    c.innerHTML='<div class="in"><div class="face front"><div class="qn">Q'+(i+1)+'</div><div class="q">'+d[0]+'</div><div class="tap">탭하면 모범 답변 ↻</div></div>'+
+      '<div class="face back"><div class="qn" style="color:var(--cyan)">A'+(i+1)+'</div><div class="a">'+d[1]+'</div></div></div>';
+    c.addEventListener('click',function(){c.classList.toggle('on');});grid.appendChild(c);});
+})();
+(function(){
+  var saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){}
+  var list=document.getElementById('ckList'),bar=document.getElementById('ckBar'),pct=document.getElementById('ckPct');
+  function update(){var done=Object.keys(saved).filter(function(k){return saved[k];}).length;
+    bar.style.width=(done/CK.length*100)+'%';pct.textContent=done+' / '+CK.length+' 완료'+(done===CK.length?' 🎉':'');
+    try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}}
+  CK.forEach(function(t,i){var row=document.createElement('div');row.className='ck'+(saved[i]?' done':'');
+    row.innerHTML='<div class="box">✓</div><span>'+t+'</span>';
+    row.addEventListener('click',function(){saved[i]=!saved[i];row.classList.toggle('done',saved[i]);update();});list.appendChild(row);});
+  update();
+})();
+(function(){
+  var bar=document.getElementById('bar'),secs=[].slice.call(document.querySelectorAll('section')),chips=[].slice.call(document.querySelectorAll('nav a.chip'));
+  function onScroll(){var s=window.scrollY,h=document.documentElement.scrollHeight-window.innerHeight;
+    bar.style.width=(h>0?s/h*100:0)+'%';
+    var cur=secs.length-1;for(var i=0;i<secs.length;i++){if(secs[i].getBoundingClientRect().top>120){cur=i-1;break;}}
+    chips.forEach(function(ch,i){ch.classList.toggle('on',i===cur);});}
+  window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+})();
+
+</script>
+</body>
+</html>
